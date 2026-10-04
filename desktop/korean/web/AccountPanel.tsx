@@ -6,6 +6,7 @@ import {
   type FormEvent,
 } from "react";
 import { useLocale } from "../runtime/locale";
+import { MfaSettings } from "./MfaSettings";
 import { errorText } from "./copy";
 import { loginApi, type WebAccount } from "./login-api";
 type ChannelChoice = { id: string; name: string };
@@ -198,6 +199,9 @@ export function AccountPanel({
         <p className="account-notice" role="status">
           {notice}
         </p>
+      )}
+      {account.role === "admin" && account.mfaEnabled && (
+        <MfaSettings account={account} onChange={onChange} />
       )}
       {(!employeesOnly || account.mustChangePassword) && (
         <form onSubmit={changePassword} className="account-form">

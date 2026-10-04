@@ -12,6 +12,7 @@ const { createLoginService } = await import(
     ? "../../login-dist/server.mjs"
     : "./server.mjs"
 );
+import { hotp } from "./mfa.mjs";
 import { Store, Limiter } from "./store.mjs";
 import { RelayBridge } from "./relay.mjs";
 const secret = new Uint8Array(32).fill(1);
@@ -76,7 +77,7 @@ async function fixture(options = {}) {
     service.server.listen(0, "127.0.0.1", resolve),
   );
   let base = `http://127.0.0.1:${service.server.address().port}/chat-api/`;
-  async function api(route, data, cookie = "", extra = {}) {
+  async function rawApi(route, data, cookie = "", extra = {}) {
     const result = await fetch(base + route, {
       method: data ? "POST" : "GET",
       headers: {
@@ -95,7 +96,45 @@ async function fixture(options = {}) {
       retryAfter: result.headers.get("retry-after"),
     };
   }
+  let recoveryCodes = [];
+  async function api(route, data, cookie = "", extra = {}) {
+    let injected = false;
+    if (
+      !options.manualMfa &&
+      ["login", "desktop/login"].includes(route) &&
+      data.username.toLowerCase() === "admin" &&
+      data.password === permanent &&
+      !data.mfaCode &&
+      recoveryCodes.length
+    ) {
+      data = { ...data, mfaCode: recoveryCodes[0] };
+      injected = true;
+    }
+    let result = await rawApi(route, data, cookie, extra);
+    if (!options.manualMfa && route === "setup" && result.value.mfaEnrollment) {
+      recoveryCodes = result.value.mfaEnrollment.recoveryCodes;
+      const account = service.store.state.accounts.admin;
+      const secret = service.store.open({
+        key: account.mfaEnrollment.secret,
+        pubkey: `mfa:${account.pubkey}`,
+      });
+      result = await rawApi("login", {
+        username: "admin",
+        password: permanent,
+        mfaChallenge: result.value.mfaEnrollment.challenge,
+        recoverySaved: true,
+        mfaCode: hotp(
+          secret,
+          Math.floor((options.clock?.() ?? Date.now()) / 30000),
+        ),
+      });
+      secret.fill(0);
+    }
+    if (injected && result.status === 200) recoveryCodes.shift();
+    return result;
+  }
   return {
+    rawApi,
     get service() {
       return service;
     },
@@ -799,6 +838,391 @@ test("failure persistence errors never become authentication success", async () 
       (await f.api("login", { username: "admin", password: "wrong" })).status,
       401,
     );
+  } finally {
+    await f.finish();
+  }
+});
+
+function decodeMfaSecret(encoded) {
+  let bits = "";
+  for (const letter of encoded)
+    bits += "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+      .indexOf(letter)
+      .toString(2)
+      .padStart(5, "0");
+  return Buffer.from(bits.match(/.{8}/g).map((byte) => parseInt(byte, 2)));
+}
+async function enrollAdmin(f, time) {
+  const first = await f.setup();
+  assert.equal(first.status, 200);
+  assert.equal(first.cookie, undefined);
+  assert.equal(first.value.token, undefined);
+  assert.equal(first.value.backup, undefined);
+  const challenge = first.value.mfaEnrollment;
+  const secret = decodeMfaSecret(challenge.secret);
+  const proof = {
+    username: "admin",
+    password: permanent,
+    mfaChallenge: challenge.challenge,
+    recoverySaved: true,
+    mfaCode: hotp(secret, Math.floor(time / 30000)),
+  };
+  const result = await f.rawApi("login", proof);
+  assert.equal(result.status, 200);
+  return { ...result, challenge, secret, proof };
+}
+
+test("MFA registers through HTTP, rejects password-only login and pre-MFA sessions, persists replay fences", async () => {
+  let time = Math.floor(Date.now() / 30000) * 30000;
+  const f = await fixture({ manualMfa: true, clock: () => time });
+  try {
+    const enrolled = await enrollAdmin(f, time);
+    assert.equal(enrolled.value.mfaEnabled, true);
+    assert.equal(enrolled.value.recoveryCodesRemaining, 10);
+    const serialized = fs.readFileSync(
+      path.join(f.directory, "accounts.json"),
+      "utf8",
+    );
+    assert.ok(!serialized.includes(enrolled.challenge.secret));
+    for (const code of enrolled.challenge.recoveryCodes)
+      assert.ok(!serialized.includes(code.replaceAll("-", "")));
+    f.service.store.transaction((state) => {
+      state.sessions[
+        createHash("sha256").update("a".repeat(64)).digest("hex")
+      ] = {
+        username: "admin",
+        until: Math.floor(Date.now() / 1000) + 300,
+      };
+    });
+    assert.equal(
+      (
+        await f.rawApi(
+          "session",
+          undefined,
+          `__Host-buzz_session=${"a".repeat(64)}`,
+        )
+      ).status,
+      401,
+    );
+    assert.equal(
+      (
+        await f.rawApi(
+          "admin/accounts",
+          undefined,
+          `__Host-buzz_session=${"a".repeat(64)}`,
+        )
+      ).status,
+      401,
+    );
+    for (const desktop of [false, true]) {
+      const result = await f.rawApi(
+        desktop ? "desktop/login" : "login",
+        { username: "admin", password: permanent },
+        "",
+        desktop ? { Origin: "tauri://localhost" } : {},
+      );
+      assert.equal(result.value.error, "mfa-required");
+      assert.equal(result.cookie, undefined);
+      assert.equal(result.value.backup, undefined);
+      assert.equal(result.value.token, undefined);
+    }
+    assert.equal(
+      (await f.rawApi("login", enrolled.proof)).value.error,
+      "invalid-mfa",
+    );
+    time += 30000;
+    const code = hotp(enrolled.secret, Math.floor(time / 30000));
+    const loggedIn = await f.rawApi("login", {
+      username: "admin",
+      password: permanent,
+      mfaCode: code,
+    });
+    assert.equal(loggedIn.status, 200);
+    await f.restart();
+    assert.equal(
+      (
+        await f.rawApi("login", {
+          username: "admin",
+          password: permanent,
+          mfaCode: code,
+        })
+      ).value.error,
+      "invalid-mfa",
+    );
+    const recovery = enrolled.challenge.recoveryCodes[0];
+    const recovered = await f.rawApi(
+      "desktop/login",
+      { username: "admin", password: permanent, mfaCode: recovery },
+      "",
+      { Origin: "tauri://localhost" },
+    );
+    assert.equal(recovered.status, 200);
+    assert.equal(recovered.value.account.recoveryCodesRemaining, 9);
+    assert.match(recovered.value.backup, /^ncryptsec/);
+    await f.restart();
+    assert.equal(
+      (
+        await f.rawApi("login", {
+          username: "admin",
+          password: permanent,
+          mfaCode: recovery,
+        })
+      ).value.error,
+      "invalid-mfa",
+    );
+  } finally {
+    await f.finish();
+  }
+});
+
+test("MFA failures share durable account lockout and parallel recovery cannot be reused", async () => {
+  let time = Date.now();
+  const f = await fixture({ manualMfa: true, clock: () => time });
+  try {
+    const enrolled = await enrollAdmin(f, time);
+    for (let i = 0; i < 4; i++)
+      assert.equal(
+        (
+          await f.rawApi("login", {
+            username: "admin",
+            password: permanent,
+            mfaCode: "bad",
+          })
+        ).value.error,
+        "invalid-mfa",
+      );
+    assert.equal(
+      (
+        await f.rawApi("login", {
+          username: "admin",
+          password: permanent,
+          mfaCode: "bad",
+        })
+      ).value.retryAfter,
+      60,
+    );
+    await f.restart();
+    const input = {
+      username: "admin",
+      password: permanent,
+      mfaCode: enrolled.challenge.recoveryCodes[0],
+    };
+    assert.equal((await f.rawApi("login", input)).value.error, "login-locked");
+    time += 60000;
+    const results = await Promise.all([
+      f.rawApi("login", input),
+      f.rawApi("login", input),
+    ]);
+    assert.equal(results.filter((result) => result.status === 200).length, 1);
+    assert.equal(f.service.store.state.accounts.admin.mfa.recovery.length, 9);
+  } finally {
+    await f.finish();
+  }
+});
+
+test("pending enrollment expires, requires acknowledgement, and cannot bypass privileged routes", async () => {
+  let time = Date.now();
+  const f = await fixture({ manualMfa: true, clock: () => time });
+  try {
+    const started = await f.setup();
+    const pending = started.value.mfaEnrollment;
+    const input = {
+      username: "admin",
+      password: permanent,
+      mfaChallenge: pending.challenge,
+      mfaCode: hotp(decodeMfaSecret(pending.secret), Math.floor(time / 30000)),
+    };
+    assert.equal(
+      (await f.rawApi("login", input)).value.error,
+      "mfa-enrollment-expired",
+    );
+    assert.equal((await f.rawApi("admin/accounts")).status, 401);
+    assert.equal((await f.rawApi("sign", { template: {} })).status, 401);
+    assert.equal(Object.keys(f.service.store.state.sessions).length, 0);
+    time += 600000;
+    await f.restart();
+    assert.equal(
+      (await f.rawApi("login", { ...input, recoverySaved: true })).value.error,
+      "mfa-enrollment-expired",
+    );
+    const replacement = await f.rawApi("login", {
+      username: "admin",
+      password: permanent,
+    });
+    assert.notEqual(
+      replacement.value.mfaEnrollment.challenge,
+      pending.challenge,
+    );
+    assert.equal(
+      (await f.rawApi("login", { ...input, recoverySaved: true })).status,
+      409,
+    );
+  } finally {
+    await f.finish();
+  }
+});
+
+test("MFA rotation requires an existing factor, preserves it until confirmation and retires all old sessions", async () => {
+  const time = Date.now();
+  const f = await fixture({ manualMfa: true, clock: () => time });
+  try {
+    const enrolled = await enrollAdmin(f, time);
+    const oldVersion = f.service.store.state.accounts.admin.mfa.version;
+    assert.equal(
+      (await f.rawApi("mfa/rotate", { password: permanent }, enrolled.cookie))
+        .value.error,
+      "invalid-mfa",
+    );
+    const began = await f.rawApi(
+      "mfa/rotate",
+      { password: permanent, mfaCode: enrolled.challenge.recoveryCodes[0] },
+      enrolled.cookie,
+    );
+    assert.equal(began.status, 200);
+    assert.equal(f.service.store.state.accounts.admin.mfa.version, oldVersion);
+    const replacement = began.value.mfaEnrollment;
+    const other = await f.rawApi("login", {
+      username: "admin",
+      password: permanent,
+      mfaCode: enrolled.challenge.recoveryCodes[1],
+    });
+    const input = {
+      mfaChallenge: replacement.challenge,
+      recoverySaved: true,
+      mfaCode: hotp(
+        decodeMfaSecret(replacement.secret),
+        Math.floor(time / 30000),
+      ),
+    };
+    assert.equal(
+      (await f.rawApi("mfa/confirm", input, other.cookie)).status,
+      409,
+    );
+    const completed = await f.rawApi("mfa/confirm", input, enrolled.cookie);
+    assert.equal(completed.status, 200);
+    assert.equal(completed.value.recoveryCodesRemaining, 10);
+    assert.equal(
+      (await f.rawApi("session", undefined, enrolled.cookie)).status,
+      401,
+    );
+    assert.equal(
+      (await f.rawApi("session", undefined, other.cookie)).status,
+      401,
+    );
+    assert.equal(
+      (await f.rawApi("session", undefined, completed.cookie)).status,
+      200,
+    );
+    assert.equal(
+      (
+        await f.rawApi("login", {
+          username: "admin",
+          password: permanent,
+          mfaCode: enrolled.challenge.recoveryCodes[2],
+        })
+      ).value.error,
+      "invalid-mfa",
+    );
+  } finally {
+    await f.finish();
+  }
+});
+
+test("the last recovery code can restore an authenticator, with a five-minute password reauthentication window", async () => {
+  let time = Date.now();
+  const f = await fixture({ manualMfa: true, clock: () => time });
+  try {
+    const enrolled = await enrollAdmin(f, time);
+    f.service.store.transaction((state) => {
+      state.accounts.admin.mfa.recovery =
+        state.accounts.admin.mfa.recovery.slice(0, 1);
+    });
+    const recovered = await f.rawApi("login", {
+      username: "admin",
+      password: permanent,
+      mfaCode: enrolled.challenge.recoveryCodes[0],
+    });
+    assert.equal(recovered.value.recoveryCodesRemaining, 0);
+    assert.equal(
+      (await f.rawApi("mfa/rotate", { password: "wrong" }, recovered.cookie))
+        .status,
+      401,
+    );
+    const pending = await f.rawApi(
+      "mfa/rotate",
+      { password: permanent },
+      recovered.cookie,
+    );
+    assert.ok(pending.value.mfaEnrollment);
+    time += 300001;
+    assert.equal(
+      (await f.rawApi("mfa/rotate", { password: permanent }, recovered.cookie))
+        .status,
+      401,
+    );
+    // An enrollment begun during the reauthentication window still has its bounded ten-minute confirmation lifetime.
+    const { challenge, secret } = pending.value.mfaEnrollment;
+    const confirmed = await f.rawApi(
+      "mfa/confirm",
+      {
+        mfaChallenge: challenge,
+        recoverySaved: true,
+        mfaCode: hotp(decodeMfaSecret(secret), Math.floor(time / 30000)),
+      },
+      recovered.cookie,
+    );
+    assert.equal(confirmed.status, 200);
+    assert.equal(confirmed.value.recoveryCodesRemaining, 10);
+  } finally {
+    await f.finish();
+  }
+});
+
+test("a failed durable session write does not spend the recovery proof", async () => {
+  const f = await fixture({ manualMfa: true });
+  try {
+    const enrolled = await enrollAdmin(f, Date.now());
+    const file = f.service.store.file;
+    f.service.store.file = path.join(
+      f.directory,
+      "missing-directory",
+      "accounts.json",
+    );
+    const input = {
+      username: "admin",
+      password: permanent,
+      mfaCode: enrolled.challenge.recoveryCodes[0],
+    };
+    const rejected = await f.rawApi("login", input);
+    assert.equal(rejected.status, 500);
+    assert.equal(rejected.cookie, undefined);
+    assert.equal(f.service.store.state.accounts.admin.mfa.recovery.length, 10);
+    f.service.store.file = file;
+    assert.equal((await f.rawApi("login", input)).status, 200);
+    assert.equal((await f.rawApi("login", input)).value.error, "invalid-mfa");
+  } finally {
+    await f.finish();
+  }
+});
+
+test("TOTP accepts one future interval and rejects wider drift and old intervals", async () => {
+  let time = Math.floor(Date.now() / 30000) * 30000;
+  const f = await fixture({ manualMfa: true, clock: () => time });
+  try {
+    const enrolled = await enrollAdmin(f, time);
+    const login = (step) =>
+      f.rawApi("login", {
+        username: "admin",
+        password: permanent,
+        mfaCode: hotp(enrolled.secret, step),
+      });
+    time += 90000;
+    const step = Math.floor(time / 30000);
+    assert.equal((await login(step - 2)).value.error, "invalid-mfa");
+    assert.equal((await login(step + 2)).value.error, "invalid-mfa");
+    assert.equal((await login(step - 1)).status, 200);
+    assert.equal((await login(step + 1)).status, 200);
+    assert.equal((await login(step)).value.error, "invalid-mfa");
   } finally {
     await f.finish();
   }

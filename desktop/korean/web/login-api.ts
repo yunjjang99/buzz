@@ -8,6 +8,8 @@ export interface WebAccount {
   mustChangePassword: boolean;
   status: "ready" | "pending" | "failed";
   provisioningError: string;
+  mfaEnabled?: boolean;
+  recoveryCodesRemaining?: number;
 }
 
 type ApiTransport = <T>(route: string, input?: object) => Promise<T>;
@@ -59,4 +61,19 @@ export function accountSigner(account: WebAccount): Signer {
       active = false;
     },
   };
+}
+
+export interface MfaChallenge {
+  challenge: string;
+  secret: string;
+  uri: string;
+  recoveryCodes: string[];
+}
+export interface MfaConfirmation {
+  mfaChallenge: string;
+  mfaCode: string;
+  recoverySaved: true;
+}
+export interface MfaEnrollmentResult {
+  mfaEnrollment: MfaChallenge;
 }

@@ -1,7 +1,14 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useLocale } from "../runtime/locale";
 import { errorText } from "./copy";
-import { loginApi, type WebAccount } from "./login-api";
+import {
+  loginApi,
+  type WebAccount,
+  type MfaChallenge,
+  type MfaConfirmation,
+  type MfaEnrollmentResult,
+} from "./login-api";
+import { MfaEnrollment } from "./MfaEnrollment";
 
 /** Primary employee sign-in, with one-time owner migration when the service is empty. */
 export function LoginPanel({
@@ -11,6 +18,13 @@ export function LoginPanel({
   onLogin(account: WebAccount): Promise<void>;
   restore?: boolean;
 }) {
+  const alive = useRef(true);
+  useEffect(() => {
+    alive.current = true;
+    return () => {
+      alive.current = false;
+    };
+  }, []);
   const restoreAllowed = useRef(restore);
   restoreAllowed.current = restore;
   const callback = useRef(onLogin);
@@ -28,6 +42,9 @@ export function LoginPanel({
   const [file, setFile] = useState<File | null>(null);
   const [backupPassword, setBackupPassword] = useState("");
   const [setup, setSetup] = useState(false);
+  const [enrollment, setEnrollment] = useState<MfaChallenge | null>(null);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
   useEffect(() => {
     let active = true;
     void (async () => {
@@ -59,16 +76,18 @@ export function LoginPanel({
       active = false;
     };
   }, []);
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  async function submit(event?: FormEvent, proof?: MfaConfirmation) {
+    event?.preventDefault();
+    if (busy) return;
+    let keepPassword = false;
     setBusy(true);
     setError(null);
     try {
-      let account: WebAccount;
-      if (setup) {
+      let account: WebAccount | MfaEnrollmentResult;
+      if (setup && !proof) {
         if (!file || file.size > 4096)
           throw new Error("encrypted-backup-required");
-        account = await loginApi<WebAccount>("setup", {
+        account = await loginApi<WebAccount | MfaEnrollmentResult>("setup", {
           username,
           password,
           name,
@@ -76,25 +95,67 @@ export function LoginPanel({
           backupPassword,
         });
       } else
-        account = await loginApi<WebAccount>("login", {
+        account = await loginApi<WebAccount | MfaEnrollmentResult>("login", {
           username,
           password,
           remember,
+          ...(mfaCode ? { mfaCode } : {}),
+          ...proof,
         });
+      if (!alive.current) return;
+      if ("mfaEnrollment" in account) {
+        setEnrollment(account.mfaEnrollment);
+        setSetup(false);
+        setConfigured(true);
+        setFile(null);
+        keepPassword = true;
+        return;
+      }
+      setEnrollment(null);
+      setMfaRequired(false);
       setPassword("");
       setBackupPassword("");
       setFile(null);
       await onLogin(account);
     } catch (failure) {
+      if (!alive.current) return;
+      if (
+        failure instanceof Error &&
+        ["mfa-required", "invalid-mfa"].includes(failure.message)
+      ) {
+        setMfaRequired(true);
+        keepPassword = true;
+      }
+      if (
+        failure instanceof Error &&
+        failure.message === "mfa-enrollment-expired"
+      )
+        setEnrollment(null);
       setError(failure);
     } finally {
       setBusy(false);
-      setPassword("");
+      if (!keepPassword) setPassword("");
+      setMfaCode("");
       setBackupPassword("");
     }
   }
   return (
     <div className="employee-login">
+      {enrollment && (
+        <MfaEnrollment
+          key={enrollment.challenge}
+          enrollment={enrollment}
+          busy={busy}
+          onConfirm={(proof) => submit(undefined, proof)}
+          onCancel={() => {
+            setEnrollment(null);
+            setPassword("");
+            setSetup(false);
+            setError(null);
+            setMfaRequired(false);
+          }}
+        />
+      )}
       <p className="login-description">
         {t(
           "직원 아이디로 로그인하면 기존 대화가 이어집니다.",
@@ -105,7 +166,7 @@ export function LoginPanel({
         <p role="status">
           {t("로그인 상태 확인 중…", "Checking your session…")}
         </p>
-      ) : (
+      ) : !enrollment ? (
         <form onSubmit={(event) => void submit(event)}>
           {setup && (
             <p className="help">
@@ -213,6 +274,19 @@ export function LoginPanel({
               </span>
             </label>
           )}
+          {mfaRequired && !setup && (
+            <label>
+              {t("인증 코드 또는 복구 코드", "Authenticator or recovery code")}
+              <input
+                value={mfaCode}
+                onChange={(event) => setMfaCode(event.target.value)}
+                autoComplete="one-time-code"
+                maxLength={35}
+                required
+                disabled={busy}
+              />
+            </label>
+          )}
           <button
             className="primary"
             type="submit"
@@ -225,7 +299,7 @@ export function LoginPanel({
                 : t("로그인", "Sign in")}
           </button>
         </form>
-      )}
+      ) : null}
       {configured === false && !restoring && (
         <button
           type="button"

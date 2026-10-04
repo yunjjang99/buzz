@@ -162,6 +162,18 @@ export function errorText(error: unknown, language: "ko" | "en"): string {
           : error.message
       : "operation-failed";
   const messages: Record<string, [string, string]> = {
+    "mfa-required": [
+      "관리자 계정입니다. 인증 앱의 코드 또는 일회용 복구 코드를 입력해 주세요.",
+      "Enter your authenticator code or a single-use recovery code.",
+    ],
+    "invalid-mfa": [
+      "인증 코드가 올바르지 않거나 이미 사용되었습니다. 인증 앱의 새 코드 또는 사용하지 않은 복구 코드를 입력해 주세요.",
+      "The code is invalid or already used. Enter a fresh authenticator code or an unused recovery code.",
+    ],
+    "mfa-enrollment-expired": [
+      "인증 등록이 만료되었거나 변경되었습니다. 다시 로그인하여 새 설정 키로 등록해 주세요.",
+      "MFA enrollment expired or changed. Sign in again and use a new setup key.",
+    ],
     "too-many-files": [
       "첨부는 모든 대화를 합쳐 최대 5개입니다. 전송하거나 삭제한 뒤 다시 선택하세요.",
       "Select up to 5 files across drafts. Send or remove existing files first.",

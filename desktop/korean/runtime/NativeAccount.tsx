@@ -11,7 +11,14 @@ import {
 import { useCommunities } from "@/features/communities/useCommunities";
 import { invokeTauri } from "@/shared/api/tauri";
 import { AccountPanel } from "../web/AccountPanel";
-import type { WebAccount } from "../web/login-api";
+import type {
+  WebAccount,
+  MfaChallenge,
+  MfaConfirmation,
+  MfaEnrollmentResult,
+} from "../web/login-api";
+import { MfaEnrollment } from "../web/MfaEnrollment";
+import { errorText } from "../web/copy";
 import {
   hasNativeSession,
   nativeApi,
@@ -54,6 +61,9 @@ export function NativeAccount({
   const [account, setAccount] = useState<WebAccount | null>(null);
   const [panel, setPanel] = useState(false);
   const [setup, setSetup] = useState(false);
+  const [enrollment, setEnrollment] = useState<MfaChallenge | null>(null);
+  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaCode, setMfaCode] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -124,8 +134,8 @@ export function NativeAccount({
       if (alive.current) setBusy(false);
     }
   }
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  async function submit(event?: FormEvent, proof?: MfaConfirmation) {
+    event?.preventDefault();
     if (pending.current) return;
     pending.current = true;
     setBusy(true);
@@ -136,24 +146,45 @@ export function NativeAccount({
       if (current.locked || current.resetFailed)
         throw new Error("앱 보안 저장소를 먼저 잠금 해제하거나 복구해 주세요.");
       let next: WebAccount;
-      if (setup) {
+      if (setup && !proof) {
         const backup = await createNcryptsecBackup(password);
-        next = await nativeApi<WebAccount>("setup", {
-          username,
-          password,
-          name,
-          backup,
-          backupPassword: password,
-        });
+        const result = await nativeApi<WebAccount | MfaEnrollmentResult>(
+          "setup",
+          {
+            username,
+            password,
+            name,
+            backup,
+            backupPassword: password,
+          },
+        );
+        requireActive();
+        if ("mfaEnrollment" in result) {
+          setEnrollment(result.mfaEnrollment);
+          setSetup(false);
+          return;
+        }
+        next = result;
         if (next.pubkey !== current.pubkey)
           throw new Error("계정이 일치하지 않습니다.");
       } else {
-        const result = await nativeApi<NativeLogin>("desktop/login", {
-          username,
-          password,
-          ...(mustChange ? { newPassword } : {}),
-        });
+        const result = await nativeApi<NativeLogin | MfaEnrollmentResult>(
+          "desktop/login",
+          {
+            username,
+            password,
+            ...(mustChange ? { newPassword } : {}),
+            ...(mfaCode ? { mfaCode } : {}),
+            ...proof,
+          },
+        );
         requireActive();
+        if ("mfaEnrollment" in result) {
+          setEnrollment(result.mfaEnrollment);
+          return;
+        }
+        setEnrollment(null);
+        setMfaRequired(false);
         next = result.account;
         if (manage && next.pubkey !== current.pubkey) {
           await nativeApi("logout", {});
@@ -204,7 +235,18 @@ export function NativeAccount({
     } catch (cause) {
       if (!alive.current) return;
       const message = cause instanceof Error ? cause.message : String(cause);
-      if (message === "password-change-required") {
+      if (
+        [
+          "mfa-required",
+          "invalid-mfa",
+          "mfa-enrollment-expired",
+          "login-locked",
+        ].includes(message)
+      ) {
+        if (message === "mfa-enrollment-expired") setEnrollment(null);
+        setMfaRequired(true);
+        setError(errorText(cause, "ko"));
+      } else if (message === "password-change-required") {
         setMustChange(true);
         setError("첫 로그인입니다. 새 비밀번호를 12자 이상으로 입력해 주세요.");
       } else
@@ -225,7 +267,10 @@ export function NativeAccount({
         );
     } finally {
       pending.current = false;
-      if (alive.current) setBusy(false);
+      if (alive.current) {
+        setBusy(false);
+        setMfaCode("");
+      }
     }
   }
   return (
@@ -245,7 +290,23 @@ export function NativeAccount({
           직원 계정 · 아이디 로그인
         </button>
       )}
-      {open && !checkingSession && (
+      {enrollment && (
+        <MfaEnrollment
+          key={enrollment.challenge}
+          enrollment={enrollment}
+          busy={busy}
+          onConfirm={(proof) => submit(undefined, proof)}
+          onCancel={() => {
+            setEnrollment(null);
+            setPassword("");
+            setSetup(false);
+            setError("");
+            setMfaRequired(false);
+          }}
+        />
+      )}
+      {enrollment && error && <p role="alert">{error}</p>}
+      {open && !checkingSession && !enrollment && (
         <form
           onSubmit={submit}
           className="flex flex-col gap-3 rounded-lg border bg-background p-5 text-foreground"
@@ -287,6 +348,20 @@ export function NativeAccount({
               disabled={busy}
             />
           </label>
+          {mfaRequired && !setup && (
+            <label className="text-sm">
+              인증 코드 또는 복구 코드
+              <input
+                className="mt-1 w-full rounded border bg-background p-2"
+                autoComplete="one-time-code"
+                maxLength={35}
+                value={mfaCode}
+                onChange={(event) => setMfaCode(event.target.value)}
+                required
+                disabled={busy}
+              />
+            </label>
+          )}
           {mustChange && !setup && (
             <label className="text-sm">
               새 비밀번호 (12자 이상)

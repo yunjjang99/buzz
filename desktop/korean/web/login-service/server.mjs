@@ -23,6 +23,7 @@ import {
   passwordMatches,
   hashToken,
 } from "./store.mjs";
+import { Mfa } from "./mfa.mjs";
 import { RelayBridge } from "./relay.mjs";
 import { checkLogin, failLogin, clearLogin } from "./login-protection.mjs";
 import { assertNoKeys, validateBackup } from "../protocol.ts";
@@ -44,6 +45,8 @@ const publicAccount = (account) => ({
   mustChangePassword: account.mustChangePassword,
   status: account.job?.status ?? "ready",
   provisioningError: account.job?.error ?? "",
+  mfaEnabled: Boolean(account.mfa),
+  recoveryCodesRemaining: account.mfa?.recovery.length ?? 0,
 });
 function failure(code, status = 400) {
   const error = new Error(code);
@@ -75,6 +78,7 @@ export async function createLoginService(options) {
   const clock = options.clock ?? Date.now;
   const limiter = new Limiter(clock);
   const activeLogins = new Set();
+  const mfa = new Mfa(store, origin, clock);
   const dummyHash = await passwordHash(randomBytes(32).toString("hex"));
   let hashing = 0;
   let importing = false;
@@ -250,7 +254,9 @@ export async function createLoginService(options) {
       saved.until <= now() ||
       !account ||
       !account.enabled ||
-      Boolean(saved.desktop) !== desktop
+      Boolean(saved.desktop) !== desktop ||
+      (account.role === "admin" &&
+        (!account.mfa || saved.mfaVersion !== account.mfa.version))
     )
       throw failure("login-required", 401);
     return { account, id };
@@ -261,7 +267,15 @@ export async function createLoginService(options) {
       throw failure("admin-required", 403);
     return current;
   }
-  function issueSession(state, account, remember, desktop = false) {
+  function issueSession(
+    state,
+    account,
+    remember,
+    desktop = false,
+    recovered = false,
+  ) {
+    if (account.role === "admin" && !account.mfa)
+      throw failure("mfa-required", 403);
     for (const [id, saved] of Object.entries(state.sessions))
       if (saved.until <= now()) delete state.sessions[id];
     const own = Object.entries(state.sessions)
@@ -276,6 +290,9 @@ export async function createLoginService(options) {
     state.sessions[hashToken(token)] = {
       username: account.username,
       desktop,
+      mfaVersion: account.mfa?.version ?? null,
+      recoveryUntil:
+        recovered && account.role === "admin" ? clock() + 300_000 : 0,
       until: now() + duration,
     };
     return `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict${remember ? `; Max-Age=${duration}` : ""}`;
@@ -421,7 +438,7 @@ export async function createLoginService(options) {
         try {
           if (getPublicKey(key) !== owner)
             throw failure("owner-backup-required", 403);
-          const cookie = store.transaction((state) => {
+          const enrollment = store.transaction((state) => {
             if (Object.keys(state.accounts).length)
               throw failure("already-configured", 409);
             const account = {
@@ -435,15 +452,9 @@ export async function createLoginService(options) {
               mustChangePassword: false,
             };
             state.accounts[name] = account;
-            return issueSession(state, account, false, desktop);
+            return mfa.begin(account);
           });
-          response.setHeader("Set-Cookie", cookie);
-          return send({
-            ...publicAccount(store.state.accounts[name]),
-            ...(desktop
-              ? { desktopToken: cookie.split(";")[0].split("=")[1] }
-              : {}),
-          });
+          return send(enrollment);
         } finally {
           key.fill(0);
         }
@@ -471,6 +482,22 @@ export async function createLoginService(options) {
             checkLogin(store.state, name, clock());
             throw failure("invalid-login", 401);
           }
+          if (account.role === "admin") {
+            if (!account.mfa && !input.mfaChallenge) {
+              return send(
+                store.transaction((state) => {
+                  const current = state.accounts[name];
+                  if (current.hash !== encoded || !current.enabled)
+                    throw failure("invalid-login", 401);
+                  return mfa.begin(current);
+                }),
+              );
+            }
+            if (account.mfa && !input.mfaCode)
+              throw failure("mfa-required", 403);
+            if (!account.mfa && !mfa.enrollment(account, input))
+              throw failure("mfa-enrollment-expired", 409);
+          }
           if (account.job && account.job.status !== "ready")
             throw failure("account-provisioning", 409);
           let replacementHash = null;
@@ -484,6 +511,19 @@ export async function createLoginService(options) {
               passwordHash(input.newPassword),
             );
           }
+          const mfaVersion = account.mfa?.version ?? null;
+          const enrollmentChallenge = account.mfaEnrollment?.challenge ?? null;
+          if (account.role === "admin") {
+            const check = structuredClone(store.state.accounts[name]);
+            const validMfa = check.mfa
+              ? mfa.consume(check, input.mfaCode)
+              : mfa.confirm(check, input);
+            if (!validMfa) {
+              store.transaction((state) => failLogin(state, name, clock()));
+              checkLogin(store.state, name, clock());
+              throw failure("invalid-mfa", 401);
+            }
+          }
           const encrypted = desktop
             ? await exportKey(
                 account,
@@ -496,6 +536,23 @@ export async function createLoginService(options) {
             const current = state.accounts[name];
             if (current.hash !== encoded || !current.enabled)
               throw failure("invalid-login", 401);
+            if (current.role === "admin") {
+              if (
+                (current.mfa?.version ?? null) !== mfaVersion ||
+                (!current.mfa &&
+                  (current.mfaEnrollment?.challenge ?? null) !==
+                    enrollmentChallenge)
+              )
+                throw failure("mfa-required", 403);
+              const validMfa = current.mfa
+                ? mfa.consume(current, input.mfaCode)
+                : mfa.confirm(current, input);
+              if (!validMfa) throw failure("invalid-mfa", 401);
+              // Activation retires all old/password-only sessions.
+              if (!mfaVersion)
+                for (const [id, saved] of Object.entries(state.sessions))
+                  if (saved.username === name) delete state.sessions[id];
+            }
             if (replacementHash) {
               current.hash = replacementHash;
               current.mustChangePassword = false;
@@ -508,6 +565,7 @@ export async function createLoginService(options) {
               current,
               input.remember === true,
               desktop,
+              typeof input.mfaCode === "string" && input.mfaCode.length > 6,
             );
           });
           response.setHeader("Set-Cookie", cookie);
@@ -535,6 +593,78 @@ export async function createLoginService(options) {
         );
         return send({ ok: true });
       }
+      if (
+        route === "/chat-api/mfa/rotate" ||
+        route === "/chat-api/mfa/confirm"
+      ) {
+        admin(request);
+        const name = current.account.username;
+        checkLogin(store.state, name, clock());
+        if (activeLogins.has(name)) throw failure("rate-limited", 429);
+        activeLogins.add(name);
+        try {
+          const encoded = current.account.hash;
+          if (route === "/chat-api/mfa/rotate") {
+            password(input.password, 1);
+            const valid = await limitedHash(() =>
+              passwordMatches(input.password, encoded),
+            );
+            const result = store.transaction((state) => {
+              const account = state.accounts[name];
+              if (
+                account.hash !== encoded ||
+                !state.sessions[current.id] ||
+                state.sessions[current.id].mfaVersion !== account.mfa?.version
+              )
+                throw failure("login-required", 401);
+              const recentlyRecovered =
+                !input.mfaCode &&
+                state.sessions[current.id].recoveryUntil > clock();
+              if (
+                !valid ||
+                (!recentlyRecovered && !mfa.consume(account, input.mfaCode))
+              ) {
+                failLogin(state, name, clock());
+                return null;
+              }
+              return mfa.begin(account, current.id);
+            });
+            if (!result) {
+              checkLogin(store.state, name, clock());
+              throw failure("invalid-mfa", 401);
+            }
+            return send(result);
+          }
+          if (!mfa.enrollment(current.account, input, current.id))
+            throw failure("mfa-enrollment-expired", 409);
+          const cookie = store.transaction((state) => {
+            const account = state.accounts[name];
+            if (!state.sessions[current.id])
+              throw failure("login-required", 401);
+            if (!mfa.confirm(account, input, current.id)) {
+              failLogin(state, name, clock());
+              return null;
+            }
+            for (const [id, saved] of Object.entries(state.sessions))
+              if (saved.username === name) delete state.sessions[id];
+            clearLogin(state, name);
+            return issueSession(state, account, false, desktop);
+          });
+          if (!cookie) {
+            checkLogin(store.state, name, clock());
+            throw failure("invalid-mfa", 401);
+          }
+          response.setHeader("Set-Cookie", cookie);
+          return send({
+            ...publicAccount(store.state.accounts[name]),
+            ...(desktop
+              ? { desktopToken: cookie.split(";")[0].split("=")[1] }
+              : {}),
+          });
+        } finally {
+          activeLogins.delete(name);
+        }
+      }
       if (route === "/chat-api/password") {
         password(input.password);
         if (input.password === input.currentPassword)
@@ -552,6 +682,7 @@ export async function createLoginService(options) {
           if (account.hash !== encoded || !state.sessions[current.id])
             throw failure("login-required", 401);
           account.hash = hash;
+          delete account.mfaEnrollment;
           clearLogin(state, account.username);
           account.mustChangePassword = false;
           for (const [id, saved] of Object.entries(state.sessions))

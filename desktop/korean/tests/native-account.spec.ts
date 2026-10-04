@@ -45,6 +45,12 @@ test("native first run ID login enters the full client and survives reload", asy
       });
     }
     const input = route.request().postDataJSON();
+    if (input.password === "fixture password" && input.mfaCode !== "123456")
+      return route.fulfill({
+        status: 403,
+        headers: { "Access-Control-Allow-Origin": "*" },
+        json: { error: "mfa-required" },
+      });
     return route.fulfill({
       status: input.password === "fixture password" ? 200 : 401,
       headers: { "Access-Control-Allow-Origin": "*" },
@@ -61,6 +67,10 @@ test("native first run ID login enters the full client and survives reload", asy
   await form.getByRole("button", { name: "로그인", exact: true }).click();
   await expect(form.getByRole("alert")).toContainText("올바르지");
   await form.getByLabel("비밀번호", { exact: true }).fill("fixture password");
+  await form.getByRole("button", { name: "로그인", exact: true }).click();
+  await expect(form.getByLabel("인증 코드 또는 복구 코드")).toBeVisible();
+  await expect(page.getByTestId("open-search")).not.toBeVisible();
+  await form.getByLabel("인증 코드 또는 복구 코드").fill("123456");
   await form.getByRole("button", { name: "로그인", exact: true }).click();
   await expect(form).not.toBeVisible();
   await expect(page.getByTestId("open-search")).toBeVisible();

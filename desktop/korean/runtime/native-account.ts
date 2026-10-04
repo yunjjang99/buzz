@@ -8,8 +8,11 @@ export function hasNativeSession() {
 }
 /** Desktop session credentials live only in memory, never localStorage. */
 export async function nativeApi<T>(route: string, input?: object): Promise<T> {
-  const attempt =
-    route === "desktop/login" || route === "setup" ? ++generation : generation;
+  const attempt = ["desktop/login", "setup", "logout", "mfa/confirm"].includes(
+    route,
+  )
+    ? ++generation
+    : generation;
   const response = await fetch(`${ORIGIN}/chat-api/${route}`, {
     method: input ? "POST" : "GET",
     credentials: "omit",
@@ -22,7 +25,10 @@ export async function nativeApi<T>(route: string, input?: object): Promise<T> {
     body: input ? JSON.stringify(input) : undefined,
   });
   const value = await response.json();
-  if (!response.ok) throw new Error(value.error ?? "login-service-unavailable");
+  if (!response.ok)
+    throw Object.assign(new Error(value.error ?? "login-service-unavailable"), {
+      retryAfter: value.retryAfter,
+    });
   if (attempt !== generation) throw new Error("계정 연결이 취소되었습니다.");
   if (value.token || value.desktopToken)
     token = value.token ?? value.desktopToken;

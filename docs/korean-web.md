@@ -220,3 +220,67 @@ WebSocket의 AUTH challenge, 직접 로그인·상대 계정과 수신을 확인
 감사 기록에는 비밀번호·세션 토큰 대신 아이디 해시와 발생·종료 시간을 저장합니다.
 기존 IP별 요청 제한, 비밀번호 scrypt 해시, Secure/HttpOnly 쿠키, 출처 검사와
 브라우저 CSP는 유지합니다. 이는 비밀번호 대입 방어이며 모든 침해를 막는 보장은 아닙니다.
+
+## 관리자 MFA (별도 워크트리 구현, 배포·실계정 등록 전)
+
+관리자 **아이디·비밀번호 로그인**은 인증 앱의 6자리 TOTP 또는 일회용 복구
+코드를 추가로 요구합니다. 일반 직원의 로그인 흐름은 유지합니다. 최초 관리자
+계정 연결과 기존 관리자 최초 로그인은 QR·설정 키·복구 코드 등록 화면으로
+이동하며, 인증 앱 코드 확인과 복구 코드 보관 확인 전에는 세션·서명 권한·
+데스크톱 계정 백업을 발급하지 않습니다. QR 이미지는 브라우저에서 생성하며
+외부 QR 서비스로 비밀키를 전송하지 않습니다.
+
+- TOTP: RFC 6238, SHA-1, 6자리, 30초 간격, 서버 시간 기준 앞뒤 한 구간 허용.
+  이미 사용한 시간 구간은 재사용할 수 없습니다. 서버의 시간 동기화가 필요합니다.
+- 복구 코드: 128비트 난수 10개. 비밀번호와 함께 사용하며 각 코드의 소비를
+  로그인 세션 발급과 원자적으로 저장합니다. 서버에는 해시만 남습니다.
+- 인증 앱 비밀키: 기존 master.key로 계정 키와 구분된 AES-GCM 문맥에 암호화합니다.
+  등록 대기 정보는 10분 후 만료되고 새 등록은 이전 대기를 대체합니다.
+- 인증 실패: 비밀번호 실패와 동일한 5회 단계별 잠금을 공유합니다. 비밀번호만
+  맞았다고 실패 횟수를 지우지 않습니다. 인증 앱 코드나 복구 코드를 로그에 남기지 않습니다.
+- 기존 비밀번호 전용 관리자 세션은 거부합니다. 오래된 데스크톱 앱은 MFA 입력을
+  지원하지 않으므로 웹 또는 새 앱으로 접속해야 합니다.
+- 계정 관리 → 관리자 2단계 인증에서 비밀번호와 현재 인증 코드/미사용 복구 코드로
+  인증 앱을 교체할 수 있습니다. 새 코드 확인 전까지 기존 인증 앱은 유지되고,
+  완료하면 다른 로그인 서비스 세션·이전 복구 코드는 모두 만료됩니다.
+  등록 시작 시 제출한 복구 코드는 취소해도 재사용할 수 없습니다.
+- 휴대폰을 잃으면 복구 코드 한 개로 로그인합니다. 그 세션에서는 5분 동안
+  비밀번호 재확인만으로 인증 앱을 교체할 수 있어 마지막 복구 코드도 사용할 수 있습니다.
+  이 시간이 지나면 다른 미사용 복구 코드나 인증 앱 코드가 필요합니다. 인증 앱과 복구 코드를
+  모두 잃으면 운영자의 서버 복구가 필요합니다. 비밀번호만으로 MFA를 해제하는
+  공개 복구 API는 제공하지 않습니다. 운영 데이터는 임의로 편집하지 말고
+  확인된 백업·운영 복구 절차를 사용합니다.
+
+**경계:** 원본 Buzz는 Nostr 키를 소유한 사용자의 직접 인증을 허용합니다.
+이번 변경은 별도 로그인 서비스의 관리자 비밀번호 인증과 계정 관리 API를
+보호합니다. 기존 `.ncryptsec`·NIP-07·이미 데스크톱 키링에 내려받은 개인키와
+기존 릴레이 연결에 MFA를 소급 적용하거나 폐기하지 않습니다. 이는 키 소유권을
+유지한다는 VISION_SOVEREIGN.md의 계약을 보존하는 의도적인 경계입니다.
+릴레이의 모든 관리자 작업까지 MFA를 강제하려면 별도 인증 프로토콜과
+키·기기 이전 계획이 필요합니다. TOTP는 패스키와 달리 피싱에 강한 인증은 아닙니다.
+
+### 로컬 검증 및 도입 순서
+
+```bash
+. ./bin/activate-hermit
+cd desktop
+pnpm install --frozen-lockfile
+pnpm exec tsc -p korean/web/tsconfig.json
+node --import ./test-loader.mjs --experimental-strip-types --test korean/web/login-service/service.test.mjs korean/web/login-service/mfa.test.mjs korean/runtime/native-account.test.mjs
+pnpm exec vite build --config korean/web/login-service/vite.config.ts
+BUZZ_LOGIN_TEST_BUILD=1 node --import ./test-loader.mjs --experimental-strip-types --test korean/web/login-service/service.test.mjs
+pnpm exec playwright test --config korean/web/playwright.config.ts tests/login.spec.ts tests/mfa.spec.ts
+VITE_BUZZ_EMPLOYEE_APP=1 node korean/build.mjs --e2e
+pnpm exec playwright test --config korean/playwright.config.ts native-account.spec.ts employee-page.spec.ts
+```
+
+브라우저 MFA 테스트는 임시 디렉터리·합성 관리자·로컬 HTTP 로그인 서버를 사용하며
+운영 계정이나 인증 앱을 변경하지 않습니다. 스크린샷의 QR·복구 코드도 합성 계정입니다.
+릴레이와 HTTPS 쿠키 전달은 테스트 어댑터로 대체하므로 실제 HTTPS 쿠키 정책이나
+네이티브 OS 키링 검증을 대신하지 않습니다.
+
+배포 전에는 계정 볼륨의 accounts.json과 master.key를 함께 백업하고, 새 웹·서버·
+데스크톱 클라이언트를 준비합니다. 관리자 본인이 인증 앱 등록 → 복구 코드 보관 →
+로그아웃 → 인증 앱 재로그인 → 복구 코드 로그인과 인증 앱 교체를 직접 확인합니다.
+등록 코드는 이전 로그인에서 썼으므로 재로그인 테스트에는 다음 30초 코드를 사용합니다.
+실제 계정의 QR·비밀번호·OTP·복구 코드는 채팅이나 PR에 첨부하지 않습니다.
