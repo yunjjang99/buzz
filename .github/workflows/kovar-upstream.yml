@@ -1,0 +1,49 @@
+name: Kovar upstream inspection
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Official desktop release, main preview, or applied baseline
+        type: choice
+        options: [release, main, baseline]
+        default: release
+      tag:
+        description: Optional published desktop-vX.Y.Z (release mode only)
+        type: string
+        default: ''
+permissions:
+  contents: read
+jobs:
+  inspect:
+    if: github.repository == 'yunjjang99/buzz'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cashapp/activate-hermit@cea9af7913204a965fd488637a8d1811bba2e616
+      - run: pnpm install --frozen-lockfile
+      - name: Inspect in disposable clone
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MODE: ${{ inputs.mode }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          args=(--mode "$MODE" --output "$RUNNER_TEMP/kovar-upstream")
+          if [[ -n "$TAG" ]]; then args+=(--tag "$TAG"); fi
+          node desktop/korean/update/upstream.mjs "${args[@]}"
+      - name: Readable summary
+        if: always()
+        run: |
+          if [[ -f "$RUNNER_TEMP/kovar-upstream/upstream.md" ]]; then
+            cat "$RUNNER_TEMP/kovar-upstream/upstream.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: kovar-upstream-${{ github.sha }}
+          path: ${{ runner.temp }}/kovar-upstream
+          if-no-files-found: error
+          retention-days: 30

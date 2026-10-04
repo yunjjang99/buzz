@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "upstreamRepository": "block/buzz",
+  "upstreamSha": "e982f70fba29cdaa9a8378f118a0e498537bd8db",
+  "upstreamTag": null,
+  "sourceKind": "main-snapshot",
+  "appIdentifier": "kr.kovar.buzz.desktop",
+  "accountStore": "kovar-accounts"
+}
