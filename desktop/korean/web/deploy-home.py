@@ -94,12 +94,22 @@ backup.mkdir(parents=True, exist_ok=False)
 (backup / "compose.home.yml").write_text(old_home)
 destination = server / "web-client"
 destination.mkdir(exist_ok=True)
-if (destination / "index.html").is_file():
+old_entry = (destination / "index.html").read_text() if (destination / "index.html").is_file() else ""
+if old_entry:
     shutil.copy2(destination / "index.html", backup / "index.html")
 # Retain old hashed assets for already-open browser tabs; publish the entry last.
 shutil.copytree(build / "assets", destination / "assets", dirs_exist_ok=True)
 entry = destination / ".index-next.html"
-shutil.copy2(build / "index.html", entry)
+# Strategy is independently deployed into the chat entry. Preserve its existing
+# bootstrap; hashed dependencies remain available because assets are additive.
+next_entry = (build / "index.html").read_text()
+strategy_bootstrap = re.findall(r'<(?:script|link)\b[^>]*data-buzz-strategy[^>]*>(?:</script>)?', old_entry)
+if strategy_bootstrap:
+    if next_entry.count("</body>") != 1:
+        raise SystemExit("Cannot preserve the strategy bootstrap in the new chat entry.")
+    next_entry = re.sub(r'<(?:script|link)\b[^>]*data-buzz-strategy[^>]*>(?:</script>)?', '', next_entry)
+    next_entry = next_entry.replace("</body>", ''.join(strategy_bootstrap) + "</body>")
+entry.write_text(next_entry)
 try:
     caddy_file.write_text(new_caddy)
     home_file.write_text(new_home)
