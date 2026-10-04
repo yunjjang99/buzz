@@ -22,3 +22,16 @@ export function nativeBuildConfig(args) {
     },
   };
 }
+
+/** Apply Kovar identity/frontend policy after platform configs, before Cargo arguments. */
+export function nativeBuildArguments(build) {
+  const args = ["build", ...build.args];
+  const delimiter = args.indexOf("--");
+  args.splice(
+    delimiter === -1 ? args.length : delimiter,
+    0,
+    "--config",
+    JSON.stringify(build.config),
+  );
+  return args;
+}

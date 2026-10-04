@@ -1,5 +1,8 @@
 import { runTauriCommand } from "../scripts/tauri-command.mjs";
-import { nativeBuildConfig } from "./native-build-config.mjs";
+import {
+  nativeBuildArguments,
+  nativeBuildConfig,
+} from "./native-build-config.mjs";
 
 const build = nativeBuildConfig(process.argv.slice(2));
 // Kovar is distributed separately. Never compile an inherited official updater.
@@ -16,9 +19,4 @@ if (build.slug) {
   delete process.env.BUZZ_BUILD_DEMO_SLUG;
   delete process.env.VITE_BUZZ_EMPLOYEE_APP;
 }
-process.exitCode = runTauriCommand([
-  "build",
-  "--config",
-  JSON.stringify(build.config),
-  ...build.args,
-]);
+process.exitCode = runTauriCommand(nativeBuildArguments(build));
