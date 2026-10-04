@@ -40,7 +40,11 @@ const env = { ...process.env, VITE_BUZZ_EMPLOYEE_APP: "1" };
 for (const name of Object.keys(env))
   if (/^(BUZZ_|VITE_BUZZ_)/.test(name) && name !== "VITE_BUZZ_EMPLOYEE_APP")
     delete env[name];
-const pnpm = process.platform === "win32" ? "pnpm.cmd" : "pnpm";
+if (process.platform === "win32")
+  throw new Error(
+    "Run compatibility on Linux/macOS; consume the same-SHA reports for Windows candidate builds",
+  );
+const pnpm = "pnpm";
 const steps = [];
 const node = (name, argv) => steps.push([name, process.execPath, argv]);
 const p = (name, argv) => steps.push([name, pnpm, argv]);

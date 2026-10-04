@@ -194,3 +194,26 @@ test("combination records require paired account backup, database rollback decis
     /Required/,
   );
 });
+
+test("nested command runners remain in the outer cancellation group", async () => {
+  if (process.platform === "win32") return;
+  const directory = fs.mkdtempSync(
+    path.join(os.tmpdir(), "kovar-nested-test-"),
+  );
+  const marker = path.join(directory, "leaked");
+  try {
+    const leaf = `setTimeout(()=>require('node:fs').writeFileSync(${JSON.stringify(marker)},'leak'),900)`;
+    const nested = `import { command } from ${JSON.stringify(new URL("./process.mjs", import.meta.url).href)}; await command(process.execPath,['-e',${JSON.stringify(leaf)}]);`;
+    await assert.rejects(
+      command(process.execPath, ["--input-type=module", "-e", nested], {
+        timeout: 250,
+        onOutput() {},
+      }),
+      /Deadline/,
+    );
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    assert.equal(fs.existsSync(marker), false);
+  } finally {
+    fs.rmSync(directory, { recursive: true, force: true });
+  }
+});

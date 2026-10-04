@@ -8,6 +8,22 @@ import { RelayBridge } from "../web/login-service/relay.mjs";
 import { Relay } from "../web/relay.ts";
 import { relayFixture } from "./relay-fixture.mjs";
 
+// Relay fixtures own Docker resources as well as processes. Give cancellation a
+// bounded cleanup path before the outer supervisor escalates to SIGKILL.
+let interrupted = false;
+const interrupt = async () => {
+  if (interrupted) return;
+  interrupted = true;
+  try {
+    for (const socket of sockets) socket.dispose();
+    if (service) await service.close();
+    await fixture.close();
+    process.exit(130);
+  } catch (error) {
+    console.error(error.message);
+    process.exit(1);
+  }
+};
 const fixture = await relayFixture();
 const { origin, ownerKey, directory } = fixture;
 const owner = getPublicKey(ownerKey);
@@ -18,6 +34,8 @@ const bridge = new RelayBridge(origin);
 const sockets = [];
 let service;
 let base;
+process.once("SIGINT", interrupt);
+process.once("SIGTERM", interrupt);
 const template = (kind, tags, content = "") => ({
   kind,
   tags,
@@ -238,6 +256,8 @@ try {
     "Real relay passed: NIP-98, NIP-42, provisioning, employee/admin boundaries, history, restart identity, expired-session recovery, native encrypted enrollment, invalid-signature rejection.",
   );
 } finally {
+  process.removeListener("SIGINT", interrupt);
+  process.removeListener("SIGTERM", interrupt);
   for (const socket of sockets) socket.dispose();
   if (service) await service.close();
   await fixture.close();

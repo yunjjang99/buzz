@@ -12,15 +12,17 @@ export function command(
   } = {},
 ) {
   return new Promise((resolve, reject) => {
+    const ownsGroup = process.env.KOVAR_PROCESS_GROUP !== "1";
     const child = spawn(command, args, {
       cwd,
-      env,
+      env: { ...env, KOVAR_PROCESS_GROUP: "1" },
       stdio: ["ignore", "pipe", "pipe"],
-      detached: process.platform !== "win32",
+      detached: process.platform !== "win32" && ownsGroup,
     });
     let failure;
     let bytes = 0;
-    const kill = () => {
+    let escalation;
+    const kill = (signal = "SIGKILL") => {
       if (!child.pid) return;
       if (process.platform === "win32") {
         const result = spawnSync(
@@ -32,15 +34,17 @@ export function command(
           failure = new Error("Process-tree cleanup failed");
       } else {
         try {
-          process.kill(-child.pid, "SIGKILL");
+          process.kill(ownsGroup ? -child.pid : child.pid, signal);
         } catch (error) {
           if (error.code !== "ESRCH") failure = error;
         }
       }
     };
     const stop = (reason) => {
-      failure ??= new Error(reason);
-      kill();
+      if (failure) return;
+      failure = new Error(reason);
+      kill("SIGTERM");
+      escalation = setTimeout(() => kill(), 10_000);
     };
     const interrupt = () => stop("Interrupted");
     process.once("SIGINT", interrupt);
@@ -61,6 +65,9 @@ export function command(
     });
     child.on("close", (code) => {
       clearTimeout(timer);
+      clearTimeout(escalation);
+      // The outer supervisor sweeps remaining descendants, including nested runners.
+      if (ownsGroup && process.platform !== "win32") kill();
       process.removeListener("SIGINT", interrupt);
       process.removeListener("SIGTERM", interrupt);
       if (failure || code !== 0)
