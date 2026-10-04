@@ -12,7 +12,11 @@ import { useCommunities } from "@/features/communities/useCommunities";
 import { invokeTauri } from "@/shared/api/tauri";
 import { AccountPanel } from "../web/AccountPanel";
 import type { WebAccount } from "../web/login-api";
-import { nativeApi, type NativeLogin } from "./native-account";
+import {
+  hasNativeSession,
+  nativeApi,
+  type NativeLogin,
+} from "./native-account";
 
 /** Full native client enrollment, using the upstream Rust NIP-49/keyring path. */
 export function NativeAccount({
@@ -45,6 +49,44 @@ export function NativeAccount({
   const requireActive = () => {
     if (!alive.current) throw new Error("계정 연결이 취소되었습니다.");
   };
+  async function openManagement() {
+    if (pending.current) return;
+    if (!hasNativeSession()) {
+      setOpen((value) => !value);
+      return;
+    }
+    pending.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      const [saved, identity] = await Promise.all([
+        nativeApi<WebAccount>("session"),
+        getIdentity(),
+      ]);
+      requireActive();
+      if (
+        saved.pubkey !== identity.pubkey ||
+        identity.locked ||
+        identity.resetFailed
+      )
+        throw new Error("현재 앱 계정과 같은 아이디로 로그인해 주세요.");
+      setAccount(saved);
+      setOpen(false);
+      setPanel(true);
+    } catch (cause) {
+      if (!alive.current) return;
+      setOpen(true);
+      const message = cause instanceof Error ? cause.message : String(cause);
+      setError(
+        message === "login-required"
+          ? "로그인이 만료되었습니다. 다시 로그인해 주세요."
+          : message,
+      );
+    } finally {
+      pending.current = false;
+      if (alive.current) setBusy(false);
+    }
+  }
   async function submit(event: FormEvent) {
     event.preventDefault();
     if (pending.current) return;
@@ -155,10 +197,8 @@ export function NativeAccount({
         <button
           type="button"
           className="m-2 rounded-md border px-3 py-2 text-sm"
-          onClick={() => {
-            if (account) setPanel(true);
-            else setOpen((value) => !value);
-          }}
+          disabled={busy}
+          onClick={() => void openManagement()}
         >
           직원 계정 · 아이디 로그인
         </button>

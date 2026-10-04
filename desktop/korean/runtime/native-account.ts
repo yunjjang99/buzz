@@ -2,6 +2,10 @@ import { setNativeLoginTransport, type WebAccount } from "../web/login-api";
 const ORIGIN = "https://buzz.kovar.kr";
 let token = "";
 let generation = 0;
+/** Whether this process already holds a desktop login session. */
+export function hasNativeSession() {
+  return Boolean(token);
+}
 /** Desktop session credentials live only in memory, never localStorage. */
 export async function nativeApi<T>(route: string, input?: object): Promise<T> {
   const attempt =

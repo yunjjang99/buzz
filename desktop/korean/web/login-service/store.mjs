@@ -13,10 +13,18 @@ const derive = promisify(scrypt);
 export const hashToken = (token) =>
   createHash("sha256").update(token).digest("hex");
 export function username(value) {
-  if (
-    typeof value !== "string" ||
-    !/^[a-zA-Z0-9][a-zA-Z0-9._-]{2,31}$/.test(value)
-  )
+  const simple =
+    typeof value === "string" &&
+    /^[a-zA-Z0-9][a-zA-Z0-9._-]{2,31}$/.test(value);
+  const email =
+    typeof value === "string" &&
+    value.length <= 254 &&
+    /^[a-zA-Z0-9][a-zA-Z0-9._%+-]{0,63}@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)+$/.test(
+      value,
+    ) &&
+    !value.split("@")[0].endsWith(".") &&
+    !value.includes("..");
+  if ((!simple && !email) || /\s/.test(value))
     throw new Error("invalid-username");
   return value.toLowerCase();
 }

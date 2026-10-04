@@ -131,8 +131,8 @@ export function errorText(error: unknown, language: "ko" | "en"): string {
       "Check your ID and password.",
     ],
     "invalid-username": [
-      "아이디는 영문·숫자·점·밑줄·하이픈으로 3~32자여야 합니다.",
-      "Use 3–32 letters, numbers, dots, underscores or hyphens for the ID.",
+      "이메일 주소 또는 영문·숫자·점·밑줄·하이픈으로 3~32자의 아이디를 입력하세요.",
+      "Use an email address or a 3–32 character ID with letters, numbers, dots, underscores or hyphens.",
     ],
     "invalid-password": [
       "새 비밀번호는 12~128자로 입력하세요.",

@@ -549,3 +549,55 @@ test("native login exports only a password-encrypted identity and isolates beare
     await f.finish();
   }
 });
+
+test("email IDs provision and sign in case-insensitively without aliasing malformed IDs", async () => {
+  const f = await fixture();
+  try {
+    const admin = await f.setup();
+    for (const id of ["shin4895@gmail.com", "cbtcshin@naver.com"]) {
+      const issued = await f.api(
+        "admin/create",
+        { username: id, name: "직원", password: temporary, channels: [] },
+        admin.cookie,
+      );
+      assert.equal(issued.status, 201);
+      for (let step = 0; step < 3; step++) await f.service.runJobs();
+      const login = await f.api("login", {
+        username: id.toUpperCase(),
+        password: temporary,
+      });
+      assert.equal(login.status, 200);
+      assert.equal(login.value.username, id);
+      assert.equal(login.value.pubkey, issued.value.pubkey);
+      const duplicate = await f.api(
+        "admin/create",
+        {
+          username: id.toUpperCase(),
+          name: "중복",
+          password: temporary,
+          channels: [],
+        },
+        admin.cookie,
+      );
+      assert.equal(duplicate.status, 409);
+    }
+    for (const id of [
+      "a@@b.com",
+      "a@b",
+      "a..b@example.com",
+      "a.@example.com",
+      "a@-bad.com",
+      "a@b.com\n",
+      `${"a".repeat(65)}@example.com`,
+    ]) {
+      const result = await f.api(
+        "admin/create",
+        { username: id, name: "직원", password: temporary, channels: [] },
+        admin.cookie,
+      );
+      assert.equal(result.value.error, "invalid-username", id);
+    }
+  } finally {
+    await f.finish();
+  }
+});

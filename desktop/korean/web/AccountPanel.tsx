@@ -268,8 +268,7 @@ export function AccountPanel({
                 id="new-employee-id"
                 required
                 minLength={3}
-                maxLength={32}
-                pattern="[a-zA-Z0-9][a-zA-Z0-9._\-]{2,31}"
+                maxLength={254}
                 autoCapitalize="none"
                 spellCheck={false}
                 autoComplete="off"

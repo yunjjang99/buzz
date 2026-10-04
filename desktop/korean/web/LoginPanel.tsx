@@ -124,8 +124,7 @@ export function LoginPanel({
             spellCheck={false}
             required
             minLength={3}
-            maxLength={32}
-            pattern="[a-zA-Z0-9][a-zA-Z0-9._\-]{2,31}"
+            maxLength={254}
             value={username}
             disabled={busy}
             onChange={(event) => setUsername(event.target.value)}
@@ -133,8 +132,8 @@ export function LoginPanel({
           {setup && (
             <p className="help">
               {t(
-                "영문·숫자·점·밑줄·하이픈으로 3~32자",
-                "3–32 letters, numbers, dots, underscores or hyphens",
+                "이메일 주소 또는 영문·숫자·점·밑줄·하이픈으로 3~32자",
+                "An email address or 3–32 letters, numbers, dots, underscores or hyphens",
               )}
             </p>
           )}

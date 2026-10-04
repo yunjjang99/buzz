@@ -30,6 +30,20 @@ test("native first run ID login enters the full client and survives reload", asy
           "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
         },
       });
+    if (route.request().method() === "GET") {
+      expect(route.request().headers().authorization).toBe(
+        `Bearer ${"a".repeat(64)}`,
+      );
+      const path = new URL(route.request().url()).pathname;
+      return route.fulfill({
+        headers: { "Access-Control-Allow-Origin": "*" },
+        json: path.endsWith("session")
+          ? account
+          : path.endsWith("accounts")
+            ? [account]
+            : [],
+      });
+    }
     const input = route.request().postDataJSON();
     return route.fulfill({
       status: input.password === "fixture password" ? 200 : 401,
@@ -50,6 +64,21 @@ test("native first run ID login enters the full client and survives reload", asy
   await form.getByRole("button", { name: "로그인", exact: true }).click();
   await expect(form).not.toBeVisible();
   await expect(page.getByTestId("open-search")).toBeVisible();
+  await page.getByTestId("open-settings").click();
+  await page.getByTestId("profile-popover-settings").click();
+  await page.getByRole("button", { name: "직원 계정 · 아이디 로그인" }).click();
+  await expect(
+    page.getByRole("heading", { name: "직원 계정 발급" }),
+  ).toBeVisible();
+  await page
+    .getByLabel("직원 아이디", { exact: true })
+    .fill("shin4895@gmail.com");
+  await expect(page.getByLabel("직원 아이디", { exact: true })).toHaveValue(
+    "shin4895@gmail.com",
+  );
+  await expect(form).not.toBeVisible();
+  await page.getByRole("button", { name: "계정 관리 닫기" }).click();
+  await page.getByRole("button", { name: "메신저로 돌아가기" }).click();
   await page.reload();
   await expect(page.getByTestId("open-search")).toBeVisible();
   const storage = await page.evaluate(() => JSON.stringify(localStorage));
