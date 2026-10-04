@@ -1,0 +1,174 @@
+Index: src/features/agents/ui/EnvVarsEditor.tsx
+===================================================================
+--- src/features/agents/ui/EnvVarsEditor.tsx	
++++ src/features/agents/ui/EnvVarsEditor.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { AlertCircle, Lock, Plus, X } from "lucide-react";
+ import * as React from "react";
+ 
+ import { Button } from "@/shared/ui/button";
+@@ -223,8 +224,9 @@
+   inheritedRows = [],
+   inheritedRowsLabel = "build",
+   keyAnnotations,
+ }: EnvVarsEditorProps) {
++  useLocale();
+   // Keys that render as their own special rows (required amber rows or
+   // file-satisfied read-only rows). These must NEVER enter `rows` state —
+   // they read/write `value` directly via `onChange`/`updateRequiredValue`.
+   // Keeping them out of rows is the invariant that prevents a pre-saved
+@@ -372,9 +374,9 @@
+                   </span>
+                   {isMissing ? (
+                     <span className="ml-1 flex items-center gap-0.5 rounded-sm bg-amber-100 px-1 py-0.5 text-2xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-400">
+                       <AlertCircle className="h-2.5 w-2.5" aria-hidden />
+-                      Required
++                      {t("Required")}{" "}
+                     </span>
+                   ) : null}
+                 </div>
+                 <div
+@@ -383,9 +385,9 @@
+                     PERSONA_FIELD_SHELL_CLASS,
+                   )}
+                 >
+                   <Input
+-                    aria-label={`Value for ${key}`}
++                    aria-label={t("Value for {value0}", { value0: key })}
+                     className={cn(
+                       "h-8 px-0 py-0 font-mono leading-6",
+                       PERSONA_FIELD_CONTROL_CLASS,
+                     )}
+@@ -393,9 +395,9 @@
+                     disabled={disabled}
+                     onChange={(event) =>
+                       updateRequiredValue(key, event.target.value)
+                     }
+-                    placeholder="value"
++                    placeholder={t("value")}
+                     ref={(el) => {
+                       if (el) {
+                         requiredValueRefs.current.set(key, el);
+                       } else {
+@@ -415,12 +417,13 @@
+                 // If the key is explicitly present in the agent-local map
+                 // (even as ""), it is an intentional override — show "Overrides"
+                 // not "Inherited from". Only show "Inherited from" when the local
+                 // record has no entry for this key (global/persona satisfies it).
+-                const verb = key in value ? "Overrides" : "Inherited from";
++                const verb =
++                  key in value ? t("Overrides") : t("Inherited from");
+                 return (
+                   <p className="ml-1 text-xs text-muted-foreground">
+-                    {verb} {inheritedLabel} value{" "}
++                    {verb} {inheritedLabel} {t("value")}{" "}
+                     <span className="font-mono">
+                       {maskInherited(inheritedValue)}
+                     </span>
+                   </p>
+@@ -459,9 +462,9 @@
+                 >
+                   {key}
+                 </span>
+                 <span className="ml-1 rounded-sm bg-muted px-1 py-0.5 text-2xs font-medium text-muted-foreground">
+-                  Set in goose config
++                  {t("Set in goose config")}{" "}
+                 </span>
+               </div>
+               {/* Spacer columns to align with required-key rows */}
+               <div
+@@ -504,9 +507,9 @@
+                   >
+                     {irow.key}
+                   </span>
+                   <span className="ml-1 rounded-sm bg-muted px-1 py-0.5 text-2xs font-medium text-muted-foreground">
+-                    Inherited from {inheritedRowsLabel}
++                    {t("Inherited from")} {inheritedRowsLabel}
+                   </span>
+                 </div>
+                 <div
+                   className={cn(
+@@ -538,9 +541,9 @@
+         requiredKeys.length === 0 &&
+         fileSatisfiedKeys.length === 0 &&
+         inheritedRows.length === 0 ? (
+           <p className="text-xs italic text-muted-foreground">
+-            No variables set.
++            {t("No variables set.")}{" "}
+           </p>
+         ) : null}
+         {rows.map((row) => {
+           const inheritedValue = inheritedFrom?.[row.key];
+@@ -555,9 +558,9 @@
+                     PERSONA_FIELD_SHELL_CLASS,
+                   )}
+                 >
+                   <Input
+-                    aria-label="Variable name"
++                    aria-label={t("Variable name")}
+                     className={cn(
+                       "h-8 px-0 py-0 font-mono leading-6",
+                       PERSONA_FIELD_CONTROL_CLASS,
+                     )}
+@@ -576,9 +579,9 @@
+                     PERSONA_FIELD_SHELL_CLASS,
+                   )}
+                 >
+                   <Input
+-                    aria-label="Variable value"
++                    aria-label={t("Variable value")}
+                     className={cn(
+                       "h-8 px-0 py-0 font-mono leading-6",
+                       PERSONA_FIELD_CONTROL_CLASS,
+                     )}
+@@ -586,14 +589,14 @@
+                     disabled={disabled}
+                     onChange={(event) =>
+                       updateRow(row.id, { value: event.target.value })
+                     }
+-                    placeholder="value"
++                    placeholder={t("value")}
+                     value={row.value}
+                   />
+                 </div>
+                 <Button
+-                  aria-label="Remove variable"
++                  aria-label={t("Remove variable")}
+                   data-testid="env-vars-remove"
+                   disabled={disabled}
+                   onClick={() => removeRow(row.id)}
+                   size="icon"
+@@ -604,9 +607,9 @@
+                 </Button>
+               </div>
+               {showsInherited ? (
+                 <p className="ml-1 text-xs text-muted-foreground">
+-                  Overrides {inheritedLabel} value{" "}
++                  {t("Overrides")} {inheritedLabel} {t("value")}{" "}
+                   <span className="font-mono">
+                     {maskInherited(inheritedValue)}
+                   </span>
+                 </p>
+@@ -618,9 +621,9 @@
+                 );
+                 if (!override) return null;
+                 return (
+                   <p className="ml-1 text-xs text-muted-foreground">
+-                    Overrides {inheritedRowsLabel} default{" "}
++                    {t("Overrides")} {inheritedRowsLabel} default{" "}
+                     <span className="font-mono">{override.value}</span>
+                   </p>
+                 );
+               })()}
+@@ -643,9 +646,9 @@
+           type="button"
+           variant="outline"
+         >
+           <Plus className="mr-1 h-4 w-4" />
+-          Add variable
++          {t("Add variable")}{" "}
+         </Button>
+       </div>
+     </div>
+   );

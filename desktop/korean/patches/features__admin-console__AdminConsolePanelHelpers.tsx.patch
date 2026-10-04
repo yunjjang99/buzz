@@ -1,0 +1,51 @@
+Index: src/features/admin-console/AdminConsolePanelHelpers.tsx
+===================================================================
+--- src/features/admin-console/AdminConsolePanelHelpers.tsx	
++++ src/features/admin-console/AdminConsolePanelHelpers.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ /**
+  * Shared helpers for the admin console panel sub-components.
+  *
+  * Exported from here to avoid duplication across AdminConsolePanel.tsx,
+@@ -191,17 +192,19 @@
+ 
+ // ── Shared UI helpers ─────────────────────────────────────────────────────
+ 
+ export function LoadingSpinner() {
++  useLocale();
+   return (
+     <div className="flex items-center gap-2 text-sm text-muted-foreground">
+       <LoaderCircle className="h-4 w-4 animate-spin" />
+-      Loading…
++      {t("Loading…")}{" "}
+     </div>
+   );
+ }
+ 
+ export function ErrorMessage({ message }: { message: string }) {
++  useLocale();
+   return (
+     <div className="flex items-center gap-1.5 text-sm text-destructive">
+       <AlertCircle className="h-4 w-4" />
+       {message}
+@@ -237,8 +240,9 @@
+   label: string;
+   value: string | null | undefined;
+   mono?: boolean;
+ }) {
++  useLocale();
+   return (
+     <div className="flex gap-2 text-xs">
+       <span className="w-28 shrink-0 text-muted-foreground">{label}</span>
+       <span className={mono ? "font-mono break-all" : "break-words"}>
+@@ -364,8 +368,9 @@
+  */
+ export function CommunityGroupedList<
+   T extends { communityId: string | null; communityHost: string | null },
+ >({ items, renderItem }: { items: T[]; renderItem: (item: T) => ReactNode }) {
++  useLocale();
+   const groups = useMemo(() => groupByCommunity(items), [items]);
+   if (groups.length <= 1) {
+     return <ul className="space-y-1">{items.map(renderItem)}</ul>;
+   }

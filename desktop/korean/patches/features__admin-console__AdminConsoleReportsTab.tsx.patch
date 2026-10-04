@@ -1,0 +1,382 @@
+Index: src/features/admin-console/AdminConsoleReportsTab.tsx
+===================================================================
+--- src/features/admin-console/AdminConsoleReportsTab.tsx	
++++ src/features/admin-console/AdminConsoleReportsTab.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ /**
+  * Reports tab — deployment-wide moderation reports for the admin console.
+  *
+  * Extracted from AdminConsolePanel.tsx. Exposes only `ReportsTab`; every other
+@@ -135,9 +136,9 @@
+ /** Label for each action. */
+ function actionLabel(action: AdminReportAction): string {
+   switch (action) {
+     case "delete":
+-      return "Delete";
++      return t("Delete");
+     case "kick":
+       return "Kick";
+     case "ban":
+       return "Ban";
+@@ -176,9 +177,11 @@
+  * AlreadyGone message to a clear operator-facing action recommendation.
+  */
+ function friendlyEnforcementError(message: string): string {
+   if (message.includes("kick target was already absent")) {
+-    return "No channel membership to remove — use Timeout or Ban for open channels.";
++    return t(
++      "No channel membership to remove — use Timeout or Ban for open channels.",
++    );
+   }
+   return message;
+ }
+ 
+@@ -214,8 +217,9 @@
+   origin: string;
+   reportId: string;
+   onActionComplete: () => void;
+ }) {
++  useLocale();
+   const [isWorking, setIsWorking] = useState(false);
+ 
+   const actionStatus = activeAction.status;
+ 
+@@ -242,9 +246,11 @@
+     } catch (e) {
+       // A 409 means the action is no longer cancellable (already cancelled,
+       // superseded, or past the mutation point). Reload detail rather than
+       // retry — the toast is informational, the reload shows current state.
+-      toast.error(`Cancel rejected: ${adminErrorMessage(e)}`);
++      toast.error(
++        t("Cancel rejected: {value0}", { value0: adminErrorMessage(e) }),
++      );
+       onActionComplete();
+     } finally {
+       setIsWorking(false);
+     }
+@@ -305,16 +311,18 @@
+  */
+ export function reasonAudienceCopy(action: AdminReportAction): string {
+   switch (action) {
+     case "delete":
+-      return "Sent verbatim to the affected user and posted publicly in the room.";
++      return t(
++        "Sent verbatim to the affected user and posted publicly in the room.",
++      );
+     case "kick":
+     case "ban":
+     case "timeout":
+-      return "Sent verbatim to the affected user.";
++      return t("Sent verbatim to the affected user.");
+     case "dismiss":
+     case "escalate":
+-      return "Sent verbatim to the reporter.";
++      return t("Sent verbatim to the reporter.");
+   }
+ }
+ 
+ /**
+@@ -367,8 +375,9 @@
+   report: AdminReportDto;
+   origin: string;
+   onResolved: () => void;
+ }) {
++  useLocale();
+   const [selectedAction, setSelectedAction] =
+     useState<AdminReportAction | null>(null);
+   const [reason, setReason] = useState("");
+   const [expirationSecs, setExpirationSecs] = useState("");
+@@ -414,9 +423,11 @@
+         reason: payload.reason,
+       });
+       // Derive toast from the authoritative relay response, not mutable form
+       // state — relay idempotency executes the first command even on retry.
+-      toast.success(`Report resolved: ${resolutionLabel(resolution)}`);
++      toast.success(
++        t("Report resolved: {value0}", { value0: resolutionLabel(resolution) }),
++      );
+       onResolved();
+     } catch (e) {
+       // Preserve the frozen payload whenever the outcome is ambiguous (409,
+       // 5xx, a lost response, or a transport failure with no relay answer)
+@@ -437,9 +448,9 @@
+       className="rounded-md border border-border/60 px-3 py-2.5 space-y-3"
+       data-testid="resolve-report-form"
+     >
+       <p className="text-xs font-medium text-muted-foreground">
+-        Resolve report
++        {t("Resolve report")}{" "}
+       </p>
+       <div className="flex flex-wrap gap-1.5">
+         {allowedActions.map((action) => (
+           <Button
+@@ -467,18 +478,18 @@
+           <label
+             className="text-xs text-muted-foreground shrink-0"
+             htmlFor="timeout-duration-input"
+           >
+-            Duration (seconds)
++            {t("Duration (seconds)")}{" "}
+           </label>
+           <input
+             className="flex-1 rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-mono"
+             data-testid="timeout-duration-input"
+             disabled={isLocked || isSubmitting}
+             id="timeout-duration-input"
+             min="1"
+             onChange={(e) => setExpirationSecs(e.target.value)}
+-            placeholder="e.g. 3600"
++            placeholder={t("e.g. 3600")}
+             type="number"
+             value={expirationSecs}
+           />
+         </div>
+@@ -489,9 +500,9 @@
+           className="w-full rounded-md border border-border/60 bg-background px-2 py-1 text-xs"
+           data-testid="resolve-reason-input"
+           disabled={isLocked || isSubmitting}
+           onChange={(e) => setReason(e.target.value)}
+-          placeholder="Reason (optional)"
++          placeholder={t("Reason (optional)")}
+           type="text"
+           value={reason}
+         />
+         {selectedAction && (
+@@ -551,8 +562,9 @@
+   report: AdminReportDto;
+   origin: string;
+   onReopened: () => void;
+ }) {
++  useLocale();
+   const [reason, setReason] = useState("");
+   const [isSubmitting, setIsSubmitting] = useState(false);
+   // Stable requestId per attempt; reused on retry after a lost response.
+   const requestIdRef = useRef<string | null>(null);
+@@ -594,23 +606,25 @@
+       data-testid="reopen-report-form"
+     >
+       <div className="space-y-1">
+         <p className="text-xs font-medium text-muted-foreground">
+-          Reopen report
++          {t("Reopen report")}{" "}
+         </p>
+         <p className="text-xs text-muted-foreground">
+-          Moves this report back to the open queue for re-triage.{" "}
++          {t("Moves this report back to the open queue for re-triage.")}{" "}
+           {wasEnforced
+-            ? "The enforcement action already taken is not reversed — reopening does not un-ban, un-timeout, or restore a deleted message."
+-            : "Reopening does not reverse any enforcement action."}
++            ? t(
++                "The enforcement action already taken is not reversed — reopening does not un-ban, un-timeout, or restore a deleted message.",
++              )
++            : t("Reopening does not reverse any enforcement action.")}
+         </p>
+       </div>
+ 
+       <input
+         className="w-full rounded-md border border-border/60 bg-background px-2 py-1 text-xs"
+         data-testid="reopen-reason-input"
+         onChange={(e) => setReason(e.target.value)}
+-        placeholder="Reason (optional)"
++        placeholder={t("Reason (optional)")}
+         type="text"
+         value={reason}
+       />
+ 
+@@ -644,8 +658,9 @@
+   origin: string;
+   pubkey: string;
+   generation: number;
+ }) {
++  useLocale();
+   const [selectedId, setSelectedId] = useState<string | null>(null);
+   // List refresh fence: bumped whenever a mutation completes in the detail
+   // view, so returning to the list shows fresh status without a tab switch.
+   const [listGen, setListGen] = useState(0);
+@@ -702,17 +717,19 @@
+   if (listState.status !== "ok") return null;
+ 
+   const reports = listState.data;
+   if (!Array.isArray(reports) || reports.length === 0) {
+-    return <p className="text-sm text-muted-foreground">No reports found.</p>;
++    return (
++      <p className="text-sm text-muted-foreground">{t("No reports found.")}</p>
++    );
+   }
+ 
+   return (
+     <CommunityGroupedList
+       items={reports}
+       renderItem={(report: AdminReportDto) => {
+         const id = report.id;
+-        const summary = report.reportType || "Report";
++        const summary = report.reportType || t("Report");
+         const status = report.status;
+         const isProcessing = status === "processing";
+         // Show a brief reporter → target snippet so rows are distinguishable.
+         const snippet = [
+@@ -759,8 +776,9 @@
+   );
+ }
+ 
+ function ReportFields({ data }: { data: AdminReportDetailDto }) {
++  useLocale();
+   const status = data.status ?? "";
+   // Valid 64-char hex pubkeys get the PubKey widget (compact npub + hover
+   // popover). Shorter/invalid strings (test fixtures, placeholder values)
+   // fall back to the plain mono DetailRow so existing behaviour is preserved.
+@@ -776,15 +794,17 @@
+         {status && <Badge variant={statusVariant(status)}>{status}</Badge>}
+         {data.reportType && <Badge variant="outline">{data.reportType}</Badge>}
+       </div>
+       <DetailRow label="ID" value={data.id} mono />
+-      <DetailRow label="Community" value={data.communityId} mono />
+-      <DetailRow label="Host" value={data.communityHost} />
+-      <DetailRow label="Event ID" value={data.reportEventId} mono />
++      <DetailRow label={t("Community")} value={data.communityId} mono />
++      <DetailRow label={t("Host")} value={data.communityHost} />
++      <DetailRow label={t("Event ID")} value={data.reportEventId} mono />
+       {/* Reporter uses PubKey widget for valid keys; falls back to mono text. */}
+       {isHex64(data.reporterPubkey) ? (
+         <div className="flex gap-2 text-xs">
+-          <span className="w-28 shrink-0 text-muted-foreground">Reporter</span>
++          <span className="w-28 shrink-0 text-muted-foreground">
++            {t("Reporter")}
++          </span>
+           <PubKey
+             className="min-w-0"
+             interactive
+             pubkey={data.reporterPubkey}
+@@ -792,16 +812,18 @@
+             variant="compact"
+           />
+         </div>
+       ) : (
+-        <DetailRow label="Reporter" value={data.reporterPubkey} mono />
++        <DetailRow label={t("Reporter")} value={data.reporterPubkey} mono />
+       )}
+-      <DetailRow label="Target kind" value={data.targetKind} />
++      <DetailRow label={t("Target kind")} value={data.targetKind} />
+       {/* Pubkey targets get the PubKey widget; event IDs are not keys, so they
+           render as raw hex with a copy control. */}
+       {isHex64(data.target) && data.targetKind?.toLowerCase() === "pubkey" ? (
+         <div className="flex gap-2 text-xs">
+-          <span className="w-28 shrink-0 text-muted-foreground">Target</span>
++          <span className="w-28 shrink-0 text-muted-foreground">
++            {t("Target")}
++          </span>
+           <PubKey
+             className="min-w-0"
+             interactive
+             pubkey={data.target}
+@@ -810,17 +832,19 @@
+           />
+         </div>
+       ) : data.targetKind?.toLowerCase() === "event" ? (
+         <div className="flex items-center gap-2 text-xs">
+-          <span className="w-28 shrink-0 text-muted-foreground">Target</span>
++          <span className="w-28 shrink-0 text-muted-foreground">
++            {t("Target")}
++          </span>
+           <span
+             className="min-w-0 break-all font-mono"
+             data-testid="report-target-event-id"
+           >
+             {data.target}
+           </span>
+           <button
+-            aria-label="Copy event ID"
++            aria-label={t("Copy event ID")}
+             className="shrink-0 text-muted-foreground hover:text-foreground"
+             data-testid="report-target-event-copy"
+             onClick={() => copyTextToClipboard(data.target)}
+             type="button"
+@@ -828,28 +852,35 @@
+             <Copy className="h-3.5 w-3.5" />
+           </button>
+         </div>
+       ) : (
+-        <DetailRow label="Target" value={data.target} mono />
++        <DetailRow label={t("Target")} value={data.target} mono />
+       )}
+-      <DetailRow label="Channel" value={data.channelId ?? null} mono />
+-      <DetailRow label="Note" value={data.note ?? null} />
+-      <DetailRow label="Resolved by" value={data.resolvedBy ?? null} mono />
+-      <DetailRow label="Resolved at" value={formatTimestamp(data.resolvedAt)} />
+-      <DetailRow label="Action ID" value={data.actionId ?? null} mono />
+-      <DetailRow label="Created" value={formatTimestamp(data.createdAt)} />
++      <DetailRow label={t("Channel")} value={data.channelId ?? null} mono />
++      <DetailRow label={t("Note")} value={data.note ?? null} />
++      <DetailRow
++        label={t("Resolved by")}
++        value={data.resolvedBy ?? null}
++        mono
++      />
++      <DetailRow
++        label={t("Resolved at")}
++        value={formatTimestamp(data.resolvedAt)}
++      />
++      <DetailRow label={t("Action ID")} value={data.actionId ?? null} mono />
++      <DetailRow label={t("Created")} value={formatTimestamp(data.createdAt)} />
+       {data.message != null && (
+         <div className="mt-3 space-y-1.5 rounded-md border border-border/40 px-3 py-2.5">
+           <p className="mb-1 text-xs font-semibold text-muted-foreground">
+-            Reported message
++            {t("Reported message")}{" "}
+             {data.message.deletedAt != null && (
+-              <span className="ml-1.5 text-destructive">(deleted)</span>
++              <span className="ml-1.5 text-destructive">{t("(deleted)")}</span>
+             )}
+           </p>
+           {isHex64(data.message.authorPubkey) ? (
+             <div className="flex gap-2 text-xs">
+               <span className="w-28 shrink-0 text-muted-foreground">
+-                Author
++                {t("Author")}{" "}
+               </span>
+               <PubKey
+                 className="min-w-0"
+                 interactive
+@@ -858,13 +889,17 @@
+                 variant="compact"
+               />
+             </div>
+           ) : (
+-            <DetailRow label="Author" value={data.message.authorPubkey} mono />
++            <DetailRow
++              label={t("Author")}
++              value={data.message.authorPubkey}
++              mono
++            />
+           )}
+-          <DetailRow label="Content" value={data.message.content} />
++          <DetailRow label={t("Content")} value={data.message.content} />
+           <DetailRow
+-            label="Msg created"
++            label={t("Msg created")}
+             value={formatTimestamp(data.message.createdAt)}
+           />
+         </div>
+       )}
+@@ -889,8 +924,9 @@
+   onBack: () => void;
+   /** Called after any mutation completes so the parent list can refetch. */
+   onMutated: () => void;
+ }) {
++  useLocale();
+   // Resolution generation: bump to reload detail after an action completes.
+   const [resolveGen, setResolveGen] = useState(0);
+ 
+   // Reload the detail AND signal the parent list on every completed mutation,
+@@ -921,9 +957,9 @@
+         onClick={onBack}
+         type="button"
+       >
+         <ChevronLeft className="h-3.5 w-3.5" />
+-        Back to reports
++        {t("Back to reports")}{" "}
+       </button>
+       {detailState.status === "loading" && <LoadingSpinner />}
+       {detailState.status === "error" && (
+         <ErrorMessage message={detailState.message} />

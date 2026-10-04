@@ -2,12 +2,14 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
 ===================================================================
 --- src/features/settings/ui/ProfileSettingsCard.tsx	
 +++ src/features/settings/ui/ProfileSettingsCard.tsx	
-@@ -1,3 +1,4 @@
+@@ -1,4 +1,5 @@
 +import { t, useLocale } from "@buzz-korean/locale";
  import { Check, ChevronDown, Copy, Pencil } from "lucide-react";
  import {
    AnimatePresence,
-@@ -62,6 +63,7 @@
+   LayoutGroup,
+@@ -61,8 +62,9 @@
+   value: string;
    testId: string;
    copyValue?: string;
  }) {
@@ -15,7 +17,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
    return (
      <div className="flex min-h-16 items-center justify-between gap-4 px-4 py-3">
        <div className="min-w-0 space-y-1">
-@@ -76,18 +78,18 @@
+         <p className="text-sm font-medium">{label}</p>
+@@ -75,20 +77,20 @@
+         </p>
        </div>
        {copyValue ? (
          <button
@@ -38,7 +42,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
          </button>
        ) : null}
      </div>
-@@ -107,9 +109,12 @@
+   );
+@@ -106,11 +108,14 @@
+   onClick: () => void;
    disabled: boolean;
    isEditing: boolean;
  }) {
@@ -53,7 +59,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
  
    return (
      <button
-@@ -136,6 +141,7 @@
+       aria-label={accessibleLabel}
+@@ -135,8 +140,9 @@
+ export function ProfileSettingsCard({
    currentPubkey,
    fallbackDisplayName,
  }: ProfileSettingsCardProps) {
@@ -61,7 +69,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
    const shouldReduceMotion = useReducedMotion();
    const profileQuery = useProfileQuery();
    const updateProfileMutation = useUpdateProfileMutation();
-@@ -302,12 +308,12 @@
+   const profile = profileQuery.data;
+@@ -301,14 +307,14 @@
+   const resolvedName =
      nextDisplayName ||
      profile?.displayName ||
      fallbackDisplayName ||
@@ -76,7 +86,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
    const emojiAvatarPreview = React.useMemo(
      () => parseEmojiAvatarDataUrl(avatarUrlDraft),
      [avatarUrlDraft],
-@@ -406,7 +412,7 @@
+   );
+@@ -405,9 +411,9 @@
+     setIsEditingProfileMetadata(false);
      setDisplayNameDraft(updatePayload.displayName ?? currentDisplayName);
      setAvatarUrlDraft(updatePayload.avatarUrl ?? currentAvatarUrl);
      setAboutDraft(updatePayload.about ?? currentAbout);
@@ -85,7 +97,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
      return true;
    }, [
      canSave,
-@@ -489,8 +495,10 @@
+     currentAbout,
+@@ -488,10 +494,12 @@
+       ref={sectionRef}
      >
        <div>
          <SettingsSectionHeader
@@ -98,7 +112,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
          />
  
          <div className="space-y-3">
-@@ -565,8 +573,8 @@
+           {profileQuery.error instanceof Error ? (
+@@ -564,25 +572,25 @@
+                               <button
                                  aria-expanded={isAvatarEditorOpen}
                                  aria-label={
                                    isAvatarEditorSaving
@@ -109,7 +125,7 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
                                  }
                                  className={avatarEditButtonClassName}
                                  data-testid="profile-avatar-edit"
-@@ -574,14 +582,14 @@
+                                 disabled={isAvatarEditorSaving}
                                  onClick={openAvatarEditor}
                                  title={
                                    isAvatarEditorSaving
@@ -127,7 +143,29 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
                                      className="h-4 w-4 border-2"
                                    />
                                  ) : (
-@@ -688,7 +696,7 @@
+                                   <Pencil className="h-4 w-4" />
+@@ -609,9 +617,11 @@
+                             ref={setAnimatedPreviewEl}
+                           />
+                           {shouldShowAnimatedPreview ? null : emojiAvatarPreview ? (
+                             <div
+-                              aria-label={`${resolvedName} avatar`}
++                              aria-label={t("{value0} avatar", {
++                                value0: resolvedName,
++                              })}
+                               className="relative flex h-full w-full shrink-0 items-center justify-center overflow-hidden rounded-full shadow-xs"
+                               data-testid="profile-avatar-preview"
+                               role="img"
+                               style={{
+@@ -681,23 +691,23 @@
+                           headerAction={
+                             <EditProfileMetadataButton
+                               disabled={updateProfileMutation.isPending}
+                               isEditing={isEditingProfileMetadata}
+-                              label="profile info"
++                              label={t("profile info")}
+                               onClick={handleProfileMetadataEdit}
+                               testId="profile-metadata-edit"
                              />
                            }
                            data-testid="profile-metadata-card"
@@ -136,7 +174,7 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
                          >
                            <div className="flex min-h-16 items-center gap-4 px-4 py-3">
                              <div className="min-w-0 flex-1 space-y-1">
-@@ -696,7 +704,7 @@
+                               <label
                                  className="block text-sm font-medium"
                                  htmlFor="profile-display-name"
                                >
@@ -145,7 +183,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
                                </label>
                                {isEditingProfileMetadata ? (
                                  <Input
-@@ -707,7 +715,7 @@
+                                   className="h-auto border-0 bg-transparent px-0 py-0 text-sm text-muted-foreground shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
+@@ -706,19 +716,19 @@
+                                   id="profile-display-name"
                                    onChange={(event) =>
                                      setDisplayNameDraft(event.target.value)
                                    }
@@ -154,7 +194,7 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
                                    ref={displayNameInputRef}
                                    value={displayNameDraft}
                                  />
-@@ -715,9 +723,9 @@
+                               ) : (
                                  <p
                                    className="min-w-0 truncate text-sm text-muted-foreground"
                                    data-testid="profile-display-name-value"
@@ -166,7 +206,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
                                  </p>
                                )}
                              </div>
-@@ -729,7 +737,7 @@
+                           </div>
+@@ -728,9 +738,9 @@
+                               <label
                                  className="block text-sm font-medium"
                                  htmlFor="profile-about"
                                >
@@ -175,7 +217,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
                                </label>
                                {isEditingProfileMetadata ? (
                                  <Textarea
-@@ -740,7 +748,7 @@
+                                   className="min-h-[72px] resize-none border-0 bg-transparent px-0 py-0 text-sm leading-6 text-muted-foreground shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-0"
+@@ -739,9 +749,9 @@
+                                   id="profile-about"
                                    onChange={(event) =>
                                      setAboutDraft(event.target.value)
                                    }
@@ -184,7 +228,9 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
                                    ref={aboutTextareaRef}
                                    value={aboutDraft}
                                  />
-@@ -753,16 +761,16 @@
+                               ) : (
+@@ -752,18 +762,18 @@
+                                       ? "text-muted-foreground"
                                        : "text-muted-foreground/55",
                                    )}
                                    data-testid="profile-about-value"
@@ -204,7 +250,30 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
                            <details
                              className="group divide-y divide-border/55"
                              data-testid="profile-identity-card"
-@@ -791,7 +799,7 @@
+                           >
+@@ -772,16 +782,17 @@
+                               data-testid="profile-identity-toggle"
+                             >
+                               <div className="min-w-0">
+                                 <p className="text-sm font-medium">
+-                                  Identity details
++                                  {t("Identity details")}{" "}
+                                 </p>
+                                 <p
+                                   className="text-sm font-normal text-muted-foreground/70"
+                                   data-settings-subcopy
+                                 >
+-                                  Your keypair and NIP-05 handle are fixed for
+-                                  this device.
++                                  {t(
++                                    "Your keypair and NIP-05 handle are fixed for this device.",
++                                  )}{" "}
+                                 </p>
+                               </div>
+                               <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground transition-[color,transform] duration-150 ease-out group-open:rotate-180 group-hover/identity:text-foreground group-focus-visible/identity:text-foreground" />
+                             </summary>
+@@ -790,15 +801,15 @@
+                               data-testid="profile-identity-details"
                              >
                                <IdentityRow
                                  copyValue={identityNpub ?? undefined}
@@ -213,3 +282,25 @@ Index: src/features/settings/ui/ProfileSettingsCard.tsx
                                  testId="profile-pubkey"
                                  value={resolvedPubkey}
                                />
+                               <IdentityRow
+                                 copyValue={profile?.nip05Handle ?? undefined}
+-                                label="NIP-05 handle"
++                                label={t("NIP-05 handle")}
+                                 testId="profile-nip05"
+                                 value={nip05Handle}
+                               />
+                               <PrivateKeyBackupRow />
+@@ -850,10 +861,11 @@
+               {shouldShowSaveArea && !isAvatarEditorOpen ? (
+                 <div className="mx-auto w-full max-w-[576px] space-y-2">
+                   {hasPendingClearRequest ? (
+                     <p className="text-sm text-muted-foreground">
+-                      Clearing existing profile fields is not supported yet.
+-                      Blank display name and avatar values are ignored for now.
++                      {t(
++                        "Clearing existing profile fields is not supported yet. Blank display name and avatar values are ignored for now.",
++                      )}{" "}
+                     </p>
+                   ) : null}
+                 </div>
+               ) : null}

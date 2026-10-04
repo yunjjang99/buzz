@@ -1,0 +1,67 @@
+Index: src/features/community-members/ui/ConfirmRemoveDialog.tsx
+===================================================================
+--- src/features/community-members/ui/ConfirmRemoveDialog.tsx	
++++ src/features/community-members/ui/ConfirmRemoveDialog.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { toast } from "sonner";
+ 
+ import { truncateNpub } from "@/shared/lib/pubkey";
+ import { PubKey } from "@/shared/ui/PubKey";
+@@ -23,8 +24,9 @@
+   displayName: string | null;
+   open: boolean;
+   onOpenChange: (open: boolean) => void;
+ }) {
++  useLocale();
+   const removeMutation = useRemoveRelayMemberMutation();
+   const label = displayName || (member ? truncateNpub(member.pubkey) : "");
+ 
+   function handleOpenChange(next: boolean) {
+@@ -40,11 +42,13 @@
+         className="max-w-sm"
+         data-testid="confirm-remove-member-dialog"
+       >
+         <DialogHeader>
+-          <DialogTitle>Remove {label}?</DialogTitle>
++          <DialogTitle>
++            {t("Remove")} {label}?
++          </DialogTitle>
+           <DialogDescription>
+-            This will immediately revoke their access to the relay.
++            {t("This will immediately revoke their access to the relay.")}{" "}
+           </DialogDescription>
+           {member ? (
+             <PubKey
+               pubkey={member.pubkey}
+@@ -58,9 +62,9 @@
+             onClick={() => handleOpenChange(false)}
+             size="sm"
+             variant="outline"
+           >
+-            Cancel
++            {t("Cancel")}{" "}
+           </Button>
+           <Button
+             data-testid="confirm-remove-member"
+             disabled={removeMutation.isPending || !member}
+@@ -74,17 +78,17 @@
+                 onError: (error) => {
+                   toast.error(
+                     error instanceof Error
+                       ? error.message
+-                      : "Failed to remove member",
++                      : t("Failed to remove member"),
+                   );
+                 },
+               });
+             }}
+             size="sm"
+             variant="destructive"
+           >
+-            {removeMutation.isPending ? "Removing..." : "Remove"}
++            {removeMutation.isPending ? t("Removing...") : t("Remove")}
+           </Button>
+         </div>
+       </DialogContent>
+     </Dialog>

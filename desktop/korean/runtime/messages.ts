@@ -1,5 +1,7 @@
+import settingsMessages from "./settings-messages.json" with { type: "json" };
 /** Korean interface copy. Untranslated surfaces retain their original English. */
 export const koreanMessages: Record<string, string> = {
+  ...settingsMessages,
   Inbox: "받은 편지함",
   Pulse: "활동",
   Projects: "프로젝트",

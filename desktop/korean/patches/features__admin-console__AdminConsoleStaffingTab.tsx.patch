@@ -1,0 +1,321 @@
+Index: src/features/admin-console/AdminConsoleStaffingTab.tsx
+===================================================================
+--- src/features/admin-console/AdminConsoleStaffingTab.tsx	
++++ src/features/admin-console/AdminConsoleStaffingTab.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ /**
+  * Staffing tab — Operator-only UI for managing relay_operators rows.
+  *
+  * Source badges distinguish config-backed entries (immutable via API) from
+@@ -83,8 +84,9 @@
+ }: {
+   pubkey: string;
+   displayName: string;
+ }) {
++  useLocale();
+   const npub = npubFromPubkey(pubkey) ?? pubkey;
+   return (
+     <span className="inline-grid min-w-0 max-w-full grid-cols-1" title={npub}>
+       <span
+@@ -110,8 +112,9 @@
+   source,
+ }: {
+   source: "config" | "owner_fallback" | "db";
+ }) {
++  useLocale();
+   const label: Record<string, string> = {
+     config: "config",
+     owner_fallback: "owner (fallback)",
+     db: "db",
+@@ -137,18 +140,19 @@
+   record,
+ }: {
+   record: AdminMemberRestrictionDto;
+ }) {
++  useLocale();
+   const now = new Date();
+   const isBanned =
+     record.banned &&
+     (record.banExpiresAt === null || new Date(record.banExpiresAt) > now);
+   const isTimedOut =
+     record.mutedUntil !== null && new Date(record.mutedUntil) > now;
+   return (
+     <span className="flex flex-wrap gap-1">
+-      {isBanned && <Badge variant="destructive">banned</Badge>}
+-      {isTimedOut && <Badge variant="secondary">timeout</Badge>}
++      {isBanned && <Badge variant="destructive">{t("banned")}</Badge>}
++      {isTimedOut && <Badge variant="secondary">{t("timeout")}</Badge>}
+     </span>
+   );
+ }
+ 
+@@ -167,8 +171,9 @@
+   /** Active relay identity; a change reloads the list. */
+   relayKey: string;
+   generation: number;
+ }) {
++  useLocale();
+   const [listGen, setListGen] = useState(0);
+   const [liftError, setLiftError] = useState<string | null>(null);
+   const [workingPubkey, setWorkingPubkey] = useState<string | null>(null);
+   /** Row pending a lift-ban confirmation. */
+@@ -299,20 +304,20 @@
+         }}
+       >
+         <AlertDialogContent data-testid="restrictions-lift-ban-dialog">
+           <AlertDialogHeader>
+-            <AlertDialogTitle>Lift ban?</AlertDialogTitle>
++            <AlertDialogTitle>{t("Lift ban?")}</AlertDialogTitle>
+             <AlertDialogDescription>
+-              This will remove the active ban for{" "}
++              {t("This will remove the active ban for")}{" "}
+               <span className="font-mono">
+                 {pendingLiftBan ? truncatePubkey(pendingLiftBan.pubkey) : ""}
+               </span>
+-              . They will be able to post again.
++              {t(". They will be able to post again.")}{" "}
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogFooter>
+             <AlertDialogCancel data-testid="restrictions-lift-ban-cancel">
+-              Cancel
++              {t("Cancel")}{" "}
+             </AlertDialogCancel>
+             <AlertDialogAction
+               asChild
+               data-testid="restrictions-lift-ban-confirm"
+@@ -320,9 +325,9 @@
+               <Button
+                 onClick={() => void handleConfirmLiftBan()}
+                 variant="default"
+               >
+-                Lift ban
++                {t("Lift ban")}{" "}
+               </Button>
+             </AlertDialogAction>
+           </AlertDialogFooter>
+         </AlertDialogContent>
+@@ -336,22 +341,22 @@
+         }}
+       >
+         <AlertDialogContent data-testid="restrictions-lift-timeout-dialog">
+           <AlertDialogHeader>
+-            <AlertDialogTitle>Clear timeout?</AlertDialogTitle>
++            <AlertDialogTitle>{t("Clear timeout?")}</AlertDialogTitle>
+             <AlertDialogDescription>
+-              This will clear the active timeout for{" "}
++              {t("This will clear the active timeout for")}{" "}
+               <span className="font-mono">
+                 {pendingLiftTimeout
+                   ? truncatePubkey(pendingLiftTimeout.pubkey)
+                   : ""}
+               </span>
+-              . They will be able to post again.
++              {t(". They will be able to post again.")}{" "}
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogFooter>
+             <AlertDialogCancel data-testid="restrictions-lift-timeout-cancel">
+-              Cancel
++              {t("Cancel")}{" "}
+             </AlertDialogCancel>
+             <AlertDialogAction
+               asChild
+               data-testid="restrictions-lift-timeout-confirm"
+@@ -359,17 +364,17 @@
+               <Button
+                 onClick={() => void handleConfirmLiftTimeout()}
+                 variant="default"
+               >
+-                Clear timeout
++                {t("Clear timeout")}{" "}
+               </Button>
+             </AlertDialogAction>
+           </AlertDialogFooter>
+         </AlertDialogContent>
+       </AlertDialog>
+ 
+       <p className="text-xs font-medium text-muted-foreground">
+-        Active restrictions
++        {t("Active restrictions")}{" "}
+       </p>
+ 
+       {listState.status === "loading" && <LoadingSpinner />}
+       {listState.status === "error" && (
+@@ -380,9 +385,9 @@
+         <p
+           className="text-sm text-muted-foreground"
+           data-testid="restrictions-empty"
+         >
+-          No active bans or timeouts.
++          {t("No active bans or timeouts.")}{" "}
+         </p>
+       )}
+       {listState.status === "ok" && items.length > 0 && (
+         <ul className="space-y-1">
+@@ -490,8 +495,9 @@
+    * server state.
+    */
+   onSelfMutation?: () => void;
+ }) {
++  useLocale();
+   const { activeCommunity } = useCommunities();
+   const [listGen, setListGen] = useState(0);
+   const [addPubkey, setAddPubkey] = useState("");
+   const [addRole, setAddRole] = useState<"operator" | "moderator">("moderator");
+@@ -532,9 +538,12 @@
+     // Reject any pubkey already present in the authoritative roster.
+     const existing = listState.data.find((op) => op.pubkey === trimmed);
+     if (existing) {
+       setAddError(
+-        `Already an operator: ${existing.effectiveRole}. Change role with the edit control on their row.`,
++        t(
++          "Already an operator: {value0}. Change role with the edit control on their row.",
++          { value0: t(existing.effectiveRole) },
++        ),
+       );
+       return;
+     }
+ 
+@@ -608,40 +617,42 @@
+         }}
+       >
+         <AlertDialogContent data-testid="staffing-remove-dialog">
+           <AlertDialogHeader>
+-            <AlertDialogTitle>Remove operator?</AlertDialogTitle>
++            <AlertDialogTitle>{t("Remove operator?")}</AlertDialogTitle>
+             <AlertDialogDescription asChild>
+               <div className="space-y-2">
+                 <p>
+-                  This will remove{" "}
++                  {t("This will remove")}{" "}
+                   <span className="font-mono">
+                     {pendingRemove ? truncatePubkey(pendingRemove.pubkey) : ""}
+                   </span>{" "}
+-                  ({pendingRemove?.effectiveRole}) from the operator list.
++                  ({pendingRemove?.effectiveRole}
++                  {t(") from the operator list.")}{" "}
+                 </p>
+                 {isSelf && (
+                   <p
+                     className="text-destructive"
+                     data-testid="staffing-remove-self-warning"
+                   >
+-                    You are removing your own operator access. Once removed, you
+-                    may lose the ability to undo this action.
++                    {t(
++                      "You are removing your own operator access. Once removed, you may lose the ability to undo this action.",
++                    )}{" "}
+                   </p>
+                 )}
+               </div>
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogFooter>
+             <AlertDialogCancel data-testid="staffing-remove-cancel">
+-              Cancel
++              {t("Cancel")}{" "}
+             </AlertDialogCancel>
+             <AlertDialogAction asChild data-testid="staffing-remove-confirm">
+               <Button
+                 onClick={() => void handleConfirmRemove()}
+                 variant="destructive"
+               >
+-                Remove
++                {t("Remove")}{" "}
+               </Button>
+             </AlertDialogAction>
+           </AlertDialogFooter>
+         </AlertDialogContent>
+@@ -650,17 +661,17 @@
+       {/* Add operator form — hidden in read-only (disabled-auth) mode */}
+       {canMutate && (
+         <div className="rounded-md border border-border/60 px-3 py-2.5 space-y-2">
+           <p className="text-xs font-medium text-muted-foreground">
+-            Add operator
++            {t("Add operator")}{" "}
+           </p>
+           <div className="flex gap-2">
+             <input
+               className="flex-1 rounded-md border border-border/60 bg-background px-2 py-1 text-xs font-mono"
+               data-testid="staffing-add-pubkey-input"
+               disabled={isAdding}
+               onChange={(e) => setAddPubkey(e.target.value)}
+-              placeholder="64-hex pubkey"
++              placeholder={t("64-hex pubkey")}
+               type="text"
+               value={addPubkey}
+             />
+             <select
+@@ -671,10 +682,10 @@
+                 setAddRole(e.target.value as "operator" | "moderator")
+               }
+               value={addRole}
+             >
+-              <option value="moderator">moderator</option>
+-              <option value="operator">operator</option>
++              <option value="moderator">{t("moderator")}</option>
++              <option value="operator">{t("operator")}</option>
+             </select>
+             <Button
+               data-testid="staffing-add-btn"
+               disabled={
+@@ -704,9 +715,9 @@
+       {listState.status === "ok" && (
+         <ul className="space-y-1">
+           {listState.data.length === 0 && (
+             <p className="text-sm text-muted-foreground">
+-              No operators configured.
++              {t("No operators configured.")}{" "}
+             </p>
+           )}
+           {listState.data.map((op: AdminOperatorDto) => {
+             const isConfigBacked = op.sources.some(
+@@ -736,9 +747,11 @@
+                 </div>
+                 {/* In-place role selector — hidden in read-only / config-backed mode */}
+                 {canMutate && !isConfigBacked && (
+                   <select
+-                    aria-label={`Change role for ${displayName}`}
++                    aria-label={t("Change role for {value0}", {
++                      value0: displayName,
++                    })}
+                     className="rounded-md border border-border/60 bg-background px-1.5 py-0.5 text-xs"
+                     data-testid={`staffing-role-select-${op.pubkey}`}
+                     disabled={isWorking}
+                     onChange={(e) =>
+@@ -748,10 +761,10 @@
+                       )
+                     }
+                     value={op.effectiveRole}
+                   >
+-                    <option value="moderator">moderator</option>
+-                    <option value="operator">operator</option>
++                    <option value="moderator">{t("moderator")}</option>
++                    <option value="operator">{t("operator")}</option>
+                   </select>
+                 )}
+                 {/* Config-backed: show role as badge (not editable) */}
+                 {isConfigBacked && (
+@@ -759,17 +772,17 @@
+                 )}
+                 {/* Remove button — hidden in read-only (disabled-auth) mode */}
+                 {canMutate && (
+                   <Button
+-                    aria-label={`Remove ${displayName}`}
++                    aria-label={t("Remove {value0}", { value0: displayName })}
+                     data-testid={`staffing-remove-btn-${op.pubkey}`}
+                     disabled={isConfigBacked || isWorking}
+                     onClick={() => setPendingRemove(op)}
+                     size="icon-xs"
+                     title={
+                       isConfigBacked
+-                        ? "Config-backed — cannot be removed via API"
+-                        : "Remove operator"
++                        ? t("Config-backed — cannot be removed via API")
++                        : t("Remove operator")
+                     }
+                     type="button"
+                     variant="ghost"
+                   >

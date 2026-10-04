@@ -1,0 +1,259 @@
+Index: src/features/settings/ui/CustomHarnessForm.tsx
+===================================================================
+--- src/features/settings/ui/CustomHarnessForm.tsx	
++++ src/features/settings/ui/CustomHarnessForm.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { Plus, X } from "lucide-react";
+ 
+ import {
+@@ -36,8 +37,9 @@
+ 
+ // ── Inline command validation ─────────────────────────────────────────────────
+ 
+ function CommandAvailabilityBadge({ command }: { command: string }) {
++  useLocale();
+   const trimmed = command.trim();
+   const prereqs = useManagedAgentPrereqsQuery(trimmed, "", {
+     enabled: trimmed.length > 0,
+   });
+@@ -55,9 +57,9 @@
+           ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+           : "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+       )}
+     >
+-      {available ? "Found on PATH" : "Not found on PATH"}
++      {available ? t("Found on PATH") : t("Not found on PATH")}
+     </span>
+   );
+ }
+ 
+@@ -69,8 +71,9 @@
+ }: {
+   children: React.ReactNode;
+   className?: string;
+ }) {
++  useLocale();
+   return (
+     <div
+       className={cn(
+         "flex min-h-11 items-center px-3",
+@@ -96,8 +99,9 @@
+ }: {
+   args: string[];
+   onChange: (next: string[]) => void;
+ }) {
++  useLocale();
+   function set(index: number, value: string) {
+     const next = [...args];
+     next[index] = value;
+     onChange(next);
+@@ -116,9 +120,9 @@
+               value={arg}
+             />
+           </FieldShell>
+           <Button
+-            aria-label="Remove argument"
++            aria-label={t("Remove argument")}
+             onClick={() => onChange(args.filter((_, idx) => idx !== i))}
+             size="icon"
+             type="button"
+             variant="ghost"
+@@ -133,9 +137,9 @@
+         type="button"
+         variant="outline"
+       >
+         <Plus className="mr-1 h-4 w-4" />
+-        Add argument
++        {t("Add argument")}{" "}
+       </Button>
+     </div>
+   );
+ }
+@@ -146,8 +150,9 @@
+ }: {
+   env: Array<{ key: string; value: string }>;
+   onChange: (next: Array<{ key: string; value: string }>) => void;
+ }) {
++  useLocale();
+   function set(index: number, field: "key" | "value", value: string) {
+     onChange(env.map((e, i) => (i === index ? { ...e, [field]: value } : e)));
+   }
+ 
+@@ -159,22 +164,22 @@
+           <FieldShell className="flex-1">
+             <Input
+               className={cn(FIELD_INPUT_CLASS, "font-mono")}
+               onChange={(e) => set(i, "key", e.target.value)}
+-              placeholder="KEY"
++              placeholder={t("KEY")}
+               value={pair.key}
+             />
+           </FieldShell>
+           <FieldShell className="flex-2">
+             <Input
+               className={cn(FIELD_INPUT_CLASS, "font-mono")}
+               onChange={(e) => set(i, "value", e.target.value)}
+-              placeholder="value"
++              placeholder={t("value")}
+               value={pair.value}
+             />
+           </FieldShell>
+           <Button
+-            aria-label="Remove env var"
++            aria-label={t("Remove env var")}
+             onClick={() => onChange(env.filter((_, idx) => idx !== i))}
+             size="icon"
+             type="button"
+             variant="ghost"
+@@ -189,9 +194,9 @@
+         type="button"
+         variant="outline"
+       >
+         <Plus className="mr-1 h-4 w-4" />
+-        Add env var
++        {t("Add env var")}{" "}
+       </Button>
+     </div>
+   );
+ }
+@@ -224,8 +229,9 @@
+   /** Optional intro block rendered at the top of the scrollable body
+    * (chromeless mode) so it scrolls with the fields. */
+   header?: React.ReactNode;
+ }) {
++  useLocale();
+   const [form, setForm] = React.useState<CustomFormValues>({
+     ...EMPTY_CUSTOM_FORM,
+     ...initial,
+   });
+@@ -294,12 +300,12 @@
+     >
+       {chromeless ? null : (
+         <div className="flex items-center justify-between">
+           <p className="text-sm font-medium">
+-            {originalId ? "Edit harness" : "Add custom harness"}
++            {originalId ? t("Edit harness") : t("Add custom harness")}
+           </p>
+           <button
+-            aria-label="Cancel"
++            aria-label={t("Cancel")}
+             className="rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+             onClick={onCancel}
+             type="button"
+           >
+@@ -321,16 +327,16 @@
+             <label
+               className="text-sm font-medium text-foreground"
+               htmlFor="ch-label"
+             >
+-              Name
++              {t("Name")}{" "}
+             </label>
+             <FieldShell>
+               <Input
+                 className={FIELD_INPUT_CLASS}
+                 id="ch-label"
+                 onChange={field("label")}
+-                placeholder="My Runtime"
++                placeholder={t("My Runtime")}
+                 required
+                 value={form.label}
+               />
+             </FieldShell>
+@@ -342,9 +348,9 @@
+               htmlFor="ch-id"
+             >
+               ID
+               <span className={PERSONA_LABEL_OPTIONAL_CLASS}>
+-                (auto-derived)
++                {t("(auto-derived)")}{" "}
+               </span>
+             </label>
+             <FieldShell>
+               <Input
+@@ -364,9 +370,9 @@
+             <label
+               className="text-sm font-medium text-foreground"
+               htmlFor="ch-command"
+             >
+-              Command
++              {t("Command")}{" "}
+             </label>
+             <CommandAvailabilityBadge command={form.command} />
+           </div>
+           <FieldShell>
+@@ -379,25 +385,27 @@
+               value={form.command}
+             />
+           </FieldShell>
+           <p className="text-xs text-muted-foreground">
+-            Any command that speaks ACP over stdio works.
++            {t("Any command that speaks ACP over stdio works.")}{" "}
+           </p>
+         </div>
+ 
+         <div className="space-y-1.5">
+-          <p className="text-sm font-medium text-foreground">Arguments</p>
++          <p className="text-sm font-medium text-foreground">
++            {t("Arguments")}
++          </p>
+           <ArgsEditor
+             args={form.args}
+             onChange={(args) => setForm((p) => ({ ...p, args }))}
+           />
+         </div>
+ 
+         <div className="space-y-1.5">
+           <p className="text-sm font-medium text-foreground">
+-            Env vars
++            {t("Env vars")}{" "}
+             <span className={PERSONA_LABEL_OPTIONAL_CLASS}>
+-              (override at spawn time; Buzz-managed vars always win)
++              {t("(override at spawn time; Buzz-managed vars always win)")}{" "}
+             </span>
+           </p>
+           <EnvEditor
+             env={form.env}
+@@ -409,10 +417,12 @@
+           <label
+             className="text-sm font-medium text-foreground"
+             htmlFor="ch-docs-url"
+           >
+-            Docs URL
+-            <span className={PERSONA_LABEL_OPTIONAL_CLASS}>(optional)</span>
++            {t("Docs URL")}{" "}
++            <span className={PERSONA_LABEL_OPTIONAL_CLASS}>
++              {t("(optional)")}
++            </span>
+           </label>
+           <FieldShell>
+             <Input
+               className={FIELD_INPUT_CLASS}
+@@ -428,10 +438,12 @@
+           <label
+             className="text-sm font-medium text-foreground"
+             htmlFor="ch-install-hint"
+           >
+-            Install hint
+-            <span className={PERSONA_LABEL_OPTIONAL_CLASS}>(optional)</span>
++            {t("Install hint")}{" "}
++            <span className={PERSONA_LABEL_OPTIONAL_CLASS}>
++              {t("(optional)")}
++            </span>
+           </label>
+           <FieldShell>
+             <Input
+               className={FIELD_INPUT_CLASS}
+@@ -462,9 +474,9 @@
+           disabled={save.isPending || !requiredFieldsSatisfied}
+           type="submit"
+         >
+           {save.isPending ? <Spinner className="mr-2 h-3.5 w-3.5" /> : null}
+-          Save
++          {t("Save")}{" "}
+         </Button>
+       </div>
+     </form>
+   );

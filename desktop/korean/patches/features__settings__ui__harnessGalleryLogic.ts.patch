@@ -1,0 +1,52 @@
+Index: src/features/settings/ui/harnessGalleryLogic.ts
+===================================================================
+--- src/features/settings/ui/harnessGalleryLogic.ts	
++++ src/features/settings/ui/harnessGalleryLogic.ts	
+@@ -3,8 +3,9 @@
+  *
+  * Extracted for deterministic unit-testing — no React, no Tauri, no network.
+  */
+ 
++import { t } from "@buzz-korean/locale";
+ import type { AcpRuntimeCatalogEntry } from "@/shared/api/types";
+ 
+ /**
+  * Returns true iff the given catalog entry is editable by the user.
+@@ -43,11 +44,14 @@
+ export function deleteHarnessConfirmMessage(
+   label: string,
+   referencingAgents: number,
+ ): string {
+-  if (referencingAgents === 0) return `Delete ${label}?`;
++  if (referencingAgents === 0) return t("Delete {name}?", { name: label });
+   const noun = referencingAgents === 1 ? "agent uses" : "agents use";
+-  return `${referencingAgents} ${noun} this harness and will stop launching. Delete ${label}?`;
++  return t(
++    "{count} {noun} this harness and will stop launching. Delete {name}?",
++    { count: referencingAgents, noun, name: label },
++  );
+ }
+ 
+ /** Minimal query-state shape consumed by `deleteConfirmState` — matches the
+  * relevant subset of a TanStack `useQuery` result so the logic stays pure. */
+@@ -87,15 +91,18 @@
+ ): DeleteConfirmState {
+   if (agents.isPending || personas.isPending) {
+     return {
+       canConfirm: false,
+-      message: "Checking which agents use this harness…",
++      message: t("Checking which agents use this harness…"),
+     };
+   }
+   if (agents.isError || personas.isError) {
+     return {
+       canConfirm: true,
+-      message: `Couldn't check which agents use this harness — some agents may stop launching. Delete ${label}?`,
++      message: t(
++        "Couldn't check which agents use this harness — some agents may stop launching. Delete {name}?",
++        { name: label },
++      ),
+     };
+   }
+   const count = countAgentsReferencingHarness(
+     harnessId,

@@ -1,0 +1,200 @@
+Index: src/features/admin-console/AdminConsoleFeedbackTab.tsx
+===================================================================
+--- src/features/admin-console/AdminConsoleFeedbackTab.tsx	
++++ src/features/admin-console/AdminConsoleFeedbackTab.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ /**
+  * Feedback tab — shows the deployment-wide product feedback queue with
+  * optional image attachment viewer and status triage controls.
+  *
+@@ -91,8 +92,9 @@
+   origin: string;
+   pubkey: string;
+   generation: number;
+ }) {
++  useLocale();
+   const [selectedId, setSelectedId] = useState<string | null>(null);
+   // List refresh fence: bumped when a feedback status change completes in the
+   // detail view, so returning to the list shows fresh status without a tab
+   // switch.
+@@ -125,9 +127,11 @@
+   if (listState.status !== "ok") return null;
+ 
+   const items = listState.data;
+   if (!Array.isArray(items) || items.length === 0) {
+-    return <p className="text-sm text-muted-foreground">No feedback found.</p>;
++    return (
++      <p className="text-sm text-muted-foreground">{t("No feedback found.")}</p>
++    );
+   }
+ 
+   return (
+     <CommunityGroupedList
+@@ -181,8 +185,9 @@
+   /** Generation from the parent panel — when this changes the attachment
+    *  context has changed and any in-flight load result is stale. */
+   panelGeneration: number;
+ }) {
++  useLocale();
+   const [blobUrl, setBlobUrl] = useState<string | null>(null);
+   const [error, setError] = useState<AdminAttachmentErrorCode | null>(null);
+   const [saving, setSaving] = useState(false);
+   const [saveError, setSaveError] = useState<AdminAttachmentErrorCode | null>(
+@@ -331,16 +336,16 @@
+   if (!blobUrl) {
+     return (
+       <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+         <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+-        Loading…
++        {t("Loading…")}{" "}
+       </div>
+     );
+   }
+ 
+   return (
+     <img
+-      alt="Feedback attachment"
++      alt={t("Feedback attachment")}
+       className="max-h-96 max-w-full rounded-md border border-border/60 object-contain"
+       src={blobUrl}
+     />
+   );
+@@ -348,25 +353,29 @@
+ 
+ // ── Feedback fields ───────────────────────────────────────────────────────
+ 
+ function FeedbackFields({ data }: { data: AdminFeedbackDto }) {
++  useLocale();
+   return (
+     <div
+       className="space-y-1.5 rounded-md border border-border/60 px-3 py-2.5"
+       data-testid="feedback-detail-fields"
+     >
+       <DetailRow label="ID" value={data.id} mono />
+-      <DetailRow label="Body" value={data.body} />
+-      <DetailRow label="Submitter" value={data.submitterPubkey} mono />
+-      <DetailRow label="Category" value={data.category ?? null} />
+-      <DetailRow label="Community" value={data.communityId} mono />
+-      <DetailRow label="Host" value={data.communityHost} />
+-      <DetailRow label="Event ID" value={data.eventId} mono />
++      <DetailRow label={t("Body")} value={data.body} />
++      <DetailRow label={t("Submitter")} value={data.submitterPubkey} mono />
++      <DetailRow label={t("Category")} value={data.category ?? null} />
++      <DetailRow label={t("Community")} value={data.communityId} mono />
++      <DetailRow label={t("Host")} value={data.communityHost} />
++      <DetailRow label={t("Event ID")} value={data.eventId} mono />
+       <DetailRow
+-        label="Event created"
++        label={t("Event created")}
+         value={formatTimestamp(data.eventCreatedAt)}
+       />
+-      <DetailRow label="Received" value={formatTimestamp(data.receivedAt)} />
++      <DetailRow
++        label={t("Received")}
++        value={formatTimestamp(data.receivedAt)}
++      />
+     </div>
+   );
+ }
+ 
+@@ -387,8 +396,9 @@
+   currentStatus: AdminFeedbackStatus | null;
+   origin: string;
+   onStatusChanged: (newStatus: AdminFeedbackStatus) => void;
+ }) {
++  useLocale();
+   const [isWorking, setIsWorking] = useState(false);
+ 
+   const statuses: AdminFeedbackStatus[] = ["new", "reviewed", "archived"];
+ 
+@@ -396,9 +406,9 @@
+     if (newStatus === currentStatus) return;
+     setIsWorking(true);
+     try {
+       await patchAdminFeedback(origin, feedbackId, newStatus);
+-      toast.success(`Feedback marked ${newStatus}`);
++      toast.success(t("Feedback marked {value0}", { value0: newStatus }));
+       onStatusChanged(newStatus);
+     } catch (e) {
+       toast.error(adminErrorMessage(e));
+     } finally {
+@@ -410,9 +420,11 @@
+     <div
+       className="flex flex-col gap-1.5"
+       data-testid="feedback-status-control"
+     >
+-      <span className="text-xs font-medium text-muted-foreground">Status</span>
++      <span className="text-xs font-medium text-muted-foreground">
++        {t("Status")}
++      </span>
+       <div className="flex gap-1.5">
+         {statuses.map((s) => (
+           <Button
+             aria-pressed={currentStatus === s}
+@@ -455,8 +467,9 @@
+   onBack: () => void;
+   /** Called after a status change completes so the parent list can refetch. */
+   onMutated: () => void;
+ }) {
++  useLocale();
+   // Local status state: initialized from server, updated on PATCH.
+   const [localStatus, setLocalStatus] = useState<AdminFeedbackStatus | null>(
+     null,
+   );
+@@ -495,9 +508,9 @@
+         onClick={onBack}
+         type="button"
+       >
+         <ChevronLeft className="h-3.5 w-3.5" />
+-        Back to feedback
++        {t("Back to feedback")}{" "}
+       </button>
+       {detailState.status === "loading" && <LoadingSpinner />}
+       {detailState.status === "error" && (
+         <ErrorMessage message={detailState.message} />
+@@ -521,17 +534,17 @@
+                 className="flex items-center gap-1.5"
+                 data-testid="feedback-status-readonly"
+               >
+                 <span className="text-xs font-medium text-muted-foreground">
+-                  Status
++                  {t("Status")}{" "}
+                 </span>
+                 <Badge variant="secondary">{localStatus}</Badge>
+               </div>
+             )
+           )}
+           {attachments.length > 0 && (
+             <div className="space-y-3">
+-              <h4 className="text-sm font-medium">Attachments</h4>
++              <h4 className="text-sm font-medium">{t("Attachments")}</h4>
+               {attachments.map((a) => (
+                 <AttachmentViewer
+                   attachment={a}
+                   feedbackId={feedbackId}
+@@ -545,11 +558,11 @@
+                 <p
+                   className="text-xs text-muted-foreground"
+                   data-testid="attachment-truncated-notice"
+                 >
+-                  {truncatedCount} attachment
+-                  {truncatedCount === 1 ? "" : "s"} not shown (display limit
+-                  reached).
++                  {truncatedCount} {t("attachment")}{" "}
++                  {truncatedCount === 1 ? "" : "s"}{" "}
++                  {t("not shown (display limit reached).")}{" "}
+                 </p>
+               )}
+             </div>
+           )}
+@@ -568,8 +581,9 @@
+   admin_attachment_network_error: "Network error fetching attachment.",
+ };
+ 
+ function AttachmentError({ code }: { code: AdminAttachmentErrorCode }) {
++  useLocale();
+   return (
+     <div className="flex items-center gap-1.5 text-xs text-destructive">
+       <AlertCircle className="h-3.5 w-3.5" />
+       {FRIENDLY_ATTACHMENT_ERROR[code] ?? `Error: ${code}`}

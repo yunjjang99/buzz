@@ -1,0 +1,39 @@
+Index: src/features/settings/ui/harnessCatalogLogic.ts
+===================================================================
+--- src/features/settings/ui/harnessCatalogLogic.ts	
++++ src/features/settings/ui/harnessCatalogLogic.ts	
+@@ -134,8 +134,10 @@
+     .map((e) => e.id);
+   return [...kept, ...appended];
+ }
+ 
++import { t } from "@buzz-korean/locale";
++
+ /** Human status label for a catalog entry; null when nothing needs saying. */
+ export function entryStatusLabel(entry: AcpRuntimeCatalogEntry): string | null {
+   if (entry.authStatus.status === "config_invalid") return "Config error";
+   switch (entry.availability) {
+@@ -162,18 +164,16 @@
+  * package names must never appear for another runtime.
+  */
+ export function adapterUpdateWarning(entry: AcpRuntimeCatalogEntry): string {
+   if (entry.id === "codex") {
+-    return (
+-      "This replaces the machine-wide codex-acp adapter. Older Buzz " +
+-      "releases using the legacy adapter may lose community access until " +
+-      "@zed-industries/codex-acp@0.16.0 is restored."
++    return t(
++      "This replaces the machine-wide codex-acp adapter. Older Buzz releases using the legacy adapter may lose community access until @zed-industries/codex-acp@0.16.0 is restored.",
+     );
+   }
+   const adapter = entry.command?.trim() || entry.label;
+-  return (
+-    `This replaces the machine-wide ${adapter} adapter. Other tools using ` +
+-    "the currently installed adapter will switch to the updated version."
++  return t(
++    "This replaces the machine-wide {adapter} adapter. Other tools using the currently installed adapter will switch to the updated version.",
++    { adapter },
+   );
+ }
+ 
+ export type CatalogPrimaryAction =

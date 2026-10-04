@@ -1,0 +1,341 @@
+Index: src/features/mesh-compute/ui/MeshComputeSettingsCard.tsx
+===================================================================
+--- src/features/mesh-compute/ui/MeshComputeSettingsCard.tsx	
++++ src/features/mesh-compute/ui/MeshComputeSettingsCard.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { ChevronDown } from "lucide-react";
+ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+ 
+@@ -84,8 +85,9 @@
+  * group. User-facing copy describes the shared-compute behavior without
+  * exposing implementation protocols or raw mesh controls.
+  */
+ export function MeshComputeSettingsCard() {
++  useLocale();
+   const shouldReduceMotion = useReducedMotion();
+   const { status, error, refresh } = useMeshNodeStatus();
+   const [installedModels, setInstalledModels] = React.useState<
+     MeshModelOption[]
+@@ -226,15 +228,17 @@
+ 
+   return (
+     <section className="min-w-0" data-testid="settings-mesh-share-compute">
+       <SettingsSectionHeader
+-        title="Share compute"
+-        description="Share this machine with members of this relay so they can run agents here."
++        title={t("Share compute")}
++        description={t(
++          "Share this machine with members of this relay so they can run agents here.",
++        )}
+       />
+ 
+       {error ? (
+         <p className="mb-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+-          Couldn't check shared compute: {error}
++          {t("Couldn't check shared compute:")} {error}
+         </p>
+       ) : null}
+       {actionError ? (
+         <p className="mb-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+@@ -244,17 +248,17 @@
+       {downloadProgress ? (
+         <DownloadProgressBar progress={downloadProgress} />
+       ) : null}
+ 
+-      <SettingsOptionGroup title="Sharing">
++      <SettingsOptionGroup title={t("Sharing")}>
+         <div className="space-y-5 px-4 py-3">
+           <div className="flex min-w-0 items-start justify-between gap-6">
+             <div className="min-w-0">
+               <label
+                 className="text-sm font-medium"
+                 htmlFor="mesh-share-compute-toggle"
+               >
+-                Share this machine
++                {t("Share this machine")}{" "}
+               </label>
+               {!isSharing ? (
+                 <StatusLine
+                   isConsuming={isConsuming}
+@@ -302,9 +306,9 @@
+               data-testid="mesh-share-compute-advanced-toggle"
+               onClick={() => setAdvancedOpen((current) => !current)}
+               type="button"
+             >
+-              <span>Advanced</span>
++              <span>{t("Advanced")}</span>
+               <ChevronDown
+                 className={cn(
+                   "h-4 w-4 text-muted-foreground transition-transform duration-150 ease-out",
+                   advancedOpen && "rotate-180",
+@@ -313,9 +317,9 @@
+             </button>
+             {advancedOpen ? (
+               <div className="mt-3 space-y-1.5">
+                 <label className="text-sm font-medium" htmlFor="mesh-vram">
+-                  Max VRAM (GB)
++                  {t("Max VRAM (GB)")}{" "}
+                 </label>
+                 <AgentConfigTextInput
+                   data-testid="mesh-share-compute-vram"
+                   disabled={controlsDisabled}
+@@ -325,15 +329,15 @@
+                     const next = e.target.value;
+                     setMaxVramGb(next);
+                     writeDraft(MAX_VRAM_DRAFT_STORAGE_KEY, next);
+                   }}
+-                  placeholder="No limit"
++                  placeholder={t("No limit")}
+                   usePersonaInputStyle
+                   value={maxVramGb}
+                 />
+                 {status?.consoleUrl ? (
+                   <p className="text-sm font-normal text-muted-foreground">
+-                    Debug console:{" "}
++                    {t("Debug console:")}{" "}
+                     <a
+                       className="underline"
+                       href={status.consoleUrl}
+                       rel="noreferrer"
+@@ -365,9 +369,9 @@
+                 <section
+                   className="space-y-1"
+                   data-testid="mesh-share-compute-sharing-status"
+                 >
+-                  <h3 className="text-sm font-medium">Status</h3>
++                  <h3 className="text-sm font-medium">{t("Status")}</h3>
+                   <div className="space-y-1 rounded-lg bg-muted/30 px-3 py-2">
+                     <StatusLine
+                       isConsuming={isConsuming}
+                       omitSharingVerb
+@@ -418,8 +422,9 @@
+   progress,
+ }: {
+   progress: NonNullable<ReturnType<typeof useMeshDownloadProgress>["progress"]>;
+ }) {
++  useLocale();
+   const percent = downloadPercent(progress);
+   const bytes = formatDownloadBytes(progress);
+   return (
+     <div
+@@ -427,9 +432,9 @@
+       data-testid="mesh-download-progress"
+     >
+       <div className="flex items-baseline justify-between gap-2 text-sm">
+         <span className="min-w-0 truncate font-medium">
+-          {progress.status === "preparing" ? "Preparing" : "Downloading"}{" "}
++          {progress.status === "preparing" ? t("Preparing") : t("Downloading")}{" "}
+           {progress.label}
+         </span>
+         <span className="shrink-0 text-muted-foreground">
+           {percent != null ? `${percent}%` : bytes || "…"}
+@@ -489,8 +494,9 @@
+   model: string;
+   onCustomModelEditingChange: (editing: boolean) => void;
+   onModelChange: (model: string) => void;
+ }) {
++  useLocale();
+   const options = React.useMemo<AgentDropdownOption[]>(() => {
+     const seen = new Set<string>();
+     const catalogOptions = (catalog?.entries ?? []).map((entry) => {
+       seen.add(entry.name);
+@@ -509,9 +515,9 @@
+               <span className="min-w-0 truncate">
+                 {installed.name ?? installed.id}
+               </span>
+               <span className="shrink-0 text-2xs text-muted-foreground">
+-                Installed
++                {t("Installed")}{" "}
+               </span>
+             </div>
+           ),
+           value: installed.id,
+@@ -520,9 +526,14 @@
+     });
+     return [
+       ...catalogOptions,
+       ...localOptions,
+-      { label: "Custom model…", value: CUSTOM_MODEL_DROPDOWN_VALUE },
++      {
++        get label() {
++          return t("Custom model…");
++        },
++        value: CUSTOM_MODEL_DROPDOWN_VALUE,
++      },
+     ];
+   }, [catalog?.entries, installedModels]);
+   const knownModel = options.some((option) => option.value === model.trim());
+   const showCustomModelInput =
+@@ -542,25 +553,25 @@
+ 
+   return (
+     <div className="space-y-1.5" data-testid="mesh-share-compute-catalog">
+       <label className="text-sm font-medium" htmlFor="mesh-share-compute-model">
+-        Model
++        {t("Model")}{" "}
+       </label>
+       <AgentDropdownSelect
+         className={MESH_SELECT_TRIGGER_CLASS}
+         disabled={disabled}
+         id="mesh-share-compute-model"
+         onValueChange={handleModelChange}
+         options={options}
+-        placeholder="Select a model"
++        placeholder={t("Select a model")}
+         placeholderClassName="text-muted-foreground/55"
+         searchable
+         testId="mesh-share-compute-model"
+         value={selectedValue}
+       />
+       {showCustomModelInput ? (
+         <AgentConfigTextInput
+-          aria-label="Custom model reference"
++          aria-label={t("Custom model reference")}
+           autoCorrect="off"
+           disabled={disabled}
+           onChange={(event) => {
+             // A stored custom ref starts out inferred rather than explicitly
+@@ -578,37 +589,45 @@
+         className="text-sm font-normal text-muted-foreground/70"
+         data-settings-subcopy
+       >
+         {catalog
+-          ? `Recommended for this machine${catalog.gpuName ? ` (${catalog.gpuName}, ${catalog.vramDisplay} AI memory)` : ""}.`
+-          : "Choose a model or enter a model reference or local file."}{" "}
+-        Buzz downloads remote models when sharing starts.
++          ? t("Recommended for this machine{value0}.", {
++              value0: catalog.gpuName
++                ? t(" ({value0}, {value1} AI memory)", {
++                    value0: catalog.gpuName,
++                    value1: catalog.vramDisplay,
++                  })
++                : "",
++            })
++          : t("Choose a model or enter a model reference or local file.")}{" "}
++        {t("Buzz downloads remote models when sharing starts.")}{" "}
+       </p>
+     </div>
+   );
+ }
+ 
+ function MeshModelOptionLabel({ entry }: { entry: MeshCatalogEntry }) {
++  useLocale();
+   return (
+     <div className="flex min-w-0 items-center gap-2">
+       <span className="min-w-0 flex-1 truncate font-medium">{entry.name}</span>
+       <span className="shrink-0 text-muted-foreground">{entry.size}</span>
+       <span className={cn("shrink-0", FIT_CLASS[entry.fit])}>
+-        {FIT_LABEL[entry.fit]}
++        {t(FIT_LABEL[entry.fit])}
+       </span>
+       {entry.recommended ? (
+         <span className="shrink-0 rounded bg-primary/15 px-1.5 text-2xs font-medium text-primary">
+-          Recommended
++          {t("Recommended")}{" "}
+         </span>
+       ) : null}
+       {entry.installed ? (
+         <span className="shrink-0 text-2xs text-muted-foreground">
+-          Installed
++          {t("Installed")}{" "}
+         </span>
+       ) : null}
+       {!entry.curated ? (
+         <span className="shrink-0 text-2xs text-muted-foreground">
+-          Advanced
++          {t("Advanced")}{" "}
+         </span>
+       ) : null}
+     </div>
+   );
+@@ -626,27 +645,31 @@
+   omitSharingVerb?: boolean;
+   pendingAction: "start" | "stop" | null;
+   status: MeshNodeStatus | null;
+ }) {
++  useLocale();
+   if (pendingAction === "start") {
+-    return <p className="text-sm text-muted-foreground">Starting…</p>;
++    return <p className="text-sm text-muted-foreground">{t("Starting…")}</p>;
+   }
+   if (pendingAction === "stop") {
+-    return <p className="text-sm text-muted-foreground">Stopping…</p>;
++    return <p className="text-sm text-muted-foreground">{t("Stopping…")}</p>;
+   }
+   // A client-mode runtime owns the single slot: this machine is consuming a
+   // peer's compute, not sharing. The switch stays off, but remains available
+   // so the member can replace the client with a serving runtime.
+   if (isConsuming) {
+     return (
+       <p className="text-sm text-muted-foreground">
+-        This machine is currently using another member's shared compute. Turn on
+-        sharing to switch to the selected local model; Buzz may briefly restart.
++        {t(
++          "This machine is currently using another member's shared compute. Turn on sharing to switch to the selected local model; Buzz may briefly restart.",
++        )}{" "}
+       </p>
+     );
+   }
+   if (!status) {
+-    return <p className="text-sm text-muted-foreground">Checking status…</p>;
++    return (
++      <p className="text-sm text-muted-foreground">{t("Checking status…")}</p>
++    );
+   }
+   const { state, health, modelId, modelName } = status;
+   const modelLabel = displayModel ?? modelName ?? modelId ?? "";
+ 
+@@ -656,42 +679,43 @@
+   if (state === "starting") {
+     const reason =
+       health.status === "degraded" || health.status === "failed"
+         ? health.reason
+-        : "Starting…";
++        : t("Starting…");
+     return <p className="text-sm text-muted-foreground">{reason}</p>;
+   }
+   if (state === "running") {
+     if (health.status === "failed") {
+       return (
+         <p className="text-sm text-destructive">
+-          Couldn't load: {health.reason}
++          {t("Couldn't load:")} {health.reason}
+         </p>
+       );
+     }
+     if (health.status === "degraded") {
+       return (
+         <p className="text-sm text-amber-600 dark:text-amber-400">
+-          Active{modelLabel ? ` — ${modelLabel}` : ""}. {health.reason}
++          {t("Active")}
++          {modelLabel ? ` — ${modelLabel}` : ""}. {health.reason}
+         </p>
+       );
+     }
+     return (
+       <p className="text-sm text-muted-foreground">
+-        {omitSharingVerb ? "" : "Sharing"}
+-        {modelLabel ? `${omitSharingVerb ? "" : " "}${modelLabel}` : ""} with
+-        relay members.
++        {omitSharingVerb ? "" : t("Sharing")}
++        {modelLabel ? `${omitSharingVerb ? "" : " "}${modelLabel}` : ""}{" "}
++        {t("with relay members.")}{" "}
+       </p>
+     );
+   }
+   if (state === "stopping") {
+-    return <p className="text-sm text-muted-foreground">Stopping…</p>;
++    return <p className="text-sm text-muted-foreground">{t("Stopping…")}</p>;
+   }
+   if (state === "failed") {
+     const reason =
+       health.status === "failed" || health.status === "degraded"
+         ? health.reason
+-        : "Couldn't start.";
++        : t("Couldn't start.");
+     return <p className="text-sm text-destructive">{reason}</p>;
+   }
+   return null;
+ }

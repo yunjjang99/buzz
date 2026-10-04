@@ -1,0 +1,211 @@
+Index: src/features/community-members/ui/CommunityMembersSettingsCard.tsx
+===================================================================
+--- src/features/community-members/ui/CommunityMembersSettingsCard.tsx	
++++ src/features/community-members/ui/CommunityMembersSettingsCard.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { Crown, MoreHorizontal, Search, Shield } from "lucide-react";
+ import { nip19 } from "nostr-tools";
+ import * as React from "react";
+ import { toast } from "sonner";
+@@ -42,9 +43,9 @@
+     !trimmedDisplayName.toLowerCase().startsWith("npub1")
+   ) {
+     return trimmedDisplayName;
+   }
+-  return member.role === "owner" ? "Community owner" : "Unnamed member";
++  return member.role === "owner" ? t("Community owner") : t("Unnamed member");
+ }
+ 
+ function npubFromPubkey(pubkey: string): string | null {
+   try {
+@@ -68,8 +69,9 @@
+ }: {
+   displayName: string;
+   pubkey: string;
+ }) {
++  useLocale();
+   const npub = npubFromPubkey(pubkey) ?? UNAVAILABLE_KEY_LABEL;
+   return (
+     <span className="inline-grid min-w-0 max-w-full grid-cols-1" title={npub}>
+       <span
+@@ -98,8 +100,9 @@
+   currentPubkey?: string;
+   profile?: UserProfileSummary;
+   member: RelayMember;
+ }) {
++  useLocale();
+   const removeMutation = useRemoveRelayMemberMutation();
+   const changeRoleMutation = useChangeRelayMemberRoleMutation();
+   const isSelf = currentPubkey
+     ? normalizePubkey(currentPubkey) === normalizePubkey(member.pubkey)
+@@ -124,9 +127,9 @@
+     } catch (error) {
+       toast.error(
+         error instanceof Error
+           ? error.message
+-          : "Couldn’t update this community member.",
++          : t("Couldn’t update this community member."),
+       );
+     }
+   }
+ 
+@@ -136,9 +139,11 @@
+       data-testid={`relay-member-row-${member.pubkey}`}
+     >
+       <UserProfilePopover
+         pubkey={member.pubkey}
+-        triggerAriaLabel={`Open profile for ${displayName}`}
++        triggerAriaLabel={t("Open profile for {value0}", {
++          value0: displayName,
++        })}
+         triggerElement="span"
+       >
+         <ProfileAvatar
+           avatarUrl={profile?.avatarUrl ?? null}
+@@ -163,19 +168,21 @@
+         <div
+           className="flex items-center gap-1.5 text-xs text-muted-foreground/70"
+           data-settings-subcopy
+         >
+-          <span className="shrink-0 capitalize">{member.role}</span>
++          <span className="shrink-0 capitalize">{t(member.role)}</span>
+           <span aria-hidden="true" className="shrink-0">
+             ·
+           </span>
+-          <span className="shrink-0">Added {formatDate(member.createdAt)}</span>
++          <span className="shrink-0">
++            {t("Added")} {formatDate(member.createdAt)}
++          </span>
+           {isSelf ? (
+             <>
+               <span aria-hidden="true" className="shrink-0">
+                 ·
+               </span>
+-              <span className="shrink-0">You</span>
++              <span className="shrink-0">{t("You")}</span>
+             </>
+           ) : null}
+         </div>
+       </div>
+@@ -183,9 +190,9 @@
+       {hasActions ? (
+         <DropdownMenu modal={false}>
+           <DropdownMenuTrigger asChild>
+             <Button
+-              aria-label={`Actions for ${displayName}`}
++              aria-label={t("Actions for {value0}", { value0: displayName })}
+               data-testid={`relay-member-actions-${member.pubkey}`}
+               disabled={isBusy}
+               size="icon"
+               variant="ghost"
+@@ -206,9 +213,9 @@
+                     "Made community admin",
+                   )
+                 }
+               >
+-                Make admin
++                {t("Make admin")}{" "}
+               </DropdownMenuItem>
+             ) : null}
+             {canDemote ? (
+               <DropdownMenuItem
+@@ -222,9 +229,9 @@
+                     "Made community member",
+                   )
+                 }
+               >
+-                Make member
++                {t("Make member")}{" "}
+               </DropdownMenuItem>
+             ) : null}
+             {canRemove && (canPromote || canDemote) ? (
+               <DropdownMenuSeparator />
+@@ -238,9 +245,9 @@
+                     "Removed community member",
+                   )
+                 }
+               >
+-                Remove from community
++                {t("Remove from community")}{" "}
+               </DropdownMenuItem>
+             ) : null}
+           </DropdownMenuContent>
+         </DropdownMenu>
+@@ -253,8 +260,9 @@
+   currentPubkey,
+ }: {
+   currentPubkey?: string;
+ }) {
++  useLocale();
+   const myMembershipQuery = useMyRelayMembershipLookupQuery();
+   const currentRole = myMembershipQuery.data?.membership?.role ?? null;
+   const canManageRelay = currentRole === "owner" || currentRole === "admin";
+   const membersQuery = useRelayMembersQuery(canManageRelay);
+@@ -294,9 +302,9 @@
+   if (myMembershipQuery.isLoading) {
+     return (
+       <section className="min-w-0" data-testid="settings-community-members">
+         <p className="text-sm text-muted-foreground">
+-          Checking invite permissions…
++          {t("Checking invite permissions…")}{" "}
+         </p>
+       </section>
+     );
+   }
+@@ -312,19 +320,19 @@
+           <Button
+             data-testid="community-invite-dialog-trigger"
+             onClick={() => setInviteDialogOpen(true)}
+           >
+-            Invite to community
++            {t("Invite to community")}{" "}
+           </Button>
+         }
+-        title="Invites"
+-        description="Manage members and community access."
++        title={t("Invites")}
++        description={t("Manage members and community access.")}
+       />
+ 
+       <SettingsOptionGroup
+         title={
+           <>
+-            Members
++            {t("Members")}{" "}
+             {members.length > 0 ? (
+               <span className="ml-1.5 font-normal">{members.length}</span>
+             ) : null}
+           </>
+@@ -338,9 +346,9 @@
+               autoCorrect="off"
+               className="w-full rounded-lg border border-border/70 bg-background py-2 pl-9 pr-3 text-sm placeholder:text-muted-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+               data-testid="community-members-search"
+               onChange={(event) => setSearch(event.target.value)}
+-              placeholder="Search members"
++              placeholder={t("Search members")}
+               spellCheck={false}
+               type="text"
+               value={search}
+             />
+@@ -353,17 +361,17 @@
+           ) : null}
+ 
+           {membersQuery.isLoading ? (
+             <p className="py-3 text-sm text-muted-foreground">
+-              Loading community members…
++              {t("Loading community members…")}{" "}
+             </p>
+           ) : members.length === 0 ? (
+             <p className="rounded-lg border border-dashed border-border/70 px-3 py-6 text-center text-sm text-muted-foreground">
+-              No community members yet.
++              {t("No community members yet.")}{" "}
+             </p>
+           ) : filteredMembers.length === 0 ? (
+             <p className="rounded-lg border border-dashed border-border/70 px-3 py-6 text-center text-sm text-muted-foreground">
+-              No members match your search.
++              {t("No members match your search.")}{" "}
+             </p>
+           ) : (
+             <VirtualizedList
+               className="max-h-[28rem] divide-y divide-border/60"

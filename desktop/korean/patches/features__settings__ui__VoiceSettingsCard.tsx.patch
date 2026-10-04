@@ -1,0 +1,237 @@
+Index: src/features/settings/ui/VoiceSettingsCard.tsx
+===================================================================
+--- src/features/settings/ui/VoiceSettingsCard.tsx	
++++ src/features/settings/ui/VoiceSettingsCard.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { ChevronDown, Play, Trash2, Upload, Volume2 } from "lucide-react";
+ 
+ import { invokeTauri } from "@/shared/api/tauri";
+@@ -46,8 +47,9 @@
+   registry: VoiceRegistryEntry[];
+ };
+ 
+ export function VoiceSettingsCard() {
++  useLocale();
+   const [settings, setSettings] = React.useState<TtsSettings | null>(null);
+   const [registry, setRegistry] = React.useState<VoiceRegistryEntry[]>([]);
+   const [busy, setBusy] = React.useState(false);
+   const [previewing, setPreviewing] = React.useState(false);
+@@ -71,9 +73,9 @@
+         if (!disposed) {
+           setError(
+             loadError instanceof Error
+               ? loadError.message
+-              : "Voice settings could not be loaded.",
++              : t("Voice settings could not be loaded."),
+           );
+         }
+       });
+     return () => {
+@@ -105,9 +107,9 @@
+       }
+       setError(
+         saveError instanceof Error
+           ? saveError.message
+-          : "Voice settings could not be saved.",
++          : t("Voice settings could not be saved."),
+       );
+     } finally {
+       setBusy(false);
+     }
+@@ -124,9 +126,9 @@
+     } catch (saveError) {
+       setError(
+         saveError instanceof Error
+           ? saveError.message
+-          : "Voice settings could not be saved.",
++          : t("Voice settings could not be saved."),
+       );
+     } finally {
+       setBusy(false);
+     }
+@@ -146,9 +148,9 @@
+     } catch (importError) {
+       setError(
+         importError instanceof Error
+           ? importError.message
+-          : "Voice could not be imported.",
++          : t("Voice could not be imported."),
+       );
+     } finally {
+       setBusy(false);
+     }
+@@ -168,9 +170,9 @@
+     } catch (deleteError) {
+       setError(
+         deleteError instanceof Error
+           ? deleteError.message
+-          : "Voice could not be deleted.",
++          : t("Voice could not be deleted."),
+       );
+     } finally {
+       setBusy(false);
+     }
+@@ -186,27 +188,31 @@
+ 
+   return (
+     <section className="min-w-0" data-testid="settings-voice">
+       <SettingsSectionHeader
+-        title="Voice"
+-        description="Choose whether Buzz reads new agent responses aloud during an active huddle."
++        title={t("Voice")}
++        description={t(
++          "Choose whether Buzz reads new agent responses aloud during an active huddle.",
++        )}
+       />
+ 
+       <SettingsOptionGroupList>
+-        <SettingsOptionGroup title="Playback">
++        <SettingsOptionGroup title={t("Playback")}>
+           <SettingsOptionRow>
+             <div className="min-w-0">
+               <label
+                 className="text-sm font-medium"
+                 htmlFor="agent-text-to-speech-switch"
+               >
+-                Agent text to speech
++                {t("Agent text to speech")}{" "}
+               </label>
+               <p
+                 className="text-sm text-muted-foreground/70"
+                 data-settings-subcopy
+               >
+-                Read new agent messages aloud in the order they arrive.
++                {t(
++                  "Read new agent messages aloud in the order they arrive.",
++                )}{" "}
+               </p>
+             </div>
+             <Switch
+               checked={enabled}
+@@ -227,25 +233,27 @@
+             !enabled && "pointer-events-none opacity-45",
+           )}
+           data-testid="pocket-voice-controls"
+         >
+-          <SettingsOptionGroup title="Voice">
++          <SettingsOptionGroup title={t("Voice")}>
+             <SettingsOptionRow>
+               <div className="min-w-0">
+-                <p className="text-sm font-medium">Pocket TTS voice</p>
++                <p className="text-sm font-medium">{t("Pocket TTS voice")}</p>
+                 <p
+                   className="text-sm text-muted-foreground/70"
+                   data-settings-subcopy
+                 >
+-                  Voice files stay private on this device.
++                  {t("Voice files stay private on this device.")}{" "}
+                 </p>
+               </div>
+ 
+               <div className="flex shrink-0 items-center gap-2">
+                 <DropdownMenu>
+                   <DropdownMenuTrigger asChild>
+                     <Button
+-                      aria-label={`Pocket TTS voice: ${selectedVoice?.displayName ?? "Mary"}`}
++                      aria-label={t("Pocket TTS voice: {value0}", {
++                        value0: selectedVoice?.displayName ?? "Mary",
++                      })}
+                       className="min-w-32 justify-between"
+                       data-testid="pocket-voice-selector"
+                       disabled={controlsDisabled}
+                       variant="outline"
+@@ -277,9 +285,11 @@
+                     </DropdownMenuRadioGroup>
+                   </DropdownMenuContent>
+                 </DropdownMenu>
+                 <Button
+-                  aria-label={`Preview ${selectedVoice?.displayName ?? "Mary"}`}
++                  aria-label={t("Preview {value0}", {
++                    value0: selectedVoice?.displayName ?? "Mary",
++                  })}
+                   data-testid="pocket-voice-preview"
+                   disabled={controlsDisabled || previewing || !selectedVoice}
+                   onClick={() => {
+                     if (!selectedVoice) return;
+@@ -291,9 +301,9 @@
+                       .catch((previewError) => {
+                         setError(
+                           previewError instanceof Error
+                             ? previewError.message
+-                            : "Voice preview could not be played.",
++                            : t("Voice preview could not be played."),
+                         );
+                       })
+                       .finally(() => setPreviewing(false));
+                   }}
+@@ -304,9 +314,9 @@
+                     <Volume2 className="h-4 w-4 animate-pulse" />
+                   ) : (
+                     <Play className="h-4 w-4" />
+                   )}
+-                  Preview
++                  {t("Preview")}{" "}
+                 </Button>
+                 <Button
+                   data-testid="pocket-voice-import"
+                   disabled={controlsDisabled}
+@@ -314,13 +324,15 @@
+                   size="sm"
+                   variant="outline"
+                 >
+                   <Upload className="h-4 w-4" />
+-                  Add voice
++                  {t("Add voice")}{" "}
+                 </Button>
+                 {selectedVoice?.key.startsWith("pocket:imported:") && (
+                   <Button
+-                    aria-label={`Delete ${selectedVoice.displayName}`}
++                    aria-label={t("Delete {value0}", {
++                      value0: selectedVoice.displayName,
++                    })}
+                     data-testid="pocket-voice-delete"
+                     disabled={controlsDisabled}
+                     onClick={() => setDeleteCandidate(selectedVoice)}
+                     size="icon"
+@@ -350,19 +362,23 @@
+         open={deleteCandidate !== null}
+       >
+         <AlertDialogContent>
+           <AlertDialogHeader>
+-            <AlertDialogTitle>Delete imported voice?</AlertDialogTitle>
++            <AlertDialogTitle>{t("Delete imported voice?")}</AlertDialogTitle>
+             <AlertDialogDescription>
+               {deleteCandidate
+-                ? `${deleteCandidate.displayName} and its local audio file will be removed.`
+-                : "This imported voice and its local audio file will be removed."}
++                ? t("{value0} and its local audio file will be removed.", {
++                    value0: deleteCandidate.displayName,
++                  })
++                : t(
++                    "This imported voice and its local audio file will be removed.",
++                  )}
+               {selectedVoice?.key === deleteCandidate?.key &&
+-                " Mary will be selected instead."}
++                t(" Mary will be selected instead.")}
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogFooter>
+-            <AlertDialogCancel disabled={busy}>Cancel</AlertDialogCancel>
++            <AlertDialogCancel disabled={busy}>{t("Cancel")}</AlertDialogCancel>
+             <AlertDialogAction
+               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+               data-testid="confirm-pocket-voice-delete"
+               disabled={busy || !deleteCandidate}
+@@ -372,9 +388,9 @@
+                   void deletePocketVoice(deleteCandidate.key);
+                 }
+               }}
+             >
+-              Delete voice
++              {t("Delete voice")}{" "}
+             </AlertDialogAction>
+           </AlertDialogFooter>
+         </AlertDialogContent>
+       </AlertDialog>

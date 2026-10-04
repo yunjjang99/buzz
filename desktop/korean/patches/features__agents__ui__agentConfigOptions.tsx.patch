@@ -1,0 +1,76 @@
+Index: src/features/agents/ui/agentConfigOptions.tsx
+===================================================================
+--- src/features/agents/ui/agentConfigOptions.tsx	
++++ src/features/agents/ui/agentConfigOptions.tsx	
+@@ -1,4 +1,5 @@
++import { t } from "@buzz-korean/locale";
+ import type {
+   AcpRuntimeCatalogEntry,
+   GlobalAgentConfig,
+ } from "@/shared/api/types";
+@@ -140,9 +141,11 @@
+ };
+ 
+ const DEFAULT_MODEL_OPTION: PersonaModelOption = {
+   id: "",
+-  label: "Default model",
++  get label() {
++    return t("Default model");
++  },
+ };
+ 
+ export const PERSONA_LLM_PROVIDER_OPTIONS: readonly PersonaModelOption[] = [
+   { id: "anthropic", label: "Anthropic" },
+@@ -315,9 +318,9 @@
+ 
+ export function providerDisplayLabel(providerId: string) {
+   const trimmedProvider = providerId.trim();
+   return trimmedProvider === "relay-mesh"
+-    ? "Buzz shared compute"
++    ? t("Buzz shared compute")
+     : trimmedProvider;
+ }
+ 
+ export function getDefaultLlmProviderLabel(
+@@ -325,10 +328,12 @@
+   globalProvider?: string,
+ ) {
+   const trimmedGlobal = (globalProvider ?? "").trim();
+   return trimmedGlobal
+-    ? `Use agent defaults (${providerDisplayLabel(trimmedGlobal)})`
+-    : "Select a provider\u2026";
++    ? t("Use agent defaults ({name})", {
++        name: providerDisplayLabel(trimmedGlobal),
++      })
++    : t("Select a provider…");
+ }
+ 
+ /** Returns the zero-value model option label.
+  *
+@@ -338,10 +343,10 @@
+  */
+ export function getDefaultLlmModelLabel(globalModel?: string) {
+   const trimmedGlobal = (globalModel ?? "").trim();
+   return trimmedGlobal
+-    ? `Use agent defaults (${trimmedGlobal})`
+-    : "Default model";
++    ? t("Use agent defaults ({name})", { name: trimmedGlobal })
++    : t("Default model");
+ }
+ 
+ /**
+  * Builds the base model dropdown options for the template dialog
+@@ -413,9 +418,12 @@
+   }
+ 
+   return [
+     ...options,
+-    { id: trimmedProvider, label: `${trimmedProvider} (current)` },
++    {
++      id: trimmedProvider,
++      label: t("{name} (current)", { name: trimmedProvider }),
++    },
+   ];
+ }
+ 
+ /**

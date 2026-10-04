@@ -1,0 +1,195 @@
+Index: src/features/community-members/ui/CommunityMembersCard.tsx
+===================================================================
+--- src/features/community-members/ui/CommunityMembersCard.tsx	
++++ src/features/community-members/ui/CommunityMembersCard.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { MoreHorizontal, Plus, Shield, ShieldCheck, User } from "lucide-react";
+ import { toast } from "sonner";
+ 
+@@ -27,18 +28,19 @@
+   const date = new Date(dateString);
+   const now = new Date();
+   const diffMs = now.getTime() - date.getTime();
+   const diffMins = Math.floor(diffMs / 60_000);
+-  if (diffMins < 1) return "just now";
+-  if (diffMins < 60) return `${diffMins}m ago`;
++  if (diffMins < 1) return t("just now");
++  if (diffMins < 60) return t("{value0}m ago", { value0: diffMins });
+   const diffHours = Math.floor(diffMins / 60);
+-  if (diffHours < 24) return `${diffHours}h ago`;
++  if (diffHours < 24) return t("{value0}h ago", { value0: diffHours });
+   const diffDays = Math.floor(diffHours / 24);
+-  if (diffDays < 30) return `${diffDays}d ago`;
++  if (diffDays < 30) return t("{value0}d ago", { value0: diffDays });
+   return date.toLocaleDateString();
+ }
+ 
+ function RoleBadge({ role }: { role: RelayMemberRole }) {
++  useLocale();
+   return (
+     <span
+       className={cn(
+         "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+@@ -52,8 +54,9 @@
+   );
+ }
+ 
+ function RoleIcon({ role }: { role: RelayMemberRole }) {
++  useLocale();
+   switch (role) {
+     case "owner":
+       return <ShieldCheck className="h-4 w-4 shrink-0 text-primary" />;
+     case "admin":
+@@ -77,8 +80,9 @@
+   viewerRole: RelayMemberRole | null;
+   onRemove: (member: RelayMember) => void;
+   onChangeRole: (pubkey: string, newRole: string) => void;
+ }) {
++  useLocale();
+   const isSelf = currentPubkey?.toLowerCase() === member.pubkey.toLowerCase();
+   const isOwner = viewerRole === "owner";
+   const isAdmin = viewerRole === "admin";
+ 
+@@ -104,14 +108,18 @@
+               {displayName || truncateNpub(member.pubkey)}
+             </span>
+             <RoleBadge role={member.role} />
+             {isSelf ? (
+-              <span className="text-xs text-muted-foreground">(you)</span>
++              <span className="text-xs text-muted-foreground">
++                {t("(you)")}
++              </span>
+             ) : null}
+           </div>
+           <p className="flex items-center gap-2 text-xs text-muted-foreground">
+             <PubKey className="text-xs" pubkey={member.pubkey} />
+-            <span>Joined {formatRelativeDate(member.createdAt)}</span>
++            <span>
++              {t("Joined")} {formatRelativeDate(member.createdAt)}
++            </span>
+           </p>
+         </div>
+       </div>
+ 
+@@ -123,9 +131,9 @@
+               size="sm"
+               variant="ghost"
+             >
+               <MoreHorizontal className="h-4 w-4" />
+-              <span className="sr-only">Actions</span>
++              <span className="sr-only">{t("Actions")}</span>
+             </Button>
+           </DropdownMenuTrigger>
+           <DropdownMenuContent align="end">
+             {canChangeRole ? (
+@@ -133,16 +141,16 @@
+                 {member.role === "member" ? (
+                   <DropdownMenuItem
+                     onClick={() => onChangeRole(member.pubkey, "admin")}
+                   >
+-                    Make Admin
++                    {t("Make Admin")}{" "}
+                   </DropdownMenuItem>
+                 ) : null}
+                 {member.role === "admin" ? (
+                   <DropdownMenuItem
+                     onClick={() => onChangeRole(member.pubkey, "member")}
+                   >
+-                    Make Member
++                    {t("Make Member")}{" "}
+                   </DropdownMenuItem>
+                 ) : null}
+               </>
+             ) : null}
+@@ -151,9 +159,9 @@
+               <DropdownMenuItem
+                 className="text-destructive focus:text-destructive"
+                 onClick={() => onRemove(member)}
+               >
+-                Remove
++                {t("Remove")}{" "}
+               </DropdownMenuItem>
+             ) : null}
+           </DropdownMenuContent>
+         </DropdownMenu>
+@@ -168,8 +176,9 @@
+   currentPubkey,
+ }: {
+   currentPubkey?: string;
+ }) {
++  useLocale();
+   const membersQuery = useRelayMembersQuery();
+   const myMembershipQuery = useMyRelayMembershipQuery();
+   const changeRoleMutation = useChangeRelayMemberRoleMutation();
+ 
+@@ -200,13 +209,13 @@
+     changeRoleMutation.mutate(
+       { pubkey, newRole },
+       {
+         onSuccess: () => {
+-          toast.success(`Role changed to ${newRole}`);
++          toast.success(t("Role changed to {value0}", { value0: t(newRole) }));
+         },
+         onError: (error) => {
+           toast.error(
+-            error instanceof Error ? error.message : "Failed to change role",
++            error instanceof Error ? error.message : t("Failed to change role"),
+           );
+         },
+       },
+     );
+@@ -218,13 +227,13 @@
+         <div className="min-w-0">
+           <div className="flex items-center gap-2">
+             <Shield className="h-4 w-4 text-muted-foreground" />
+             <h2 className="text-sm font-semibold tracking-tight">
+-              Community Members
++              {t("Community Members")}{" "}
+             </h2>
+           </div>
+           <p className="mt-1 text-sm text-muted-foreground">
+-            Manage who has access to this relay.
++            {t("Manage who has access to this relay.")}{" "}
+           </p>
+         </div>
+ 
+         {canManage ? (
+@@ -233,9 +242,9 @@
+             onClick={() => setAddDialogOpen(true)}
+             size="sm"
+           >
+             <Plus className="h-4 w-4" />
+-            Add Member
++            {t("Add Member")}{" "}
+           </Button>
+         ) : null}
+       </div>
+ 
+@@ -245,9 +254,11 @@
+         </p>
+       ) : null}
+ 
+       {membersQuery.isLoading ? (
+-        <p className="mt-4 text-sm text-muted-foreground">Loading members...</p>
++        <p className="mt-4 text-sm text-muted-foreground">
++          {t("Loading members...")}
++        </p>
+       ) : members.length > 0 ? (
+         <div className="mt-4 space-y-2">
+           {members.map((member) => (
+             <MemberRow
+@@ -263,9 +274,11 @@
+             />
+           ))}
+         </div>
+       ) : membersQuery.isSuccess ? (
+-        <p className="mt-4 text-sm text-muted-foreground">No members yet.</p>
++        <p className="mt-4 text-sm text-muted-foreground">
++          {t("No members yet.")}
++        </p>
+       ) : null}
+ 
+       <AddMemberDialog
+         isOwner={isOwner}

@@ -1,0 +1,29 @@
+Index: src/features/agents/ui/HarnessCatalogRetryNotice.tsx
+===================================================================
+--- src/features/agents/ui/HarnessCatalogRetryNotice.tsx	
++++ src/features/agents/ui/HarnessCatalogRetryNotice.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { AlertCircle } from "lucide-react";
+ 
+ import { useRetryBootWarm } from "@/features/agents/hooks";
+ import { Button } from "@/shared/ui/button";
+@@ -10,15 +11,16 @@
+  * harness probe re-runs in place via `useRetryBootWarm`, so the create/edit
+  * picker and Agent defaults surfaces both render this instead of a dead end.
+  */
+ export function HarnessCatalogRetryNotice() {
++  useLocale();
+   const retryBootWarm = useRetryBootWarm();
+   return (
+     <div className="flex flex-wrap items-center gap-2 text-sm text-destructive">
+       <AlertCircle className="size-4 shrink-0" />
+-      <span>Couldn't detect agent harnesses.</span>
++      <span>{t("Couldn't detect agent harnesses.")}</span>
+       <Button onClick={retryBootWarm} size="sm" variant="outline">
+-        Try again
++        {t("Try again")}{" "}
+       </Button>
+     </div>
+   );
+ }

@@ -1,0 +1,94 @@
+Index: src/features/settings/EncryptedBackupProvider.tsx
+===================================================================
+--- src/features/settings/EncryptedBackupProvider.tsx	
++++ src/features/settings/EncryptedBackupProvider.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { toast } from "sonner";
+ 
+ import {
+@@ -38,8 +39,9 @@
+ }: {
+   children: React.ReactNode;
+   onOpenSettings: () => void;
+ }) {
++  useLocale();
+   const [state, dispatch] = React.useReducer(
+     encryptedBackupReducer,
+     initialEncryptedBackupState,
+   );
+@@ -97,9 +99,9 @@
+             requestId,
+             message:
+               err instanceof Error
+                 ? err.message
+-                : "Failed to encrypt your key.",
++                : t("Failed to encrypt your key."),
+           });
+         });
+     };
+     const timer = window.setTimeout(
+@@ -114,9 +116,11 @@
+ 
+   React.useEffect(() => {
+     if (state.downloadPending) {
+       toast.loading("Preparing backup…", {
+-        description: "You can close this window while Buzz finishes.",
++        get description() {
++          return t("You can close this window while Buzz finishes.");
++        },
+         duration: Number.POSITIVE_INFINITY,
+         id: BACKUP_READY_TOAST_ID,
+       });
+       return;
+@@ -141,9 +145,11 @@
+   const showAvailableToast = React.useCallback(
+     (description: string, error = false) => {
+       const options = {
+         action: {
+-          label: "Open settings",
++          get label() {
++            return t("Open settings");
++          },
+           onClick: () => onOpenSettingsRef.current(),
+         },
+         description,
+         id: BACKUP_READY_TOAST_ID,
+@@ -159,27 +165,31 @@
+       if (isSaving) return;
+       setIsSaving(true);
+       setSaveError(null);
+       toast("Saving backup…", {
+-        description: "The download window will open when it’s ready.",
++        get description() {
++          return t("The download window will open when it’s ready.");
++        },
+         id: BACKUP_READY_TOAST_ID,
+       });
+       try {
+         const path = await saveNcryptsecCopy(ncryptsec);
+         if (mountedRef.current) {
+           showAvailableToast(
+             path === null
+-              ? "Your backup will be available to download for 5 minutes."
+-              : "You can download another copy for 5 minutes.",
++              ? t("Your backup will be available to download for 5 minutes.")
++              : t("You can download another copy for 5 minutes."),
+           );
+         }
+       } catch (err) {
+         if (!mountedRef.current) return;
+         const message =
+-          err instanceof Error ? err.message : "Failed to save your key.";
++          err instanceof Error ? err.message : t("Failed to save your key.");
+         setSaveError(message);
+         showAvailableToast(
+-          `${message} It will be available to download for 5 minutes.`,
++          t("{value0} It will be available to download for 5 minutes.", {
++            value0: message,
++          }),
+           true,
+         );
+       } finally {
+         if (mountedRef.current) setIsSaving(false);

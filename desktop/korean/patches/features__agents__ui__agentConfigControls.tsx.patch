@@ -1,0 +1,234 @@
+Index: src/features/agents/ui/agentConfigControls.tsx
+===================================================================
+--- src/features/agents/ui/agentConfigControls.tsx	
++++ src/features/agents/ui/agentConfigControls.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ /**
+  * Shared provider and model field components for agent dialogs.
+  *
+  * Both CreateAgentDialog (local mode) and AgentInstanceEditDialog import these
+@@ -48,9 +49,11 @@
+ ): AgentDropdownOption[] {
+   if (options.length === 0 && !loading) {
+     options.push({
+       disabled: true,
+-      label: "No models found",
++      get label() {
++        return t("No models found");
++      },
+       value: MODEL_NO_MODELS_VALUE,
+     });
+   }
+   return options;
+@@ -64,12 +67,12 @@
+   discoveredModelOptions: readonly PersonaModelOption[] | null;
+   loading: boolean;
+   status: PersonaModelDiscoveryStatus | null;
+ }): string | null {
+-  if (loading) return "Loading models...";
++  if (loading) return t("Loading models...");
+   if (status !== null) return status.message;
+   return discoveredModelOptions !== null
+-    ? "Saved changes take effect on the next start."
++    ? t("Saved changes take effect on the next start.")
+     : null;
+ }
+ 
+ function optionTestId(testId: string | undefined, value: string) {
+@@ -83,8 +86,9 @@
+   ...props
+ }: React.ComponentProps<typeof Input> & {
+   usePersonaInputStyle?: boolean;
+ }) {
++  useLocale();
+   const input = (
+     <Input
+       {...props}
+       className={cn(
+@@ -141,8 +145,9 @@
+   selectedLabel?: React.ReactNode;
+   testId?: string;
+   value: string;
+ }) {
++  useLocale();
+   const [open, setOpen] = React.useState(false);
+   const [query, setQuery] = React.useState("");
+   const selectedOption = options.find((option) => option.value === value);
+   const isPlaceholderSelection =
+@@ -228,14 +233,14 @@
+                 aria-hidden="true"
+                 className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-foreground/45"
+               />
+               <Input
+-                aria-label="Search models"
++                aria-label={t("Search models")}
+                 autoFocus
+                 className="h-9 rounded-xl border-foreground/10 bg-white pl-9 text-sm"
+                 data-testid={testId ? `${testId}-search` : undefined}
+                 onChange={(event) => setQuery(event.target.value)}
+-                placeholder="Search models…"
++                placeholder={t("Search models…")}
+                 value={query}
+               />
+             </div>
+           ) : null}
+@@ -244,9 +249,9 @@
+               className="px-3 py-2 text-sm text-foreground/55"
+               data-testid={testId ? `${testId}-empty` : undefined}
+             >
+               {showSearch && query.trim().length > 0
+-                ? "No matches"
++                ? t("No matches")
+                 : emptyOptionsLabel}
+             </p>
+           ) : null}
+           {filteredOptions.map((option) => {
+@@ -301,8 +306,9 @@
+   children: React.ReactNode;
+   htmlFor: string;
+   isRequired: boolean;
+ }) {
++  useLocale();
+   return (
+     <label className={cn("text-sm font-medium", className)} htmlFor={htmlFor}>
+       {children}
+       {isRequired ? (
+@@ -328,9 +334,9 @@
+   return (
+     defaultModelLabel ??
+     discoveredModelOptions?.find((option) => option.id.trim() === "")?.label ??
+     (isSharedCompute
+-      ? "Auto (collective when available)"
++      ? t("Auto (collective when available)")
+       : getDefaultLlmModelLabel(globalModel))
+   );
+ }
+ 
+@@ -406,8 +412,9 @@
+   useChevronIcon?: boolean;
+   /** Match custom agent text inputs when this field is shown in that flow. */
+   usePersonaInputStyle?: boolean;
+ }) {
++  useLocale();
+   const trimmedModel = model.trim();
+   const isSharedCompute = provider?.trim() === "relay-mesh";
+   const discoveredDefaultOption = discoveredModelOptions?.find(
+     (option) => option.id.trim() === "",
+@@ -497,16 +504,25 @@
+     ...(modelDiscoveryLoading && discoveredModelOptions === null
+       ? [
+           {
+             disabled: true,
+-            label: "Loading models...",
++            get label() {
++              return t("Loading models...");
++            },
+             value: MODEL_DISCOVERY_LOADING_VALUE,
+           },
+         ]
+       : []),
+     ...(!isSharedCompute &&
+     (showCustomModelOption || modelSelectValue === CUSTOM_MODEL_DROPDOWN_VALUE)
+-      ? [{ label: "Custom model...", value: CUSTOM_MODEL_DROPDOWN_VALUE }]
++      ? [
++          {
++            get label() {
++              return t("Custom model...");
++            },
++            value: CUSTOM_MODEL_DROPDOWN_VALUE,
++          },
++        ]
+       : []),
+   ];
+   // An opened dropdown must never show a blank popover. When all the above
+   // yields an empty list and discovery has finished, add a disabled sentinel
+@@ -519,9 +535,9 @@
+     modelDiscoveryLoading &&
+     discoveredModelOptions === null &&
+     trimmedModel.length === 0 &&
+     !isCustomModelEditing
+-      ? "Loading models..."
++      ? t("Loading models...")
+       : placeholder;
+   const statusMessage = resolveModelFieldStatusMessage({
+     discoveredModelOptions,
+     loading: modelDiscoveryLoading,
+@@ -574,9 +590,9 @@
+         className={labelClassName}
+         htmlFor={id}
+         isRequired={isRequired}
+       >
+-        Model
++        {t("Model")}{" "}
+       </RequiredFieldLabel>
+       {!useCustomSelect && useChevronIcon ? (
+         <div className="relative">
+           {modelSelect}
+@@ -589,13 +605,13 @@
+         modelSelect
+       )}
+       {showCustomModelInput ? (
+         <AgentConfigTextInput
+-          aria-label="Custom model ID"
++          aria-label={t("Custom model ID")}
+           autoCorrect="off"
+           disabled={disabled}
+           onChange={(event) => onModelChange(event.target.value)}
+-          placeholder="Custom model ID"
++          placeholder={t("Custom model ID")}
+           usePersonaInputStyle={usePersonaInputStyle}
+           value={model}
+         />
+       ) : null}
+@@ -622,8 +638,9 @@
+   onProviderChange: (value: string) => void;
+   provider: string;
+   selectedRuntime: AcpRuntimeCatalogEntry | undefined;
+ }) {
++  useLocale();
+   const trimmedProvider = provider.trim();
+   const providerOptions = getPersonaProviderOptions(
+     trimmedProvider,
+     selectedRuntime?.id ?? "",
+@@ -635,9 +652,9 @@
+ 
+   return (
+     <div className="space-y-1.5">
+       <RequiredFieldLabel htmlFor="agent-provider" isRequired={isRequired}>
+-        LLM provider
++        {t("LLM provider")}{" "}
+       </RequiredFieldLabel>
+       <select
+         aria-required={isRequired}
+         className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs disabled:cursor-not-allowed disabled:opacity-60"
+@@ -654,23 +671,25 @@
+             {option.id ? providerDisplayLabel(option.label) : option.label}
+           </option>
+         ))}
+         <option value={CUSTOM_PROVIDER_DROPDOWN_VALUE}>
+-          Custom provider...
++          {t("Custom provider...")}{" "}
+         </option>
+       </select>
+       {isCustomProviderEditing ? (
+         <Input
+-          aria-label="Custom provider ID"
++          aria-label={t("Custom provider ID")}
+           autoCorrect="off"
+           disabled={disabled}
+           onChange={(event) => onProviderChange(event.target.value)}
+-          placeholder="Custom provider ID"
++          placeholder={t("Custom provider ID")}
+           value={provider}
+         />
+       ) : null}
+       <p className="text-xs text-muted-foreground">
+-        Changing the provider updates the available model list immediately.
++        {t(
++          "Changing the provider updates the available model list immediately.",
++        )}{" "}
+       </p>
+     </div>
+   );
+ }

@@ -1,0 +1,63 @@
+Index: src/features/settings/ui/KeyboardShortcutsCard.tsx
+===================================================================
+--- src/features/settings/ui/KeyboardShortcutsCard.tsx	
++++ src/features/settings/ui/KeyboardShortcutsCard.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import {
+   getShortcutsByCategory,
+   getPlatformKeys,
+   type KeyboardShortcut,
+@@ -10,8 +11,9 @@
+ } from "./SettingsOptionGroup";
+ import { SettingsSectionHeader } from "./SettingsSectionHeader";
+ 
+ function KeyCombo({ shortcut }: { shortcut: KeyboardShortcut }) {
++  useLocale();
+   const keys = getPlatformKeys(shortcut);
+   // Split on "+" but keep "+" as a standalone key (e.g. for zoom-in "⌘+")
+   const parts = keys
+     .split(/(?<!\+)\+(?!\s*$)/)
+@@ -32,34 +34,37 @@
+   );
+ }
+ 
+ export function KeyboardShortcutsCard() {
++  useLocale();
+   const categories = getShortcutsByCategory();
+ 
+   return (
+     <section className="min-w-0" data-testid="settings-shortcuts">
+       <SettingsSectionHeader
+-        title="Keyboard shortcuts"
+-        description="All available keyboard shortcuts. Shortcuts are read-only."
++        title={t("Keyboard shortcuts")}
++        description={t(
++          "All available keyboard shortcuts. Shortcuts are read-only.",
++        )}
+       />
+ 
+       <SettingsOptionGroupList>
+         {[...categories.entries()].map(([category, shortcuts]) => (
+-          <SettingsOptionGroup key={category} title={category}>
++          <SettingsOptionGroup key={category} title={t(category)}>
+             {shortcuts.map((shortcut) => (
+               <SettingsOptionRow
+                 className="min-h-12 px-3 py-2"
+                 key={shortcut.id}
+               >
+                 <div className="min-w-0 flex-1">
+                   <span className="text-sm font-medium text-foreground">
+-                    {shortcut.label}
++                    {t(shortcut.label)}
+                   </span>
+                   <span
+                     className="ml-2 text-muted-foreground/70"
+                     data-settings-subcopy
+                   >
+-                    {shortcut.description}
++                    {t(shortcut.description)}
+                   </span>
+                 </div>
+                 <KeyCombo shortcut={shortcut} />
+               </SettingsOptionRow>

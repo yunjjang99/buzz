@@ -1,0 +1,24 @@
+Index: src/features/settings/ui/AgentDefaultsSettingsCard.tsx
+===================================================================
+--- src/features/settings/ui/AgentDefaultsSettingsCard.tsx	
++++ src/features/settings/ui/AgentDefaultsSettingsCard.tsx	
+@@ -1,13 +1,17 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { AgentDefaultsEditor } from "@/features/agents/ui/AgentDefaultsEditor";
+ import { SettingsOptionGroup } from "./SettingsOptionGroup";
+ 
+ export function AgentDefaultsSettingsCard() {
++  useLocale();
+   return (
+     <SettingsOptionGroup
+       data-testid="settings-global-agent-config"
+-      description="Provider, model, effort, and environment settings inherited by local agents. Agent-specific settings always take priority."
+-      title="Agent defaults"
++      description={t(
++        "Provider, model, effort, and environment settings inherited by local agents. Agent-specific settings always take priority.",
++      )}
++      title={t("Agent defaults")}
+     >
+       <div className="px-4 py-4">
+         <AgentDefaultsEditor layout="flat" />
+       </div>

@@ -2,13 +2,204 @@ Index: src/features/settings/ui/SettingsPanels.tsx
 ===================================================================
 --- src/features/settings/ui/SettingsPanels.tsx	
 +++ src/features/settings/ui/SettingsPanels.tsx	
-@@ -1,3 +1,5 @@
+@@ -1,4 +1,6 @@
 +import { t, useLocale } from "@buzz-korean/locale";
 +import { LanguageSetting } from "@buzz-korean/LanguageSetting";
  import { useMemo, useState } from "react";
  import { AnimatePresence, motion, useReducedMotion } from "motion/react";
  import {
-@@ -419,6 +421,7 @@
+   Archive,
+@@ -152,87 +154,119 @@
+ 
+ export const settingsSections: SettingsSectionDescriptor[] = [
+   {
+     value: "appearance",
+-    label: "Appearance",
++    get label() {
++      return t("Appearance");
++    },
+     icon: MonitorCog,
+   },
+   {
+     value: "profile",
+-    label: "Profile",
++    get label() {
++      return t("Profile");
++    },
+     icon: UserRound,
+   },
+   {
+     value: "notifications",
+-    label: "Notifications",
++    get label() {
++      return t("Notifications");
++    },
+     icon: BellRing,
+   },
+   {
+     value: "voice",
+-    label: "Voice",
++    get label() {
++      return t("Voice");
++    },
+     icon: Volume2,
+   },
+   {
+     value: "experimental",
+-    label: "Experiments",
++    get label() {
++      return t("Experiments");
++    },
+     icon: FlaskConical,
+   },
+   {
+     value: "agents",
+-    label: "Agents",
++    get label() {
++      return t("Agents");
++    },
+     icon: Bot,
+     featureGate: "managed-agents",
+   },
+   {
+     value: "channel-templates",
+-    label: "Channel templates",
++    get label() {
++      return t("Channel templates");
++    },
+     icon: LayoutTemplate,
+     featureGate: "channel-templates",
+   },
+   {
+     value: "compute",
+-    label: "Compute",
++    get label() {
++      return t("Compute");
++    },
+     icon: Cpu,
+   },
+   {
+     value: "shortcuts",
+-    label: "Shortcuts",
++    get label() {
++      return t("Shortcuts");
++    },
+     icon: Keyboard,
+   },
+   {
+     value: "hosted-communities",
+-    label: "Hosted communities",
++    get label() {
++      return t("Hosted communities");
++    },
+     icon: MessagesSquare,
+   },
+   {
+     value: "community-members",
+-    label: "Invites",
++    get label() {
++      return t("Invites");
++    },
+     icon: Ticket,
+   },
+   {
+     value: "relay-admin",
+-    label: "Admin",
++    get label() {
++      return t("Admin");
++    },
+     icon: ServerCog,
+   },
+   {
+     value: "custom-emoji",
+-    label: "Custom emoji",
++    get label() {
++      return t("Custom emoji");
++    },
+     icon: Smile,
+     featureGate: "custom-emoji",
+   },
+   {
+     value: "local-archive",
+-    label: "Local archive",
++    get label() {
++      return t("Local archive");
++    },
+     icon: Archive,
+   },
+   {
+     value: "mobile",
+-    label: "Mobile",
++    get label() {
++      return t("Mobile");
++    },
+     icon: Smartphone,
+   },
+   {
+     value: "updates",
+-    label: "Updates",
++    get label() {
++      return t("Updates");
++    },
+     icon: Download,
+   },
+ ];
+ 
+@@ -323,8 +357,9 @@
+   lightVars: ThemePreviewVars | null;
+   darkVars: ThemePreviewVars | null;
+   onSelect: () => void;
+ }) {
++  useLocale();
+   const darkName = getThemePair(lightName);
+   return (
+     <button
+       aria-pressed={isActive}
+@@ -367,8 +402,9 @@
+   name: SyntaxThemeName;
+   vars: ThemePreviewVars | null;
+   onSelect: () => void;
+ }) {
++  useLocale();
+   return (
+     <button
+       aria-pressed={isActive}
+       className="group flex w-[168px] shrink-0 flex-col items-center text-center focus-visible:outline-hidden"
+@@ -400,11 +436,29 @@
+ 
+ type AppearanceMode = "system" | "light" | "dark";
+ 
+ const APPEARANCE_MODE_OPTIONS = [
+-  { mode: "system" as const, label: "System", Icon: SunMoon },
+-  { mode: "light" as const, label: "Light", Icon: Sun },
+-  { mode: "dark" as const, label: "Dark", Icon: Moon },
++  {
++    mode: "system" as const,
++    get label() {
++      return t("System");
++    },
++    Icon: SunMoon,
++  },
++  {
++    mode: "light" as const,
++    get label() {
++      return t("Light");
++    },
++    Icon: Sun,
++  },
++  {
++    mode: "dark" as const,
++    get label() {
++      return t("Dark");
++    },
++    Icon: Moon,
++  },
+ ] as const;
+ 
+ // Reveal/hide motion for the accent picker: a small translate + opacity fade.
+ // The picker sits below the theme grid and reads as tucking up behind it, so
+@@ -418,8 +472,9 @@
+   ease: [0.23, 1, 0.32, 1] as const,
  };
  
  function ThemeSettingsCard() {
@@ -16,7 +207,9 @@ Index: src/features/settings/ui/SettingsPanels.tsx
    const {
      setTheme,
      selectedThemeName,
-@@ -637,11 +640,14 @@
+     themeName,
+@@ -636,13 +691,16 @@
+       className="flex min-h-0 flex-1 flex-col overflow-y-auto"
        data-testid="settings-theme"
      >
        <SettingsSectionHeader
@@ -33,7 +226,9 @@ Index: src/features/settings/ui/SettingsPanels.tsx
          <SettingsOptionGroup
            data-testid="appearance-theme-card"
            headerAction={
-@@ -657,10 +663,10 @@
+             showCommunityScope && activeCommunity ? (
+@@ -656,35 +714,35 @@
+             ) : null
            }
            title={
              <>
@@ -46,7 +241,7 @@ Index: src/features/settings/ui/SettingsPanels.tsx
                  </span>
                ) : null}
              </>
-@@ -668,22 +674,22 @@
+           }
          >
            <SettingsOptionRow data-testid="appearance-color-mode-row">
              <div className="min-w-0">
@@ -73,7 +268,9 @@ Index: src/features/settings/ui/SettingsPanels.tsx
                  Icon,
                }))}
                testId="appearance-color-mode-control"
-@@ -693,12 +699,12 @@
+               value={selectedMode}
+@@ -692,18 +750,20 @@
+           </SettingsOptionRow>
  
            <SettingsOptionRow data-testid="theme-style-row">
              <div className="min-w-0">
@@ -88,7 +285,16 @@ Index: src/features/settings/ui/SettingsPanels.tsx
                </p>
              </div>
              <button
-@@ -788,7 +794,7 @@
+-              aria-label={`Theme style, ${selectedThemeLabel}`}
++              aria-label={t("Theme style, {value0}", {
++                value0: selectedThemeLabel,
++              })}
+               aria-controls="theme-style-options"
+               aria-expanded={themeStyleExpanded}
+               className="flex h-auto min-w-0 items-center gap-2 rounded-md bg-transparent p-0 text-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-ring"
+               data-testid="theme-style-trigger"
+@@ -787,9 +847,9 @@
+         </SettingsOptionGroup>
  
          <SettingsOptionGroup
            data-testid="appearance-preferences-card"
@@ -97,3 +303,4 @@ Index: src/features/settings/ui/SettingsPanels.tsx
          >
            <ConversationDisplaySettings />
            <LinkPreviewStyleSetting />
+           <ThreadLayoutSetting />

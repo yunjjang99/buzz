@@ -1,0 +1,255 @@
+Index: src/features/custom-emoji/ui/CustomEmojiSettingsCard.tsx
+===================================================================
+--- src/features/custom-emoji/ui/CustomEmojiSettingsCard.tsx	
++++ src/features/custom-emoji/ui/CustomEmojiSettingsCard.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { ImagePlus, Trash2 } from "lucide-react";
+ import * as React from "react";
+ import { toast } from "sonner";
+ 
+@@ -28,8 +29,9 @@
+  * emoji. When shortcodes collide across members, the palette shows one
+  * deterministic winner (see `unionCustomEmoji`).
+  */
+ export function CustomEmojiSettingsCard() {
++  useLocale();
+   const { data: own = [], isLoading: ownLoading } = useOwnCustomEmojiQuery();
+   const { data: community = [], isLoading: communityLoading } =
+     useCustomEmojiQuery();
+   const setEmoji = useSetCustomEmojiMutation();
+@@ -75,9 +77,9 @@
+     } catch (error) {
+       toast.error(
+         error instanceof Error
+           ? error.message
+-          : "Failed to upload emoji image.",
++          : t("Failed to upload emoji image."),
+       );
+     } finally {
+       setIsUploading(false);
+     }
+@@ -91,12 +93,12 @@
+         url: pendingUpload.url,
+       });
+       setName("");
+       setPendingUpload(null);
+-      toast.success(`Added :${stored}:`);
++      toast.success(t("Added :{value0}:", { value0: stored }));
+     } catch (error) {
+       toast.error(
+-        error instanceof Error ? error.message : "Failed to add emoji.",
++        error instanceof Error ? error.message : t("Failed to add emoji."),
+       );
+     }
+   }, [normalized, pendingUpload, setEmoji]);
+ 
+@@ -108,12 +110,12 @@
+   const handleRemove = React.useCallback(
+     async (shortcode: string) => {
+       try {
+         await removeEmoji.mutateAsync(shortcode);
+-        toast.success(`Removed :${shortcode}:`);
++        toast.success(t("Removed :{value0}:", { value0: shortcode }));
+       } catch (error) {
+         toast.error(
+-          error instanceof Error ? error.message : "Failed to remove emoji.",
++          error instanceof Error ? error.message : t("Failed to remove emoji."),
+         );
+       }
+     },
+     [removeEmoji],
+@@ -125,13 +127,15 @@
+ 
+   return (
+     <section className="min-w-0" data-testid="settings-custom-emoji">
+       <SettingsSectionHeader
+-        title="Custom emoji"
++        title={t("Custom emoji")}
+         description={
+           <>
+-            Add your own custom emoji for everyone on this relay to use. Type{" "}
+-            <code>:name:</code> in messages and reactions.
++            {t(
++              "Add your own custom emoji for everyone on this relay to use. Type",
++            )}{" "}
++            <code>:name:</code> {t("in messages and reactions.")}{" "}
+           </>
+         }
+       />
+ 
+@@ -142,25 +146,26 @@
+             event.preventDefault();
+             if (canSubmit) void handleAdd();
+           }}
+         >
+-          <SettingsOptionGroup title="Add emoji">
++          <SettingsOptionGroup title={t("Add emoji")}>
+             <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm">
+               <div className="min-w-0 flex-[1_1_22rem]">
+-                <h4 className="text-sm font-medium">Upload an image</h4>
++                <h4 className="text-sm font-medium">{t("Upload an image")}</h4>
+                 <p
+                   className="text-sm font-normal text-muted-foreground/70"
+                   data-settings-subcopy
+                 >
+-                  Square images work best. GIF, PNG, JPEG, and WebP files are
+-                  supported.
++                  {t(
++                    "Square images work best. GIF, PNG, JPEG, and WebP files are supported.",
++                  )}{" "}
+                 </p>
+               </div>
+               <div className="flex min-w-0 flex-[1_1_16rem] items-center gap-3">
+                 <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-md border bg-background">
+                   {pendingUpload ? (
+                     <img
+-                      alt="Selected custom emoji preview"
++                      alt={t("Selected custom emoji preview")}
+                       src={rewriteRelayUrl(pendingUpload.url)}
+                       className="h-14 w-14 object-contain"
+                       draggable={false}
+                     />
+@@ -181,26 +186,27 @@
+                     disabled={isUploading || setEmoji.isPending}
+                     variant="outline"
+                   >
+                     {isUploading
+-                      ? "Uploading…"
++                      ? t("Uploading…")
+                       : pendingUpload
+-                        ? "Choose different image"
+-                        : "Upload image"}
++                        ? t("Choose different image")
++                        : t("Upload image")}
+                   </Button>
+                 </div>
+               </div>
+             </div>
+ 
+             <div className="flex flex-wrap items-start justify-between gap-3 px-4 py-3 text-sm">
+               <div className="min-w-0 flex-[1_1_22rem]">
+-                <h4 className="text-sm font-medium">Give it a name</h4>
++                <h4 className="text-sm font-medium">{t("Give it a name")}</h4>
+                 <p
+                   className="text-sm font-normal text-muted-foreground/70"
+                   data-settings-subcopy
+                 >
+-                  This is what you’ll type to add this emoji to messages and
+-                  reactions.
++                  {t(
++                    "This is what you’ll type to add this emoji to messages and reactions.",
++                  )}{" "}
+                 </p>
+               </div>
+               <div className="w-full min-w-0 max-w-sm flex-[1_1_20rem] space-y-2">
+                 <div className="relative">
+@@ -223,25 +229,29 @@
+                   </span>
+                 </div>
+                 {nameInvalid ? (
+                   <p className="text-sm text-destructive">
+-                    Use only letters, numbers, hyphen, or underscore.
++                    {t(
++                      "Use only letters, numbers, hyphen, or underscore.",
++                    )}{" "}
+                   </p>
+                 ) : pendingUpload === null ? (
+                   <p
+                     className="text-sm font-normal text-muted-foreground/70"
+                     data-settings-subcopy
+                   >
+-                    Choose an image first; Buzz will suggest a name from the
+-                    filename.
++                    {t(
++                      "Choose an image first; Buzz will suggest a name from the filename.",
++                    )}{" "}
+                   </p>
+                 ) : ownDuplicate ? (
+                   <p
+                     className="text-sm font-normal text-muted-foreground/70"
+                     data-settings-subcopy
+                   >
+-                    You already have :{normalized}: — saving will replace its
+-                    image.
++                    {t("You already have :")}
++                    {normalized}
++                    {t(": — saving will replace its image.")}{" "}
+                   </p>
+                 ) : null}
+               </div>
+             </div>
+@@ -254,36 +264,38 @@
+                 disabled={
+                   setEmoji.isPending || (name.length === 0 && !pendingUpload)
+                 }
+               >
+-                Clear
++                {t("Clear")}{" "}
+               </Button>
+               <Button
+                 type="submit"
+                 data-testid="custom-emoji-add"
+                 disabled={!canSubmit}
+               >
+-                {setEmoji.isPending ? "Saving…" : "Save emoji"}
++                {setEmoji.isPending ? t("Saving…") : t("Save emoji")}
+               </Button>
+             </div>
+           </SettingsOptionGroup>
+         </form>
+ 
+         <div data-testid="custom-emoji-mine">
+           {ownLoading ? (
+-            <SettingsOptionGroup title="My emoji">
++            <SettingsOptionGroup title={t("My emoji")}>
+               <div className="px-4 py-3 text-sm font-normal text-muted-foreground">
+-                Loading…
++                {t("Loading…")}{" "}
+               </div>
+             </SettingsOptionGroup>
+           ) : own.length === 0 ? (
+-            <SettingsOptionGroup title="My emoji">
++            <SettingsOptionGroup title={t("My emoji")}>
+               <div className="px-4 py-3 text-sm font-normal text-muted-foreground">
+-                You haven&apos;t added any emoji yet. Add one above.
++                {t("You haven't added any emoji yet. Add one above.")}{" "}
+               </div>
+             </SettingsOptionGroup>
+           ) : (
+-            <SettingsOptionGroup title={`My emoji (${own.length})`}>
++            <SettingsOptionGroup
++              title={t("My emoji ({value0})", { value0: own.length })}
++            >
+               {own.map((e) => (
+                 <div
+                   key={e.shortcode}
+                   className="flex items-center gap-3 px-4 py-3"
+@@ -297,9 +309,9 @@
+                   <span className="min-w-0 flex-1 truncate text-sm">
+                     :{e.shortcode}:
+                   </span>
+                   <Button
+-                    aria-label={`Remove :${e.shortcode}:`}
++                    aria-label={t("Remove :{value0}:", { value0: e.shortcode })}
+                     size="icon"
+                     variant="ghost"
+                     onClick={() => void handleRemove(e.shortcode)}
+                     disabled={removeEmoji.isPending}
+@@ -314,10 +326,14 @@
+ 
+         {!communityLoading && othersEmoji.length > 0 ? (
+           <div data-testid="custom-emoji-community">
+             <SettingsOptionGroup
+-              description="Added by other members. You can use these, but only their owner can remove them."
+-              title={`Community emoji (${othersEmoji.length})`}
++              description={t(
++                "Added by other members. You can use these, but only their owner can remove them.",
++              )}
++              title={t("Community emoji ({value0})", {
++                value0: othersEmoji.length,
++              })}
+             >
+               {othersEmoji.map((e) => (
+                 <div
+                   key={e.shortcode}

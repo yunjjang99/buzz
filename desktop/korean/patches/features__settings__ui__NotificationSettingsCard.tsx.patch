@@ -1,0 +1,222 @@
+Index: src/features/settings/ui/NotificationSettingsCard.tsx
+===================================================================
+--- src/features/settings/ui/NotificationSettingsCard.tsx	
++++ src/features/settings/ui/NotificationSettingsCard.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { useState } from "react";
+ import { ChevronDown, ChevronUp } from "lucide-react";
+ 
+ import type {
+@@ -47,8 +48,9 @@
+   onSetSlotAlertsEnabled: (slot: SoundSlot, enabled: boolean) => void;
+   onSetNotifyWhileViewing: (enabled: boolean) => void;
+   onSetSoundForSlot: (slot: SoundSlot, name: SoundName) => void;
+ }) {
++  useLocale();
+   const permissionBlocked =
+     notificationPermission === "denied" ||
+     notificationPermission === "unsupported";
+   // The parent Sound switch derives from its children: on when any live
+@@ -65,41 +67,47 @@
+ 
+   return (
+     <section className="min-w-0" data-testid="settings-notifications">
+       <SettingsSectionHeader
+-        title="Notifications"
+-        description="Desktop alerts are on by default. Fine-tune what gets through below."
++        title={t("Notifications")}
++        description={t(
++          "Desktop alerts are on by default. Fine-tune what gets through below.",
++        )}
+       />
+ 
+       <span className="sr-only" data-testid="notifications-desktop-state">
+         {notificationPermission === "unsupported"
+-          ? "Unavailable"
++          ? t("Unavailable")
+           : notificationPermission === "denied"
+-            ? "Blocked"
++            ? t("Blocked")
+             : notificationSettings.desktopEnabled
+-              ? "On"
+-              : "Off"}
++              ? t("On")
++              : t("Off")}
+       </span>
+ 
+       <SettingsOptionGroupList>
+-        <SettingsOptionGroup title="Desktop">
++        <SettingsOptionGroup title={t("Desktop")}>
+           <SettingsOptionRow>
+             <div className="min-w-0">
+               <label
+                 className="text-sm font-medium"
+                 htmlFor="desktop-alerts-switch"
+               >
+                 {isUpdatingDesktopNotifications
+-                  ? "Requesting..."
+-                  : "Desktop alerts"}
++                  ? t("Requesting...")
++                  : t("Desktop alerts")}
+               </label>
+               <p
+                 className="text-sm font-normal text-muted-foreground/70"
+                 data-settings-subcopy
+               >
+                 {notificationSettings.desktopEnabled
+-                  ? "Native desktop alerts are enabled for the categories you have armed below."
+-                  : "Request OS permission and surface new mentions or needs-action items outside the app."}
++                  ? t(
++                      "Native desktop alerts are enabled for the categories you have armed below.",
++                    )
++                  : t(
++                      "Request OS permission and surface new mentions or needs-action items outside the app.",
++                    )}
+               </p>
+             </div>
+             <Switch
+               checked={notificationSettings.desktopEnabled}
+@@ -117,16 +125,17 @@
+               <label
+                 className="text-sm font-medium"
+                 htmlFor="notify-while-viewing-switch"
+               >
+-                Notify while viewing
++                {t("Notify while viewing")}{" "}
+               </label>
+               <p
+                 className="text-sm font-normal text-muted-foreground/70"
+                 data-settings-subcopy
+               >
+-                Also alert for direct messages in the conversation you have
+-                open.
++                {t(
++                  "Also alert for direct messages in the conversation you have open.",
++                )}{" "}
+               </p>
+             </div>
+             <Switch
+               checked={
+@@ -144,22 +153,22 @@
+         </SettingsOptionGroup>
+ 
+         {notificationSettings.desktopEnabled ? (
+           <>
+-            <SettingsOptionGroup title="Sound">
++            <SettingsOptionGroup title={t("Sound")}>
+               <SettingsOptionRow>
+                 <div className="min-w-0">
+                   <label
+                     className="text-sm font-medium"
+                     htmlFor="notification-sound-switch"
+                   >
+-                    Sound
++                    {t("Sound")}{" "}
+                   </label>
+                   <p
+                     className="text-sm font-normal text-muted-foreground/70"
+                     data-settings-subcopy
+                   >
+-                    Alert with a sound for the events below.
++                    {t("Alert with a sound for the events below.")}{" "}
+                   </p>
+                 </div>
+                 <Switch
+                   checked={anyAlertsOn}
+@@ -173,9 +182,9 @@
+             </SettingsOptionGroup>
+ 
+             {anyAlertsOn ? (
+               <div className="space-y-4">
+-                <SettingsOptionGroup title="Alert sounds">
++                <SettingsOptionGroup title={t("Alert sounds")}>
+                   {visibleSlots.map((slot) => {
+                     const comingSoon = COMING_SOON_SLOTS.has(slot);
+                     const alertsOn =
+                       notificationSettings.slotAlertsEnabled[slot];
+@@ -188,20 +197,20 @@
+                         key={slot}
+                       >
+                         <div className="min-w-0">
+                           <span className="flex items-center gap-2 text-sm font-medium">
+-                            {SLOT_LABELS[slot]}
++                            {t(SLOT_LABELS[slot])}
+                             {comingSoon ? (
+                               <span className="rounded-full bg-muted/70 px-2 py-0.5 text-2xs font-normal uppercase tracking-wide text-muted-foreground">
+-                                Coming soon
++                                {t("Coming soon")}{" "}
+                               </span>
+                             ) : null}
+                           </span>
+                           <p
+                             className="text-sm font-normal text-muted-foreground/70"
+                             data-settings-subcopy
+                           >
+-                            {SLOT_DESCRIPTIONS[slot]}
++                            {t(SLOT_DESCRIPTIONS[slot])}
+                           </p>
+                         </div>
+                         <span className="flex items-center gap-3">
+                           <span
+@@ -242,14 +251,14 @@
+                   >
+                     {showComingSoon ? (
+                       <>
+                         <ChevronUp className="h-4 w-4" />
+-                        Show less
++                        {t("Show less")}{" "}
+                       </>
+                     ) : (
+                       <>
+                         <ChevronDown className="h-4 w-4" />
+-                        View all
++                        {t("View all")}{" "}
+                       </>
+                     )}
+                   </Button>
+                 </div>
+@@ -257,23 +266,24 @@
+             ) : null}
+           </>
+         ) : null}
+ 
+-        <SettingsOptionGroup title="Badges">
++        <SettingsOptionGroup title={t("Badges")}>
+           <SettingsOptionRow>
+             <div className="min-w-0">
+               <label
+                 className="text-sm font-medium"
+                 htmlFor="home-badge-switch"
+               >
+-                Home badge
++                {t("Home badge")}{" "}
+               </label>
+               <p
+                 className="text-sm font-normal text-muted-foreground/70"
+                 data-settings-subcopy
+               >
+-                Show a Home badge for mentions and needs-action items in the
+-                sidebar.
++                {t(
++                  "Show a Home badge for mentions and needs-action items in the sidebar.",
++                )}{" "}
+               </p>
+             </div>
+             <Switch
+               checked={notificationSettings.homeBadgeEnabled}
+@@ -289,10 +299,12 @@
+ 
+       {permissionBlocked && (
+         <p className="mt-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
+           {notificationPermission === "unsupported"
+-            ? "Desktop notifications are not supported in this environment."
+-            : "Desktop notifications are blocked. Enable them in your system settings."}
++            ? t("Desktop notifications are not supported in this environment.")
++            : t(
++                "Desktop notifications are blocked. Enable them in your system settings.",
++              )}
+         </p>
+       )}
+ 
+       {notificationErrorMessage ? (

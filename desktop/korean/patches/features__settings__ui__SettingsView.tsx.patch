@@ -1,7 +1,7 @@
 Index: src/features/settings/ui/SettingsView.tsx
 ===================================================================
---- src/features/settings/ui/SettingsView.tsx
-+++ src/features/settings/ui/SettingsView.tsx
+--- src/features/settings/ui/SettingsView.tsx	
++++ src/features/settings/ui/SettingsView.tsx	
 @@ -1,4 +1,6 @@
 +import { NativeAccount } from "@buzz-korean/NativeAccount";
 +import { t, useLocale } from "@buzz-korean/locale";
@@ -9,7 +9,40 @@ Index: src/features/settings/ui/SettingsView.tsx
  import { getVersion } from "@tauri-apps/api/app";
  import { AlertCircle, ArrowLeft, LoaderCircle, RefreshCw } from "lucide-react";
  
-@@ -83,8 +85,9 @@
+@@ -52,9 +54,11 @@
+   label: string;
+   sections: SettingsSection[];
+ }> = [
+   {
+-    label: "Personal",
++    get label() {
++      return t("Personal");
++    },
+     sections: [
+       "profile",
+       "appearance",
+       "notifications",
+@@ -65,13 +69,17 @@
+       "channel-templates",
+     ],
+   },
+   {
+-    label: "Communities",
++    get label() {
++      return t("Communities");
++    },
+     sections: ["hosted-communities", "community-members", "relay-admin"],
+   },
+   {
+-    label: "App",
++    get label() {
++      return t("App");
++    },
+     sections: ["agents", "compute", "experimental", "mobile", "updates"],
+   },
+ ];
+ 
+@@ -83,8 +91,9 @@
    active: boolean;
    onSelect: (section: SettingsSection) => void;
    section: (typeof settingsSections)[number];
@@ -19,7 +52,7 @@ Index: src/features/settings/ui/SettingsView.tsx
  
    return (
      <SidebarMenuItem>
-@@ -92,9 +95,9 @@
+@@ -92,9 +101,9 @@
          aria-pressed={active}
          data-testid={`settings-nav-${section.value}`}
          isActive={active}
@@ -30,7 +63,7 @@ Index: src/features/settings/ui/SettingsView.tsx
        >
          <Icon
            className={cn(
-@@ -103,9 +106,9 @@
+@@ -103,9 +112,9 @@
                ? "text-sidebar-active-foreground"
                : "text-sidebar-foreground/70",
            )}
@@ -41,7 +74,7 @@ Index: src/features/settings/ui/SettingsView.tsx
      </SidebarMenuItem>
    );
  }
-@@ -126,8 +129,9 @@
+@@ -126,8 +135,9 @@
    onSetAllSlotAlertsEnabled,
    onSetSoundForSlot,
    section,
@@ -51,7 +84,7 @@ Index: src/features/settings/ui/SettingsView.tsx
    const myMembershipQuery = useMyRelayMembershipLookupQuery();
    const featureState = useFeatureSnapshot();
    const visibleSections = React.useMemo(() => {
-@@ -240,13 +244,13 @@
+@@ -240,13 +250,13 @@
              <SidebarMenuItem>
                <SidebarMenuButton
                  data-testid="settings-back-to-app"
@@ -67,7 +100,7 @@ Index: src/features/settings/ui/SettingsView.tsx
              </SidebarMenuItem>
            </SidebarMenu>
          </SidebarHeader>
-@@ -257,9 +261,9 @@
+@@ -257,9 +267,9 @@
                className="mx-3 flex items-center gap-2 rounded-md border border-sidebar-border px-3 py-2 text-xs text-sidebar-foreground/70"
                data-testid="community-access-loading"
              >
@@ -78,7 +111,7 @@ Index: src/features/settings/ui/SettingsView.tsx
            ) : null}
            {myMembershipQuery.isError ? (
              <div
-@@ -267,17 +271,17 @@
+@@ -267,17 +277,17 @@
                data-testid="community-access-error"
              >
                <div className="flex items-center gap-2">
@@ -98,7 +131,7 @@ Index: src/features/settings/ui/SettingsView.tsx
              </div>
            ) : null}
            {shouldWarnMissingMembershipSnapshot(myMembershipQuery.data) ? (
-@@ -285,17 +289,22 @@
+@@ -285,17 +295,22 @@
                className="mx-3 flex items-start gap-2 rounded-md border border-amber-500/40 px-3 py-2 text-xs text-sidebar-foreground"
                data-testid="community-access-snapshot-missing"
              >
@@ -125,7 +158,7 @@ Index: src/features/settings/ui/SettingsView.tsx
                      <SettingsSectionButton
                        active={entry.value === section}
                        key={entry.value}
-@@ -309,8 +318,9 @@
+@@ -309,8 +324,9 @@
            ))}
          </SidebarContent>
  

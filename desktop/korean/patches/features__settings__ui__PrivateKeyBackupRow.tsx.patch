@@ -1,0 +1,146 @@
+Index: src/features/settings/ui/PrivateKeyBackupRow.tsx
+===================================================================
+--- src/features/settings/ui/PrivateKeyBackupRow.tsx	
++++ src/features/settings/ui/PrivateKeyBackupRow.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { Download, Eye, EyeOff, ShieldCheck } from "lucide-react";
+ import * as React from "react";
+ 
+ import { NsecMaskedDisplay } from "@/features/onboarding/ui/NsecMaskedDisplay";
+@@ -25,8 +26,9 @@
+   availableUntil,
+ }: {
+   availableUntil: number;
+ }) {
++  useLocale();
+   const [{ durationMs, initialWidth }] = React.useState(() => {
+     const remainingMs = Math.max(0, availableUntil - Date.now());
+     return {
+       durationMs: remainingMs,
+@@ -57,8 +59,9 @@
+  * Collapsible private-key row with backup actions. The nsec is fetched only
+  * while expanded; encrypted backup state lives in the app-level provider.
+  */
+ export function PrivateKeyBackupRow() {
++  useLocale();
+   const [isOpen, setIsOpen] = React.useState(false);
+   const [nsec, setNsec] = React.useState<string | null>(null);
+   const [isLoading, setIsLoading] = React.useState(false);
+   const [loadError, setLoadError] = React.useState<string | null>(null);
+@@ -96,9 +99,9 @@
+         if (!fetchCancelledRef.current)
+           setLoadError(
+             err instanceof Error
+               ? err.message
+-              : "Failed to retrieve private key.",
++              : t("Failed to retrieve private key."),
+           );
+       } finally {
+         if (!fetchCancelledRef.current) setIsLoading(false);
+       }
+@@ -123,9 +126,9 @@
+   return (
+     <>
+       <div className="px-4 py-3" data-testid="profile-private-key-row">
+         <div className="flex items-center justify-between gap-4">
+-          <p className="text-sm font-medium">Private key</p>
++          <p className="text-sm font-medium">{t("Private key")}</p>
+           <div className="flex shrink-0 items-center gap-2">
+             {backupAvailable ? (
+               <Button
+                 className="relative overflow-hidden rounded-full"
+@@ -136,13 +139,15 @@
+               >
+                 {availableUntil !== null ? (
+                   <BackupAvailabilityFill availableUntil={availableUntil} />
+                 ) : null}
+-                <span className="relative z-10">Download backup</span>
++                <span className="relative z-10">{t("Download backup")}</span>
+               </Button>
+             ) : null}
+             <Button
+-              aria-label={isOpen ? "Hide private key" : "Reveal private key"}
++              aria-label={
++                isOpen ? t("Hide private key") : t("Reveal private key")
++              }
+               className="rounded-full"
+               data-testid="profile-private-key-toggle"
+               onClick={() => void handleReveal()}
+               type="button"
+@@ -150,37 +155,41 @@
+             >
+               {isOpen ? (
+                 <>
+                   <EyeOff className="h-4 w-4 shrink-0" />
+-                  Hide
++                  {t("Hide")}{" "}
+                 </>
+               ) : (
+                 <>
+                   <Eye className="h-4 w-4 shrink-0" />
+-                  Reveal
++                  {t("Reveal")}{" "}
+                 </>
+               )}
+             </Button>
+           </div>
+         </div>
+         {isOpen ? (
+           <div className="mt-2">
+             {isLoading ? (
+-              <p className="text-sm text-muted-foreground">Loading…</p>
++              <p className="text-sm text-muted-foreground">{t("Loading…")}</p>
+             ) : loadError ? (
+               <p className="text-sm text-destructive">{loadError}</p>
+             ) : nsec ? (
+               <NsecMaskedDisplay
+                 actions={[
+                   {
+                     icon: <Download aria-hidden="true" />,
+-                    label: "Create backup",
++                    get label() {
++                      return t("Create backup");
++                    },
+                     onSelect: handleCreateBackup,
+                     testId: "private-key-create-backup",
+                   },
+                   {
+                     icon: <ShieldCheck aria-hidden="true" />,
+-                    label: "Test backup",
++                    get label() {
++                      return t("Test backup");
++                    },
+                     onSelect: () => setTestOpen(true),
+                     testId: "private-key-test-backup",
+                   },
+                 ]}
+@@ -193,21 +202,23 @@
+       <EncryptedBackupCreator onOpenChange={setCreateOpen} open={createOpen} />
+       <Dialog onOpenChange={handleTestOpenChange} open={testOpen}>
+         <DialogContent className="max-w-lg" data-testid="backup-test-dialog">
+           <DialogHeader className="pr-8">
+-            <DialogTitle>Test a key backup</DialogTitle>
++            <DialogTitle>{t("Test a key backup")}</DialogTitle>
+             <DialogDescription>
+-              Confirm that a backup file and its password can unlock an
+-              identity.
++              {t(
++                "Confirm that a backup file and its password can unlock an identity.",
++              )}{" "}
+             </DialogDescription>
+           </DialogHeader>
+           <BackupTestFlow
+             onProgressChange={setTestProgress}
+             progress={testProgress}
+           />
+           <p className="text-xs leading-5 text-muted-foreground">
+-            Backups use the standard NIP-49 format, so this works for backups
+-            from compatible Nostr apps too.
++            {t(
++              "Backups use the standard NIP-49 format, so this works for backups from compatible Nostr apps too.",
++            )}{" "}
+           </p>
+         </DialogContent>
+       </Dialog>
+     </>

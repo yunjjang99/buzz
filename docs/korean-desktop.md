@@ -11,10 +11,13 @@
 - 워크스페이스 접속 및 초대 링크 입력
 - 채널 생성·찾아보기·공개 범위·자동 삭제 기간
 - 메시지 입력·전송·답장·서식·파일 첨부 버튼
-- 설정 메뉴, 프로필, 화면 설정과 언어 선택
+- 설정 메뉴, 프로필·백업·로그아웃 확인창, 화면 설정과 언어 선택
+- 알림·음성·단축키·모바일 연결·업데이트의 상세 설명과 오류 안내
+- 직원 초대·권한 관리, 사용자 이모지·보관함·채널 템플릿
+- 에이전트 기본값·실행 도구·제공업체 설정, 컴퓨팅·실험 기능
 
-아직 번역하지 않은 화면과 서버 오류 문구는 영어로 표시됩니다. AI 에이전트,
-프로젝트, 자동화, 초기 계정 생성, 알림 상세 설정 등에는 추가 번역이 필요합니다.
+아직 번역하지 않은 화면과 서버 오류 문구는 영어로 표시됩니다. 에이전트
+대화·프로젝트·자동화 화면과 외부 도구가 반환하는 안내는 별도 범위입니다.
 이 문서는 전체 한국어 번역이나 Windows 실행 검증이 완료되었다는 의미가 아닙니다.
 
 ## 홈서버 연결
@@ -74,12 +77,13 @@ node korean/check.mjs
 node --test korean/tests/overlay.test.mjs
 node --import ./test-jsdom-setup.mjs --import ./test-loader.mjs \
   --experimental-strip-types --test-force-exit --test korean/runtime/locale.jsdom-test.mjs
-node korean/build.mjs --e2e
+VITE_BUZZ_EMPLOYEE_APP=1 node korean/build.mjs --e2e
 pnpm exec playwright test --config korean/playwright.config.ts
 ```
 
 화면 테스트는 실제 UI에서 한국어·영어 전환, 키보드 선택, 재실행에 해당하는
-새로고침 후 설정 유지, 한글 초안 보존과 메시지 전송을 확인합니다. 실제 서버,
+새로고침 후 설정 유지, 한글 초안 보존과 메시지 전송을 확인합니다. 상세 설정
+탭과 로그아웃 확인창의 번역·영어 복귀도 검사합니다. 실제 서버,
 네이티브 알림, Windows IME 및 운영체제별 설치 동작은 별도 확인해야 합니다.
 
 직원 배포 전에 Mac과 Windows에서 다음을 직접 확인하세요.
@@ -138,12 +142,14 @@ node korean/check-upstream.mjs desktop-v0.5.26
 
 ## 번역 추가
 
-문구는 `desktop/korean/runtime/messages.ts`에 추가합니다. UI 적용 규칙은
+일반 문구는 `desktop/korean/runtime/messages.ts`, 상세 설정 문구는
+`desktop/korean/runtime/settings-messages.json`에 추가합니다. UI 적용 규칙은
 `desktop/korean/manifest.json`과 `patches/`에 있습니다. 원본 컴포넌트를 직접
 수정하지 않습니다. 규칙은 `useLocale()`로 변경을 구독하고 `t("English copy")`를
 표시하도록 변환합니다. 이름·메시지 등 사용자 데이터는 `t()`에 직접 넣지 말고
 `t("Message #{channel}", { channel: channelName })`처럼 매개변수로 전달합니다.
-모듈 수준 옵션 배열은 영어 원문으로 유지하고 렌더링할 때 번역합니다.
+모듈 수준 옵션은 렌더링 또는 getter에서 번역해 언어 변경을 반영합니다.
+역할·상태 식별자와 저장되는 값은 영어 원본을 유지합니다.
 
 새 규칙을 추가하거나 원본에 맞게 수정한 뒤 `node korean/check.mjs`로 전체
 적용 위치와 **변환 후 TypeScript**까지 검사하고 화면 테스트를 실행합니다.
@@ -169,7 +175,9 @@ node korean/check-upstream.mjs desktop-v0.5.26
 기존에 저장된 다른 앱 계정을 자동으로 덮어쓰지 않습니다. 다른 계정으로
 연결하려면 기존 계정을 백업하고 앱의 기존 로그아웃 기능을 먼저 사용하세요.
 관리 기능의 앱 접속 토큰은 메모리에만 유지하며 8시간 후 만료됩니다.
-관리 창을 닫고 다시 아이디로 로그인하면 만료된 접속을 복구할 수 있습니다.
+앱을 종료하면 관리 접속 토큰도 사라집니다. 채팅은 로컬 키로 다시 접속하지만,
+직원 발급에는 **직원 계정 관리 인증**에서 관리자 아이디로 다시 인증해야 합니다.
+관리 창을 닫고 다시 로그인하면 만료된 접속을 복구할 수 있습니다.
 
 이 연결은 앱에 계정 키를 저장하는 **기기 등록**이기도 합니다. 웹 비밀번호
 초기화는 웹·관리 접속 세션을 해제하지만 등록된 네이티브 앱의 키를 회수하지
@@ -179,7 +187,7 @@ node korean/check-upstream.mjs desktop-v0.5.26
 의도적인 차이가 있습니다.
 
 추가 변경도 `desktop/korean/` 오버레이와 별도 로그인 서비스에 한정합니다.
-원본 Rust·화면 파일은 수정하지 않고, 업데이트 시 26개 UI 바인딩의 문맥을
+원본 Rust·화면 파일은 수정하지 않고, 업데이트 시 매니페스트에 등록된 모든 UI 바인딩의 문맥을
 검사합니다. 문맥이 바뀌면 빌드를 중단하고 재검토합니다. 충돌이 영원히 없다는
 보장은 아니며 새 원본 버전에서 앱 빌드와 동작 검증을 반복해야 합니다.
 

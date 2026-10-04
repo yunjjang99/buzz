@@ -1,0 +1,442 @@
+Index: src/features/settings/ui/ChannelTemplatesSettingsCard.tsx
+===================================================================
+--- src/features/settings/ui/ChannelTemplatesSettingsCard.tsx	
++++ src/features/settings/ui/ChannelTemplatesSettingsCard.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import {
+   Bot,
+   Copy,
+   MessageSquare,
+@@ -59,8 +60,9 @@
+ import { Input } from "@/shared/ui/input";
+ import { Textarea } from "@/shared/ui/textarea";
+ 
+ export function ChannelTemplatesSettingsCard() {
++  useLocale();
+   const templatesQuery = useChannelTemplatesQuery();
+   const deleteMutation = useDeleteChannelTemplateMutation();
+   const duplicateMutation = useDuplicateChannelTemplateMutation();
+ 
+@@ -74,13 +76,13 @@
+ 
+   function handleDuplicate(template: ChannelTemplate) {
+     duplicateMutation.mutate(template.id, {
+       onSuccess: (created) => {
+-        toast.success(`Duplicated as "${created.name}"`);
++        toast.success(t('Duplicated as "{value0}"', { value0: created.name }));
+       },
+       onError: (error) => {
+         toast.error(
+-          error instanceof Error ? error.message : "Failed to duplicate",
++          error instanceof Error ? error.message : t("Failed to duplicate"),
+         );
+       },
+     });
+   }
+@@ -88,27 +90,28 @@
+   function handleDelete() {
+     if (!deleteTarget) return;
+     deleteMutation.mutate(deleteTarget.id, {
+       onSuccess: () => {
+-        toast.success(`Deleted "${deleteTarget.name}"`);
++        toast.success(t('Deleted "{value0}"', { value0: deleteTarget.name }));
+         setDeleteTarget(null);
+       },
+       onError: (error) => {
+         toast.error(
+-          error instanceof Error ? error.message : "Failed to delete",
++          error instanceof Error ? error.message : t("Failed to delete"),
+         );
+       },
+     });
+   }
+ 
+   return (
+     <section className="min-w-0" data-testid="settings-channel-templates">
+       <SettingsSectionHeader
+-        title="Channel templates"
++        title={t("Channel templates")}
+         description={
+           <>
+-            Save reusable channel configurations and apply them when creating
+-            new channels.
++            {t(
++              "Save reusable channel configurations and apply them when creating new channels.",
++            )}{" "}
+           </>
+         }
+         action={
+           <Button
+@@ -117,28 +120,29 @@
+             type="button"
+             variant="outline"
+           >
+             <Plus className="mr-1.5 h-4 w-4" />
+-            Create
++            {t("Create")}{" "}
+           </Button>
+         }
+       />
+ 
+       {templatesQuery.isLoading ? (
+-        <SettingsOptionGroup title="Templates">
++        <SettingsOptionGroup title={t("Templates")}>
+           <p className="px-4 py-6 text-center text-sm text-muted-foreground">
+-            Loading templates...
++            {t("Loading templates...")}{" "}
+           </p>
+         </SettingsOptionGroup>
+       ) : templates.length === 0 ? (
+-        <SettingsOptionGroup title="Templates">
++        <SettingsOptionGroup title={t("Templates")}>
+           <div className="px-4 py-8 text-center text-sm text-muted-foreground">
+-            No templates yet. Create one to save a reusable channel
+-            configuration.
++            {t(
++              "No templates yet. Create one to save a reusable channel configuration.",
++            )}{" "}
+           </div>
+         </SettingsOptionGroup>
+       ) : (
+-        <SettingsOptionGroup title="Templates">
++        <SettingsOptionGroup title={t("Templates")}>
+           {templates.map((template) => (
+             <TemplateRow
+               key={template.id}
+               onDelete={() => setDeleteTarget(template)}
+@@ -173,21 +177,22 @@
+         open={deleteTarget !== null}
+       >
+         <AlertDialogContent>
+           <AlertDialogHeader>
+-            <AlertDialogTitle>Delete template</AlertDialogTitle>
++            <AlertDialogTitle>{t("Delete template")}</AlertDialogTitle>
+             <AlertDialogDescription>
+-              Are you sure you want to delete &quot;{deleteTarget?.name}&quot;?
+-              This action cannot be undone.
++              {t('Are you sure you want to delete "')}
++              {deleteTarget?.name}
++              {t('"? This action cannot be undone.')}{" "}
+             </AlertDialogDescription>
+           </AlertDialogHeader>
+           <AlertDialogFooter>
+-            <AlertDialogCancel>Cancel</AlertDialogCancel>
++            <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+             <AlertDialogAction
+               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+               onClick={handleDelete}
+             >
+-              Delete
++              {t("Delete")}{" "}
+             </AlertDialogAction>
+           </AlertDialogFooter>
+         </AlertDialogContent>
+       </AlertDialog>
+@@ -205,8 +210,9 @@
+   onEdit: () => void;
+   onDuplicate: () => void;
+   onDelete: () => void;
+ }) {
++  useLocale();
+   const personaCount = template.agents.personas.length;
+   const teamCount = template.agents.teams.length;
+ 
+   return (
+@@ -215,9 +221,9 @@
+         <div className="flex items-center gap-2">
+           <span className="truncate text-sm font-medium">{template.name}</span>
+           {template.isBuiltin ? (
+             <Badge className="shrink-0 text-2xs uppercase" variant="outline">
+-              built-in
++              {t("built-in")}{" "}
+             </Badge>
+           ) : null}
+         </div>
+         {template.description ? (
+@@ -246,9 +252,9 @@
+           ) : null}
+           {template.canvasTemplate ? (
+             <span className="flex items-center gap-1">
+               <MessageSquare className="h-4 w-4" />
+-              canvas
++              {t("canvas")}{" "}
+             </span>
+           ) : null}
+         </div>
+       </div>
+@@ -266,21 +272,21 @@
+         </DropdownMenuTrigger>
+         <DropdownMenuContent align="end">
+           <DropdownMenuItem onClick={onEdit}>
+             <Pencil className="mr-2 h-4 w-4" />
+-            Edit
++            {t("Edit")}{" "}
+           </DropdownMenuItem>
+           <DropdownMenuItem onClick={onDuplicate}>
+             <Copy className="mr-2 h-4 w-4" />
+-            Duplicate
++            {t("Duplicate")}{" "}
+           </DropdownMenuItem>
+           {!template.isBuiltin ? (
+             <DropdownMenuItem
+               className="text-destructive focus:text-destructive"
+               onClick={onDelete}
+             >
+               <Trash2 className="mr-2 h-4 w-4" />
+-              Delete
++              {t("Delete")}{" "}
+             </DropdownMenuItem>
+           ) : null}
+         </DropdownMenuContent>
+       </DropdownMenu>
+@@ -298,8 +304,9 @@
+   open: boolean;
+   onOpenChange: (open: boolean) => void;
+   onCreated?: (template: ChannelTemplate) => void;
+ }) {
++  useLocale();
+   const isEditing = template !== null;
+   const createMutation = useCreateChannelTemplateMutation();
+   const updateMutation = useUpdateChannelTemplateMutation();
+   const personasQuery = usePersonasQuery();
+@@ -383,14 +390,14 @@
+       };
+ 
+       updateMutation.mutate(input, {
+         onSuccess: () => {
+-          toast.success(`Updated "${trimmedName}"`);
++          toast.success(t('Updated "{value0}"', { value0: trimmedName }));
+           onOpenChange(false);
+         },
+         onError: (error) => {
+           toast.error(
+-            error instanceof Error ? error.message : "Failed to update",
++            error instanceof Error ? error.message : t("Failed to update"),
+           );
+         },
+       });
+     } else {
+@@ -402,15 +409,15 @@
+       };
+ 
+       createMutation.mutate(input, {
+         onSuccess: (created) => {
+-          toast.success(`Created "${trimmedName}"`);
++          toast.success(t('Created "{value0}"', { value0: trimmedName }));
+           onCreated?.(created);
+           onOpenChange(false);
+         },
+         onError: (error) => {
+           toast.error(
+-            error instanceof Error ? error.message : "Failed to create",
++            error instanceof Error ? error.message : t("Failed to create"),
+           );
+         },
+       });
+     }
+@@ -447,13 +454,13 @@
+   return (
+     <Dialog onOpenChange={onOpenChange} open={open}>
+       <ChooserDialogContent
+         className="max-w-lg"
+-        title={isEditing ? "Edit template" : "Create template"}
++        title={isEditing ? t("Edit template") : t("Create template")}
+         description={
+           isEditing
+-            ? "Update this channel template configuration."
+-            : "Save a reusable channel configuration."
++            ? t("Update this channel template configuration.")
++            : t("Save a reusable channel configuration.")
+         }
+         footer={
+           <div className="flex w-full items-center justify-end gap-2">
+             <Button
+@@ -461,22 +468,22 @@
+               onClick={() => onOpenChange(false)}
+               type="button"
+               variant="ghost"
+             >
+-              Cancel
++              {t("Cancel")}{" "}
+             </Button>
+             <Button
+               disabled={isPending || name.trim().length === 0}
+               form="template-form"
+               type="submit"
+             >
+               {isPending
+                 ? isEditing
+-                  ? "Saving..."
+-                  : "Creating..."
++                  ? t("Saving...")
++                  : t("Creating...")
+                 : isEditing
+-                  ? "Save"
+-                  : "Create"}
++                  ? t("Save")
++                  : t("Create")}
+             </Button>
+           </div>
+         }
+       >
+@@ -486,16 +493,16 @@
+             <label
+               className="text-sm font-medium text-foreground"
+               htmlFor="template-name"
+             >
+-              Name
++              {t("Name")}{" "}
+             </label>
+             <Input
+               autoComplete="off"
+               disabled={isPending}
+               id="template-name"
+               onChange={(e) => setName(e.target.value)}
+-              placeholder="Sprint Planning"
++              placeholder={t("Sprint Planning")}
+               value={name}
+             />
+           </div>
+ 
+@@ -504,19 +511,19 @@
+             <label
+               className="text-sm font-medium text-foreground"
+               htmlFor="template-description"
+             >
+-              Description{" "}
++              {t("Description")}{" "}
+               <span className="font-normal text-muted-foreground">
+-                (optional)
++                {t("(optional)")}{" "}
+               </span>
+             </label>
+             <Textarea
+               className="min-h-16 resize-none"
+               disabled={isPending}
+               id="template-description"
+               onChange={(e) => setDescription(e.target.value)}
+-              placeholder="What this template is for"
++              placeholder={t("What this template is for")}
+               rows={2}
+               value={description}
+             />
+           </div>
+@@ -526,27 +533,28 @@
+             <label
+               className="text-sm font-medium text-foreground"
+               htmlFor="template-canvas"
+             >
+-              Canvas template{" "}
++              {t("Canvas template")}{" "}
+               <span className="font-normal text-muted-foreground">
+-                (optional)
++                {t("(optional)")}{" "}
+               </span>
+             </label>
+             <Textarea
+               className="min-h-20 resize-none font-mono text-xs"
+               disabled={isPending}
+               id="template-canvas"
+               onChange={(e) => setCanvasTemplate(e.target.value)}
+-              placeholder="Canvas content here..."
++              placeholder={t("Canvas content here...")}
+               rows={4}
+               value={canvasTemplate}
+             />
+             <p
+               className="text-xs text-muted-foreground/70"
+               data-settings-subcopy
+             >
+-              Use {"{channel.name}"} and {"{template.name}"} as placeholders.
++              {t("Use")} {"{channel.name}"} {t("and")} {"{template.name}"}{" "}
++              {t("as placeholders.")}{" "}
+             </p>
+           </div>
+ 
+           {/* Agent Personas */}
+@@ -609,21 +617,22 @@
+   onToggleTeam: (teamId: string) => void;
+   selectedTeamIds: readonly string[];
+   teams: readonly { id: string; name: string }[];
+ }) {
++  useLocale();
+   if (isLoading || teams.length === 0) {
+     return null;
+   }
+ 
+   return (
+     <div className="space-y-3">
+       <div>
+-        <div className="text-sm font-medium">Teams</div>
++        <div className="text-sm font-medium">{t("Teams")}</div>
+         <p
+           className="text-sm font-normal text-muted-foreground/70"
+           data-settings-subcopy
+         >
+-          Select teams to include in this template.
++          {t("Select teams to include in this template.")}{" "}
+         </p>
+       </div>
+       <div className="flex flex-wrap gap-2">
+         {teams.map((team) => {
+@@ -682,8 +691,9 @@
+   selectedTeamIds: readonly string[];
+   teamRuntimes: Record<string, string>;
+   teams: readonly AgentTeam[];
+ }) {
++  useLocale();
+   const hasSelections =
+     selectedPersonaIds.length > 0 || selectedTeamIds.length > 0;
+   if (!hasSelections) return null;
+ 
+@@ -694,22 +704,24 @@
+ 
+   return (
+     <div className="space-y-3">
+       <div>
+-        <div className="text-sm font-medium">Runtimes</div>
++        <div className="text-sm font-medium">{t("Runtimes")}</div>
+         <p
+           className="text-sm font-normal text-muted-foreground/70"
+           data-settings-subcopy
+         >
+-          Choose which runtime to use for each agent.
++          {t("Choose which runtime to use for each agent.")}{" "}
+         </p>
+       </div>
+ 
+       {providersLoading ? (
+-        <p className="text-xs text-muted-foreground">Discovering runtimes...</p>
++        <p className="text-xs text-muted-foreground">
++          {t("Discovering runtimes...")}
++        </p>
+       ) : providers.length === 0 ? (
+         <p className="text-xs text-muted-foreground">
+-          No ACP runtimes detected. Install one to assign runtimes.
++          {t("No ACP runtimes detected. Install one to assign runtimes.")}{" "}
+         </p>
+       ) : (
+         <div className="space-y-2">
+           {selectedPersonas.map((persona) => (
+@@ -758,8 +770,9 @@
+   onChange: (runtimeId: string) => void;
+   providers: AcpRuntime[];
+   value: string;
+ }) {
++  useLocale();
+   return (
+     <div className="flex items-center gap-2">
+       <div className="flex min-w-0 flex-1 items-center gap-2">
+         {icon === "team" ? (
+@@ -778,9 +791,9 @@
+         disabled={disabled}
+         onChange={(e) => onChange(e.target.value)}
+         value={value}
+       >
+-        <option value="">Default</option>
++        <option value="">{t("Default")}</option>
+         {providers.map((runtime) => (
+           <option key={runtime.id} value={runtime.id}>
+             {runtime.label}
+           </option>

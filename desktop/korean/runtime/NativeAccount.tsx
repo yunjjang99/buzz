@@ -210,10 +210,16 @@ export function NativeAccount({
           aria-label="앱 아이디 로그인"
         >
           <h2 className="text-lg font-semibold">
-            {setup ? "관리자 최초 설정" : "회사 계정으로 로그인"}
+            {setup
+              ? "관리자 최초 설정"
+              : manage
+                ? "직원 계정 관리 인증"
+                : "회사 계정으로 로그인"}
           </h2>
           <p className="text-sm text-muted-foreground">
-            buzz.kovar.kr · 웹과 같은 계정으로 대화를 이어갑니다.
+            {manage
+              ? "채팅 접속과 별도로, 직원 발급·비밀번호 변경 기능을 사용하려면 등록한 아이디와 비밀번호로 인증하세요."
+              : "buzz.kovar.kr · 웹과 같은 계정으로 대화를 이어갑니다."}
           </p>
           <label className="text-sm">
             아이디

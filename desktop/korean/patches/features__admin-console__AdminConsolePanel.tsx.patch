@@ -1,0 +1,70 @@
+Index: src/features/admin-console/AdminConsolePanel.tsx
+===================================================================
+--- src/features/admin-console/AdminConsolePanel.tsx	
++++ src/features/admin-console/AdminConsolePanel.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ /**
+  * Main admin console panel — renders when probe state is `nip98Authorized` or
+  * `disabled`.
+  *
+@@ -48,18 +49,45 @@
+   activeTab: Tab;
+   onSelect: (tab: Tab) => void;
+   showStaffing: boolean;
+ }) {
++  useLocale();
+   const allTabs: Array<{
+     value: Tab;
+     label: string;
+     Icon: React.ComponentType<{ className?: string }>;
+   }> = [
+-    { value: "reports", label: "Reports", Icon: ShieldAlert },
+-    { value: "feedback", label: "Feedback", Icon: MessageSquare },
+-    { value: "actions", label: "Actions", Icon: Gavel },
++    {
++      value: "reports",
++      get label() {
++        return t("Reports");
++      },
++      Icon: ShieldAlert,
++    },
++    {
++      value: "feedback",
++      get label() {
++        return t("Feedback");
++      },
++      Icon: MessageSquare,
++    },
++    {
++      value: "actions",
++      get label() {
++        return t("Actions");
++      },
++      Icon: Gavel,
++    },
+     ...(showStaffing
+-      ? [{ value: "staffing" as const, label: "Staffing", Icon: Users }]
++      ? [
++          {
++            value: "staffing" as const,
++            get label() {
++              return t("Staffing");
++            },
++            Icon: Users,
++          },
++        ]
+       : []),
+   ];
+   return (
+     <div className="mb-4 flex gap-1 border-b border-border/60">
+@@ -119,8 +147,9 @@
+    * Do not pass this prop in production code.
+    */
+   initialTab?: Tab;
+ }) {
++  useLocale();
+   const isOperator = role === "operator";
+   const [activeTab, setActiveTab] = useState<Tab>(initialTab ?? "reports");
+   // Increment whenever the (pubkey, origin) context changes to invalidate all
+   // in-flight useAsyncLoad effects via their effect-local `active` flags.

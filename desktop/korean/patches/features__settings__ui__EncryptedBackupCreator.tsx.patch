@@ -1,0 +1,209 @@
+Index: src/features/settings/ui/EncryptedBackupCreator.tsx
+===================================================================
+--- src/features/settings/ui/EncryptedBackupCreator.tsx	
++++ src/features/settings/ui/EncryptedBackupCreator.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { AlertTriangle, Eye, EyeOff, RefreshCw } from "lucide-react";
+ import * as React from "react";
+ 
+ import { generateBackupPassphrase } from "@/shared/api/tauriIdentity";
+@@ -20,12 +21,32 @@
+ const MAX_GENERATED_WORDS = 10;
+ const DEFAULT_GENERATED_WORDS = 3;
+ 
+ const SEPARATOR_OPTIONS = [
+-  { label: "Spaces", value: " " },
+-  { label: "Hyphens", value: "-" },
+-  { label: "Periods", value: "." },
+-  { label: "Commas", value: "," },
++  {
++    get label() {
++      return t("Spaces");
++    },
++    value: " ",
++  },
++  {
++    get label() {
++      return t("Hyphens");
++    },
++    value: "-",
++  },
++  {
++    get label() {
++      return t("Periods");
++    },
++    value: ".",
++  },
++  {
++    get label() {
++      return t("Commas");
++    },
++    value: ",",
++  },
+ ] as const;
+ 
+ const DEFAULT_SEPARATOR = SEPARATOR_OPTIONS[0].value;
+ 
+@@ -34,8 +55,9 @@
+  * so randomized increments consume a shrinking fraction of the remaining
+  * distance. The bar moves quickly at first and can never reach completion.
+  */
+ function FakeKdfProgressBar() {
++  useLocale();
+   const [progress, setProgress] = React.useState(0);
+ 
+   React.useEffect(() => {
+     let animationFrame = 0;
+@@ -56,9 +78,9 @@
+   }, []);
+ 
+   return (
+     <div
+-      aria-label="Encrypting your key"
++      aria-label={t("Encrypting your key")}
+       aria-valuemax={100}
+       aria-valuemin={0}
+       aria-valuenow={Math.round(progress)}
+       className="h-2 w-full overflow-hidden rounded-full bg-muted"
+@@ -90,8 +112,9 @@
+   disabled?: boolean;
+   onRequestGenerate?: () => void;
+   onGenerated: (value: string) => void;
+ }) {
++  useLocale();
+   const [open, setOpen] = React.useState(false);
+   const [words, setWords] = React.useState(DEFAULT_GENERATED_WORDS);
+   const [separator, setSeparator] = React.useState<string>(DEFAULT_SEPARATOR);
+   const [error, setError] = React.useState<string | null>(null);
+@@ -124,9 +147,11 @@
+       if (mountedRef.current) onGeneratedRef.current(passphrase);
+     } catch (err) {
+       if (!mountedRef.current) return;
+       setError(
+-        err instanceof Error ? err.message : "Failed to generate a password.",
++        err instanceof Error
++          ? err.message
++          : t("Failed to generate a password."),
+       );
+     }
+   }, []);
+ 
+@@ -141,9 +166,9 @@
+           clicks here must generate a fresh password while the popover stays
+           open. Only click-outside or Esc closes it. */}
+       <PopoverAnchor asChild>
+         <Button
+-          aria-label="Generate a password"
++          aria-label={t("Generate a password")}
+           className="absolute right-9 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+           data-testid="backup-passphrase-generate"
+           disabled={disabled}
+           onClick={() => {
+@@ -183,9 +208,9 @@
+           <label
+             className="text-sm text-muted-foreground"
+             htmlFor="backup-passphrase-words"
+           >
+-            Words
++            {t("Words")}{" "}
+           </label>
+           <div className="flex flex-1 items-center justify-end gap-3">
+             <input
+               className="h-1.5 w-full max-w-30 cursor-pointer appearance-none rounded-full bg-foreground/15 accent-primary"
+@@ -207,9 +232,9 @@
+           <label
+             className="text-sm text-muted-foreground"
+             htmlFor="backup-passphrase-separator"
+           >
+-            Separator
++            {t("Separator")}{" "}
+           </label>
+           <select
+             className="h-8 rounded-lg border border-border bg-background px-2 text-sm text-foreground outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+             id="backup-passphrase-separator"
+@@ -257,8 +282,9 @@
+ }: {
+   onOpenChange: (open: boolean) => void;
+   open: boolean;
+ }) {
++  useLocale();
+   const { state, dispatch, isSaving, saveError } = useEncryptedBackup();
+   const [isRevealed, setIsRevealed] = React.useState(false);
+ 
+   // A queued download hides the form; mask the password before it can return
+@@ -274,12 +300,13 @@
+   return (
+     <Dialog onOpenChange={onOpenChange} open={open}>
+       <DialogContent className="max-w-lg" data-testid="encrypted-backup-dialog">
+         <DialogHeader className="pr-8">
+-          <DialogTitle>Create a key backup</DialogTitle>
++          <DialogTitle>{t("Create a key backup")}</DialogTitle>
+           <DialogDescription>
+-            You can close this window while Buzz finishes the backup in the
+-            background.
++            {t(
++              "You can close this window while Buzz finishes the backup in the background.",
++            )}{" "}
+           </DialogDescription>
+         </DialogHeader>
+         <div
+           className="w-full space-y-3 text-left"
+@@ -289,9 +316,9 @@
+             <FakeKdfProgressBar />
+           ) : !state.savedPassword ? (
+             <div className="relative">
+               <Input
+-                aria-label="Encryption password"
++                aria-label={t("Encryption password")}
+                 autoComplete="new-password"
+                 className="h-10 bg-background pr-19"
+                 data-testid="backup-passphrase-input"
+                 onChange={(event) =>
+@@ -299,14 +326,18 @@
+                     type: "set-passphrase",
+                     value: event.target.value,
+                   })
+                 }
+-                placeholder={`Password (min ${MIN_PASSPHRASE_LEN} characters)`}
++                placeholder={t("Password (min {value0} characters)", {
++                  value0: MIN_PASSPHRASE_LEN,
++                })}
+                 type={isRevealed ? "text" : "password"}
+                 value={state.passphrase}
+               />
+               <Button
+-                aria-label={isRevealed ? "Hide password" : "Reveal password"}
++                aria-label={
++                  isRevealed ? t("Hide password") : t("Reveal password")
++                }
+                 className="absolute right-1 top-1/2 h-8 w-8 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                 data-testid="backup-passphrase-reveal-toggle"
+                 onClick={() => setIsRevealed((revealed) => !revealed)}
+                 size="icon"
+@@ -330,11 +361,11 @@
+           ) : null}
+ 
+           {!state.downloadPending && !state.savedPassword ? (
+             <p className="text-xs leading-5 text-muted-foreground">
+-              Keep the file private and save its password somewhere safe — Buzz
+-              cannot reset it. Once ready, the backup remains available to
+-              download for 5 minutes.
++              {t(
++                "Keep the file private and save its password somewhere safe — Buzz cannot reset it. Once ready, the backup remains available to download for 5 minutes.",
++              )}{" "}
+             </p>
+           ) : null}
+ 
+           {state.createError && state.passphrase.length === 0 ? (
+@@ -363,9 +394,9 @@
+                 disabled={downloadDisabled(state) || isSaving}
+                 onClick={() => dispatch({ type: "download-clicked" })}
+                 type="button"
+               >
+-                Backup key
++                {t("Backup key")}{" "}
+               </Button>
+             </div>
+           ) : null}
+         </div>

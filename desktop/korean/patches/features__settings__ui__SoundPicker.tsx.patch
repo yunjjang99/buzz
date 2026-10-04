@@ -1,0 +1,56 @@
+Index: src/features/settings/ui/SoundPicker.tsx
+===================================================================
+--- src/features/settings/ui/SoundPicker.tsx	
++++ src/features/settings/ui/SoundPicker.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { useRef, useState } from "react";
+ import { ChevronDown, Pause, Play } from "lucide-react";
+ 
+ import {
+@@ -31,8 +32,9 @@
+ }: {
+   name: SoundName;
+   className?: string;
+ }) {
++  useLocale();
+   const maskImage = `url(/sounds/${name}.svg)`;
+   return (
+     <span
+       aria-hidden="true"
+@@ -61,8 +63,9 @@
+   value: SoundName;
+   disabled?: boolean;
+   onChange: (next: SoundName) => void;
+ }) {
++  useLocale();
+   const items = sortedSounds(recommended);
+   const [isPlaying, setIsPlaying] = useState(false);
+   const audioRef = useRef<HTMLAudioElement | null>(null);
+ 
+@@ -113,9 +116,9 @@
+                   <span>{name}</span>
+                   <span className="flex items-center gap-2">
+                     {name === recommended ? (
+                       <span className="text-2xs font-semibold uppercase tracking-wide text-muted-foreground">
+-                        rec.
++                        {t("rec.")}{" "}
+                       </span>
+                     ) : null}
+                     <Waveform className="h-6 w-15 opacity-70" name={name} />
+                   </span>
+@@ -125,9 +128,13 @@
+           </DropdownMenuRadioGroup>
+         </DropdownMenuContent>
+       </DropdownMenu>
+       <Button
+-        aria-label={isPlaying ? `Pause ${value}` : `Preview ${value}`}
++        aria-label={
++          isPlaying
++            ? t("Pause {value0}", { value0: value })
++            : t("Preview {value0}", { value0: value })
++        }
+         className="h-7 w-7 rounded-full border border-border/50 bg-muted/45 p-0 text-foreground shadow-none hover:bg-muted/70"
+         disabled={disabled}
+         onClick={togglePreview}
+         size="sm"

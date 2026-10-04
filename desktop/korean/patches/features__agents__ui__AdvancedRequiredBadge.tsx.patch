@@ -1,0 +1,30 @@
+Index: src/features/agents/ui/AdvancedRequiredBadge.tsx
+===================================================================
+--- src/features/agents/ui/AdvancedRequiredBadge.tsx	
++++ src/features/agents/ui/AdvancedRequiredBadge.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { hasMissingRequiredEnvKey } from "./personaRuntimeModel";
+ 
+ export function AdvancedRequiredBadge({
+   envVars,
+@@ -10,8 +11,9 @@
+   requiredEnvKeys?: readonly string[];
+   show?: boolean;
+   testId: string;
+ }) {
++  useLocale();
+   const visible =
+     show ?? hasMissingRequiredEnvKey(requiredEnvKeys ?? [], envVars ?? {});
+   if (!visible) return null;
+   return (
+@@ -19,8 +21,8 @@
+       aria-hidden="true"
+       className="rounded-full bg-destructive/10 px-2 py-0.5 text-xs text-destructive"
+       data-testid={testId}
+     >
+-      Required
++      {t("Required")}{" "}
+     </span>
+   );
+ }

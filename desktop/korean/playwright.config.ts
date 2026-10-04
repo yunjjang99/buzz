@@ -8,7 +8,11 @@ export default defineConfig({
   projects: [
     {
       name: "korean",
-      testMatch: ["**/korean-locale.spec.ts", "**/native-account.spec.ts"],
+      testMatch: [
+        "**/korean-locale.spec.ts",
+        "**/native-account.spec.ts",
+        "**/settings-details.spec.ts",
+      ],
     },
   ],
   webServer: {

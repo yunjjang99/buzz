@@ -105,6 +105,218 @@
     {
       "file": "src/features/onboarding/ui/MachineOnboardingFlow.tsx",
       "patch": "features__onboarding__ui__MachineOnboardingFlow.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/EncryptedBackupProvider.tsx",
+      "patch": "features__settings__EncryptedBackupProvider.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/SidebarUpdateCard.tsx",
+      "patch": "features__settings__SidebarUpdateCard.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/UpdateChecker.tsx",
+      "patch": "features__settings__UpdateChecker.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/UpdateIndicator.tsx",
+      "patch": "features__settings__UpdateIndicator.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/AgentDefaultsSettingsCard.tsx",
+      "patch": "features__settings__ui__AgentDefaultsSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/AgentsSettingsPanel.tsx",
+      "patch": "features__settings__ui__AgentsSettingsPanel.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/BackupTestFlow.tsx",
+      "patch": "features__settings__ui__BackupTestFlow.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/ChannelTemplatesSettingsCard.tsx",
+      "patch": "features__settings__ui__ChannelTemplatesSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/CustomHarnessForm.tsx",
+      "patch": "features__settings__ui__CustomHarnessForm.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/EncryptedBackupCreator.tsx",
+      "patch": "features__settings__ui__EncryptedBackupCreator.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/ExperimentalFeaturesCard.tsx",
+      "patch": "features__settings__ui__ExperimentalFeaturesCard.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/HarnessCatalogDialog.tsx",
+      "patch": "features__settings__ui__HarnessCatalogDialog.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/HarnessRow.tsx",
+      "patch": "features__settings__ui__HarnessRow.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/HarnessesSettingsPanel.tsx",
+      "patch": "features__settings__ui__HarnessesSettingsPanel.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/HostedCommunitiesSettingsCard.tsx",
+      "patch": "features__settings__ui__HostedCommunitiesSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/KeyboardShortcutsCard.tsx",
+      "patch": "features__settings__ui__KeyboardShortcutsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/MobilePairingCard.tsx",
+      "patch": "features__settings__ui__MobilePairingCard.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/NotificationSettingsCard.tsx",
+      "patch": "features__settings__ui__NotificationSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/PreventSleepSettingsCard.tsx",
+      "patch": "features__settings__ui__PreventSleepSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/PrivateKeyBackupRow.tsx",
+      "patch": "features__settings__ui__PrivateKeyBackupRow.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/SendFeedbackDialog.tsx",
+      "patch": "features__settings__ui__SendFeedbackDialog.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/SignOutSection.tsx",
+      "patch": "features__settings__ui__SignOutSection.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/SoundPicker.tsx",
+      "patch": "features__settings__ui__SoundPicker.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/VoiceSettingsCard.tsx",
+      "patch": "features__settings__ui__VoiceSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/community-members/ui/AddMemberDialog.tsx",
+      "patch": "features__community-members__ui__AddMemberDialog.tsx.patch"
+    },
+    {
+      "file": "src/features/community-members/ui/CommunityInviteDialog.tsx",
+      "patch": "features__community-members__ui__CommunityInviteDialog.tsx.patch"
+    },
+    {
+      "file": "src/features/community-members/ui/CommunityMembersCard.tsx",
+      "patch": "features__community-members__ui__CommunityMembersCard.tsx.patch"
+    },
+    {
+      "file": "src/features/community-members/ui/CommunityMembersSettingsCard.tsx",
+      "patch": "features__community-members__ui__CommunityMembersSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/community-members/ui/ConfirmRemoveDialog.tsx",
+      "patch": "features__community-members__ui__ConfirmRemoveDialog.tsx.patch"
+    },
+    {
+      "file": "src/features/community-members/ui/InviteLinkSection.tsx",
+      "patch": "features__community-members__ui__InviteLinkSection.tsx.patch"
+    },
+    {
+      "file": "src/features/custom-emoji/ui/CustomEmojiSettingsCard.tsx",
+      "patch": "features__custom-emoji__ui__CustomEmojiSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/local-archive/ui/LocalArchiveSettingsCard.tsx",
+      "patch": "features__local-archive__ui__LocalArchiveSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/admin-console/AdminConsoleActionsTab.tsx",
+      "patch": "features__admin-console__AdminConsoleActionsTab.tsx.patch"
+    },
+    {
+      "file": "src/features/admin-console/AdminConsoleFeedbackTab.tsx",
+      "patch": "features__admin-console__AdminConsoleFeedbackTab.tsx.patch"
+    },
+    {
+      "file": "src/features/admin-console/AdminConsolePanel.tsx",
+      "patch": "features__admin-console__AdminConsolePanel.tsx.patch"
+    },
+    {
+      "file": "src/features/admin-console/AdminConsolePanelHelpers.tsx",
+      "patch": "features__admin-console__AdminConsolePanelHelpers.tsx.patch"
+    },
+    {
+      "file": "src/features/admin-console/AdminConsoleReportsTab.tsx",
+      "patch": "features__admin-console__AdminConsoleReportsTab.tsx.patch"
+    },
+    {
+      "file": "src/features/admin-console/AdminConsoleSettingsCard.tsx",
+      "patch": "features__admin-console__AdminConsoleSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/admin-console/AdminConsoleStaffingTab.tsx",
+      "patch": "features__admin-console__AdminConsoleStaffingTab.tsx.patch"
+    },
+    {
+      "file": "src/features/mesh-compute/ui/MeshComputeSettingsCard.tsx",
+      "patch": "features__mesh-compute__ui__MeshComputeSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/agents/ui/AgentDefaultsEditor.tsx",
+      "patch": "features__agents__ui__AgentDefaultsEditor.tsx.patch"
+    },
+    {
+      "file": "src/features/agents/ui/AgentConfigFields.tsx",
+      "patch": "features__agents__ui__AgentConfigFields.tsx.patch"
+    },
+    {
+      "file": "src/features/agents/ui/agentConfigControls.tsx",
+      "patch": "features__agents__ui__agentConfigControls.tsx.patch"
+    },
+    {
+      "file": "src/features/agents/ui/EnvVarsEditor.tsx",
+      "patch": "features__agents__ui__EnvVarsEditor.tsx.patch"
+    },
+    {
+      "file": "src/features/agents/ui/PersonaProviderApiKeyField.tsx",
+      "patch": "features__agents__ui__PersonaProviderApiKeyField.tsx.patch"
+    },
+    {
+      "file": "src/features/agents/ui/HarnessCatalogRetryNotice.tsx",
+      "patch": "features__agents__ui__HarnessCatalogRetryNotice.tsx.patch"
+    },
+    {
+      "file": "src/features/agents/ui/AdvancedRequiredBadge.tsx",
+      "patch": "features__agents__ui__AdvancedRequiredBadge.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/harnessCatalogLogic.ts",
+      "patch": "features__settings__ui__harnessCatalogLogic.ts.patch"
+    },
+    {
+      "file": "src/features/settings/ui/harnessGalleryLogic.ts",
+      "patch": "features__settings__ui__harnessGalleryLogic.ts.patch"
+    },
+    {
+      "file": "src/features/settings/ui/harnessFormLogic.ts",
+      "patch": "features__settings__ui__harnessFormLogic.ts.patch"
+    },
+    {
+      "file": "src/features/settings/lib/appearanceScopeCopy.ts",
+      "patch": "features__settings__lib__appearanceScopeCopy.ts.patch"
+    },
+    {
+      "file": "src/features/onboarding/ui/NsecMaskedDisplay.tsx",
+      "patch": "features__onboarding__ui__NsecMaskedDisplay.tsx.patch"
+    },
+    {
+      "file": "src/features/agents/ui/agentConfigOptions.tsx",
+      "patch": "features__agents__ui__agentConfigOptions.tsx.patch"
     }
   ]
 }

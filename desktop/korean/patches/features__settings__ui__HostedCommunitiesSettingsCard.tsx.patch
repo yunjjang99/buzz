@@ -1,0 +1,737 @@
+Index: src/features/settings/ui/HostedCommunitiesSettingsCard.tsx
+===================================================================
+--- src/features/settings/ui/HostedCommunitiesSettingsCard.tsx	
++++ src/features/settings/ui/HostedCommunitiesSettingsCard.tsx	
+@@ -1,4 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { invoke } from "@tauri-apps/api/core";
+ import {
+   AlertCircle,
+@@ -66,8 +67,9 @@
+   }
+ }
+ 
+ export function HostedCommunitiesSettingsCard() {
++  useLocale();
+   const onboarding = useCommunityOnboarding();
+   const { activeCommunity } = useCommunities();
+   const localPubkey = useIdentityQuery().data?.pubkey ?? null;
+   const [auth, setAuth] = React.useState<BuilderlabAuth | null>(null);
+@@ -97,18 +99,18 @@
+       throw new Error(
+         errorMessage(
+           identityResponse.error,
+           identityResponse.correlation_id,
+-          "Could not load the connected Buzz identity.",
++          t("Could not load the connected Buzz identity."),
+         ),
+       );
+     }
+     if (communitiesResponse.error && !communitiesResponse.error.setup_needed) {
+       throw new Error(
+         errorMessage(
+           communitiesResponse.error,
+           communitiesResponse.correlation_id,
+-          "Could not load communities.",
++          t("Could not load communities."),
+         ),
+       );
+     }
+     setIdentity(identityResponse.identity ?? null);
+@@ -150,16 +152,16 @@
+     }
+   };
+ 
+   const signIn = () =>
+-    run("Signing in…", async () => {
++    run(t("Signing in…"), async () => {
+       const nextAuth = await invoke<BuilderlabAuth>("start_builderlab_login");
+       setAuth(nextAuth);
+       await loadAccount();
+     });
+ 
+   const signOut = () =>
+-    run("Signing out…", async () => {
++    run(t("Signing out…"), async () => {
+       await invoke("clear_builderlab_auth");
+       setAuth(null);
+       setIdentity(null);
+       setCommunities([]);
+@@ -167,36 +169,36 @@
+       setAvailability(null);
+     });
+ 
+   const connectIdentity = () =>
+-    run("Connecting Buzz identity…", async () => {
++    run(t("Connecting Buzz identity…"), async () => {
+       const response = await invoke<IdentityResponse>(
+         "bind_builderlab_nostr_identity",
+       );
+       if (response.error) {
+         throw new Error(
+           errorMessage(
+             response.error,
+             response.correlation_id,
+-            "Could not connect the Buzz identity.",
++            t("Could not connect the Buzz identity."),
+           ),
+         );
+       }
+       setIdentity(response.identity ?? null);
+       await loadAccount();
+     });
+ 
+   const unpairIdentity = () =>
+-    run("Unpairing identity…", async () => {
++    run(t("Unpairing identity…"), async () => {
+       const response = await invoke<IdentityResponse>(
+         "delete_builderlab_nostr_identity",
+       );
+       if (response.error) {
+         throw new Error(
+           errorMessage(
+             response.error,
+             response.correlation_id,
+-            "Could not unpair the Buzz identity.",
++            t("Could not unpair the Buzz identity."),
+           ),
+         );
+       }
+       setIdentity(null);
+@@ -236,9 +238,9 @@
+         (boundHex !== null && localHex !== null && boundHex !== localHex)),
+   );
+ 
+   const switchToDeviceIdentity = () =>
+-    run("Switching identity…", async () => {
++    run(t("Switching identity…"), async () => {
+       // The account is bound to a different npub, so re-binding directly returns
+       // identity_already_bound. Release the current binding first, then bind
+       // this device's key. If the local key is reserved by another Builderlab
+       // account, the bind fails with pubkey_already_bound — surface that instead
+@@ -250,9 +252,9 @@
+         throw new Error(
+           errorMessage(
+             released.error,
+             released.correlation_id,
+-            "Could not release the previously connected Buzz identity.",
++            t("Could not release the previously connected Buzz identity."),
+           ),
+         );
+       }
+       const bound = await invoke<IdentityResponse>(
+@@ -263,13 +265,15 @@
+         // the reason the swap could not complete.
+         await loadAccount();
+         throw new Error(
+           bound.error.code === "pubkey_already_bound"
+-            ? "This device's Buzz identity is already reserved by another Builderlab account, so it can't be connected here. Sign in with that account, or transfer the identity there first."
++            ? t(
++                "This device's Buzz identity is already reserved by another Builderlab account, so it can't be connected here. Sign in with that account, or transfer the identity there first.",
++              )
+             : errorMessage(
+                 bound.error,
+                 bound.correlation_id,
+-                "Could not connect this device's Buzz identity.",
++                t("Could not connect this device's Buzz identity."),
+               ),
+         );
+       }
+       setIdentity(bound.identity ?? null);
+@@ -277,9 +281,9 @@
+     });
+ 
+   const archiveCommunity = (community: HostedCommunity) => {
+     if (!community.id) return Promise.resolve(false);
+-    return run("Archiving community…", async () => {
++    return run(t("Archiving community…"), async () => {
+       const response = await invoke<CommunityMutationResponse>(
+         "archive_builderlab_community",
+         { communityId: community.id },
+       );
+@@ -289,9 +293,9 @@
+         throw new Error(
+           errorMessage(
+             response.error,
+             response.correlation_id,
+-            "Could not archive the community.",
++            t("Could not archive the community."),
+           ),
+         );
+       }
+       await loadAccount();
+@@ -299,9 +303,9 @@
+   };
+ 
+   const unarchiveCommunity = (community: HostedCommunity) => {
+     if (!community.id) return Promise.resolve(false);
+-    return run("Unarchiving community…", async () => {
++    return run(t("Unarchiving community…"), async () => {
+       const response = await invoke<CommunityMutationResponse>(
+         "unarchive_builderlab_community",
+         { communityId: community.id },
+       );
+@@ -309,18 +313,18 @@
+         throw new Error(
+           errorMessage(
+             response.error,
+             response.correlation_id,
+-            "Could not unarchive the community.",
++            t("Could not unarchive the community."),
+           ),
+         );
+       }
+       await loadAccount();
+     });
+   };
+ 
+   const transferCommunity = (community: HostedCommunity, npub: string) =>
+-    run("Transferring ownership…", async () => {
++    run(t("Transferring ownership…"), async () => {
+       const response = await invoke<CommunityMutationResponse>(
+         "transfer_builderlab_community",
+         { communityId: community.id, transfereeNpub: npub },
+       );
+@@ -328,9 +332,9 @@
+         throw new Error(
+           errorMessage(
+             response.error,
+             response.correlation_id,
+-            "Could not transfer ownership.",
++            t("Could not transfer ownership."),
+           ),
+         );
+       }
+       await loadAccount();
+@@ -388,9 +392,9 @@
+       identityMismatch ||
+       communities.length >= MAX_COMMUNITIES
+     )
+       return;
+-    void run("Creating community…", async () => {
++    void run(t("Creating community…"), async () => {
+       const availabilityResponse = await invoke<AvailabilityResponse>(
+         "check_builderlab_community_name",
+         { name: normalizedName },
+       );
+@@ -399,9 +403,9 @@
+         throw new Error(
+           errorMessage(
+             availabilityResponse.error,
+             availabilityResponse.correlation_id,
+-            "That Buzz address is already taken.",
++            t("That Buzz address is already taken."),
+           ),
+         );
+       }
+       const response = await invoke<CommunityMutationResponse>(
+@@ -412,9 +416,9 @@
+         throw new Error(
+           errorMessage(
+             response.error,
+             response.correlation_id,
+-            "Could not create the community.",
++            t("Could not create the community."),
+           ),
+         );
+       }
+       const url = relayUrl(response.community);
+@@ -442,10 +446,12 @@
+ 
+   return (
+     <section className="space-y-6" data-testid="hosted-communities-settings">
+       <SettingsSectionHeader
+-        title="Hosted communities"
+-        description="Buzz works with any relay. This page is only for relay hosting provided by Block — sign in with a Builderlab account to create and manage Block-hosted communities. Builderlab sign-in is used on this page alone."
++        title={t("Hosted communities")}
++        description={t(
++          "Buzz works with any relay. This page is only for relay hosting provided by Block — sign in with a Builderlab account to create and manage Block-hosted communities. Builderlab sign-in is used on this page alone.",
++        )}
+       />
+ 
+       {error ? (
+         <div className="flex items-start gap-2 rounded-lg border border-destructive/40 bg-destructive/5 p-3 text-sm text-destructive">
+@@ -455,19 +461,23 @@
+       ) : null}
+ 
+       {loading ? (
+         <div className="flex items-center gap-2 text-sm text-muted-foreground">
+-          <LoaderCircle className="h-4 w-4 animate-spin" /> Checking sign-in…
++          <LoaderCircle className="h-4 w-4 animate-spin" />{" "}
++          {t("Checking sign-in…")}{" "}
+         </div>
+       ) : !auth ? (
+         <div className="rounded-xl border border-border/70 p-5">
+-          <h3 className="font-medium">Sign in to manage hosted communities</h3>
++          <h3 className="font-medium">
++            {t("Sign in to manage hosted communities")}
++          </h3>
+           <p
+             className="mt-2 max-w-2xl text-sm text-muted-foreground/70"
+             data-settings-subcopy
+           >
+-            Authentication opens in your browser and returns securely to Buzz.
+-            You can use every other part of the app without signing in.
++            {t(
++              "Authentication opens in your browser and returns securely to Buzz. You can use every other part of the app without signing in.",
++            )}{" "}
+           </p>
+           <Button
+             className="mt-4"
+             disabled={busy}
+@@ -477,17 +487,17 @@
+               <LoaderCircle className="h-4 w-4 animate-spin" />
+             ) : (
+               <ExternalLink className="h-4 w-4" />
+             )}
+-            {action ?? "Sign in with Builderlab"}
++            {action ?? t("Sign in with Builderlab")}
+           </Button>
+         </div>
+       ) : (
+         <>
+           <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 p-4">
+             <div>
+               <p className="text-sm font-medium">
+-                {auth.name || auth.email || "Builderlab account"}
++                {auth.name || auth.email || t("Builderlab account")}
+               </p>
+               {auth.name && auth.email ? (
+                 <p className="text-xs text-muted-foreground">{auth.email}</p>
+               ) : null}
+@@ -497,25 +507,24 @@
+               size="sm"
+               disabled={busy}
+               onClick={() => void signOut()}
+             >
+-              <LogOut className="h-4 w-4" /> Sign out
++              <LogOut className="h-4 w-4" /> {t("Sign out")}{" "}
+             </Button>
+           </div>
+ 
+           {!identity ? (
+             <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 p-5">
+               <h3 className="font-medium">
+-                Link this account to your Buzz identity
++                {t("Link this account to your Buzz identity")}{" "}
+               </h3>
+               <p
+                 className="mt-2 text-sm text-muted-foreground/70"
+                 data-settings-subcopy
+               >
+-                This Builderlab account isn&apos;t linked to a Buzz identity
+-                yet. Connect this device&apos;s key to create and own
+-                communities under it — Buzz signs a one-time challenge locally,
+-                so your private key never leaves Desktop.
++                {t(
++                  "This Builderlab account isn't linked to a Buzz identity yet. Connect this device's key to create and own communities under it — Buzz signs a one-time challenge locally, so your private key never leaves Desktop.",
++                )}{" "}
+               </p>
+               <Button
+                 className="mt-4"
+                 disabled={busy}
+@@ -523,37 +532,42 @@
+               >
+                 {action ? (
+                   <LoaderCircle className="h-4 w-4 animate-spin" />
+                 ) : null}
+-                {action ?? "Connect Buzz identity"}
++                {action ?? t("Connect Buzz identity")}
+               </Button>
+             </div>
+           ) : identityMismatch ? (
+             <div className="rounded-xl border border-amber-500/50 bg-amber-500/5 p-5">
+               <div className="flex items-start gap-2">
+                 <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                 <div>
+                   <h3 className="font-medium">
+-                    This account is connected to a different Buzz identity
++                    {t(
++                      "This account is connected to a different Buzz identity",
++                    )}{" "}
+                   </h3>
+                   <p
+                     className="mt-2 text-sm text-muted-foreground/70"
+                     data-settings-subcopy
+                   >
+-                    Your Builderlab account owns communities under another Buzz
+-                    key, so connecting them here would join a relay this device
+-                    isn&apos;t a member of. Creating and connecting are paused
+-                    until the identities match.
++                    {t(
++                      "Your Builderlab account owns communities under another Buzz key, so connecting them here would join a relay this device isn't a member of. Creating and connecting are paused until the identities match.",
++                    )}{" "}
+                   </p>
+                   <dl className="mt-3 space-y-1 text-xs">
+                     <div className="flex flex-wrap gap-x-2">
+-                      <dt className="text-muted-foreground">Account uses</dt>
++                      <dt className="text-muted-foreground">
++                        {t("Account uses")}
++                      </dt>
+                       <dd className="font-mono">
+                         {boundNpub ?? UNAVAILABLE_KEY_LABEL}
+                       </dd>
+                     </div>
+                     <div className="flex flex-wrap gap-x-2">
+-                      <dt className="text-muted-foreground">This device</dt>
++                      <dt className="text-muted-foreground">
++                        {t("This device")}
++                      </dt>
+                       <dd className="font-mono">
+                         {localNpub ?? UNAVAILABLE_KEY_LABEL}
+                       </dd>
+                     </div>
+@@ -567,16 +581,16 @@
+               >
+                 {action ? (
+                   <LoaderCircle className="h-4 w-4 animate-spin" />
+                 ) : null}
+-                {action ?? "Switch to this device's identity"}
++                {action ?? t("Switch to this device's identity")}
+               </Button>
+             </div>
+           ) : (
+             <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 p-4">
+               <div className="flex items-center gap-2 text-sm text-muted-foreground">
+-                <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Buzz
+-                identity connected
++                <CheckCircle2 className="h-4 w-4 text-emerald-500" />{" "}
++                {t("Buzz identity connected")}{" "}
+                 {boundNpub ? (
+                   <span className="font-mono text-xs">{boundNpub}</span>
+                 ) : null}
+               </div>
+@@ -589,25 +603,27 @@
+ 
+           <div className="space-y-3">
+             <div className="flex items-center justify-between gap-3">
+               <h3 className="font-medium">
+-                Your communities
++                {t("Your communities")}{" "}
+                 <span className="ml-2 text-xs font-normal text-muted-foreground">
+-                  {communities.length} of {MAX_COMMUNITIES} used
++                  {communities.length} {t("of")} {MAX_COMMUNITIES} {t(
++                    "used",
++                  )}{" "}
+                 </span>
+               </h3>
+               <Button
+                 variant="ghost"
+                 size="sm"
+                 disabled={busy}
+-                onClick={() => void run("Refreshing…", loadAccount)}
++                onClick={() => void run(t("Refreshing…"), loadAccount)}
+               >
+-                <RefreshCw className="h-4 w-4" /> Refresh
++                <RefreshCw className="h-4 w-4" /> {t("Refresh")}{" "}
+               </Button>
+             </div>
+             {communities.length === 0 ? (
+               <p className="rounded-xl border border-dashed p-5 text-sm text-muted-foreground">
+-                No hosted communities yet.
++                {t("No hosted communities yet.")}{" "}
+               </p>
+             ) : (
+               <ul className="space-y-2">
+                 {[...communities]
+@@ -656,26 +672,27 @@
+             className="space-y-4 rounded-xl border border-border/70 p-5"
+             onSubmit={createCommunity}
+           >
+             <div>
+-              <h3 className="font-medium">Create a community</h3>
++              <h3 className="font-medium">{t("Create a community")}</h3>
+               <p
+                 className="mt-1 text-sm text-muted-foreground/70"
+                 data-settings-subcopy
+               >
+-                Choose the address your team will use to connect.
++                {t("Choose the address your team will use to connect.")}{" "}
+               </p>
+             </div>
+             {atCommunityLimit ? (
+               <p className="text-sm text-muted-foreground">
+-                You&apos;ve reached the limit of {MAX_COMMUNITIES} hosted
+-                communities. Transfer one to free up a slot before creating
+-                another.
++                {t("You've reached the limit of")} {MAX_COMMUNITIES}{" "}
++                {t(
++                  "hosted communities. Transfer one to free up a slot before creating another.",
++                )}{" "}
+               </p>
+             ) : null}
+             <div className="flex max-w-xl items-center gap-2">
+               <Input
+-                aria-label="Community address"
++                aria-label={t("Community address")}
+                 autoComplete="off"
+                 disabled={
+                   !usableBoundIdentity ||
+                   identityMismatch ||
+@@ -696,21 +713,21 @@
+               </span>
+             </div>
+             {name && !validName ? (
+               <p className="text-sm text-destructive">
+-                Use lowercase letters, numbers, and single hyphens.
++                {t("Use lowercase letters, numbers, and single hyphens.")}{" "}
+               </p>
+             ) : validName && checkingName ? (
+               <p className="text-sm text-muted-foreground">
+-                Checking availability…
++                {t("Checking availability…")}{" "}
+               </p>
+             ) : availability === false ? (
+               <p className="text-sm text-destructive">
+-                That address is already taken.
++                {t("That address is already taken.")}{" "}
+               </p>
+             ) : availability === true ? (
+               <p className="text-sm text-emerald-600">
+-                That address is available.
++                {t("That address is available.")}{" "}
+               </p>
+             ) : null}
+             <Button
+               disabled={
+@@ -726,9 +743,9 @@
+             >
+               {action ? (
+                 <LoaderCircle className="h-4 w-4 animate-spin" />
+               ) : null}
+-              {action ?? "Create and connect"}
++              {action ?? t("Create and connect")}
+             </Button>
+           </form>
+         </>
+       )}
+@@ -742,8 +759,9 @@
+ }: {
+   busy: boolean;
+   onConfirm: () => void;
+ }) {
++  useLocale();
+   const [open, setOpen] = React.useState(false);
+   return (
+     <AlertDialog open={open} onOpenChange={setOpen}>
+       <Button
+@@ -752,26 +770,26 @@
+         className="text-destructive hover:text-destructive"
+         disabled={busy}
+         onClick={() => setOpen(true)}
+       >
+-        <Unlink className="h-4 w-4" /> Unpair identity
++        <Unlink className="h-4 w-4" /> {t("Unpair identity")}{" "}
+       </Button>
+       <AlertDialogContent>
+         <AlertDialogHeader>
+-          <AlertDialogTitle>Unpair this Buzz identity?</AlertDialogTitle>
++          <AlertDialogTitle>{t("Unpair this Buzz identity?")}</AlertDialogTitle>
+           <AlertDialogDescription>
+-            Your Builderlab account will no longer be connected to this Buzz
+-            key. You can reconnect any key later, but community actions stay
+-            unavailable until you do.
++            {t(
++              "Your Builderlab account will no longer be connected to this Buzz key. You can reconnect any key later, but community actions stay unavailable until you do.",
++            )}{" "}
+           </AlertDialogDescription>
+         </AlertDialogHeader>
+         <AlertDialogFooter>
+-          <AlertDialogCancel>Cancel</AlertDialogCancel>
++          <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+           <AlertDialogAction
+             className={buttonVariants({ variant: "destructive" })}
+             onClick={onConfirm}
+           >
+-            Unpair identity
++            {t("Unpair identity")}{" "}
+           </AlertDialogAction>
+         </AlertDialogFooter>
+       </AlertDialogContent>
+     </AlertDialog>
+@@ -796,14 +814,15 @@
+   onUnarchive: () => void;
+   onTransfer: (npub: string) => Promise<boolean>;
+   showIconPicker: boolean;
+ }) {
++  useLocale();
+   const [confirmArchive, setConfirmArchive] = React.useState(false);
+   const [confirmUnarchive, setConfirmUnarchive] = React.useState(false);
+   const [transferOpen, setTransferOpen] = React.useState(false);
+   const url = relayUrl(community);
+   const archived = Boolean(community.archived_at);
+-  const displayName = community.name ?? community.slug ?? "Hosted community";
++  const displayName = community.name ?? community.slug ?? t("Hosted community");
+ 
+   return (
+     <li
+       className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 p-4 ${
+@@ -819,9 +838,9 @@
+             className="truncate text-xs text-muted-foreground/70"
+             data-settings-subcopy
+           >
+             {community.normalized_host}
+-            {archived ? " · Archived" : ""}
++            {archived ? t(" · Archived") : ""}
+           </p>
+         </div>
+       </div>
+ 
+@@ -832,26 +851,29 @@
+             size="sm"
+             disabled={busy || !community.id}
+             onClick={() => setConfirmUnarchive(true)}
+           >
+-            <ArchiveRestore className="h-4 w-4" /> Unarchive
++            <ArchiveRestore className="h-4 w-4" /> {t("Unarchive")}{" "}
+           </Button>
+           <AlertDialog
+             open={confirmUnarchive}
+             onOpenChange={setConfirmUnarchive}
+           >
+             <AlertDialogContent>
+               <AlertDialogHeader>
+-                <AlertDialogTitle>Unarchive {displayName}?</AlertDialogTitle>
++                <AlertDialogTitle>
++                  {t("Unarchive")} {displayName}?
++                </AlertDialogTitle>
+                 <AlertDialogDescription>
+-                  This address becomes connectable again. Connections that
+-                  closed during archival will not reconnect automatically.
++                  {t(
++                    "This address becomes connectable again. Connections that closed during archival will not reconnect automatically.",
++                  )}{" "}
+                 </AlertDialogDescription>
+               </AlertDialogHeader>
+               <AlertDialogFooter>
+-                <AlertDialogCancel>Cancel</AlertDialogCancel>
++                <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+                 <AlertDialogAction onClick={onUnarchive}>
+-                  Unarchive
++                  {t("Unarchive")}{" "}
+                 </AlertDialogAction>
+               </AlertDialogFooter>
+             </AlertDialogContent>
+           </AlertDialog>
+@@ -864,47 +886,48 @@
+               size="sm"
+               disabled={busy}
+               onClick={onConnect}
+             >
+-              Connect
++              {t("Connect")}{" "}
+             </Button>
+           ) : null}
+           <Button
+             variant="ghost"
+             size="sm"
+             disabled={busy || !community.id}
+             onClick={() => setTransferOpen(true)}
+           >
+-            <ArrowLeftRight className="h-4 w-4" /> Transfer
++            <ArrowLeftRight className="h-4 w-4" /> {t("Transfer")}{" "}
+           </Button>
+           <Button
+             variant="ghost"
+             size="sm"
+             className="text-destructive hover:text-destructive"
+             disabled={busy || !community.id}
+             onClick={() => setConfirmArchive(true)}
+           >
+-            <Archive className="h-4 w-4" /> Archive
++            <Archive className="h-4 w-4" /> {t("Archive")}{" "}
+           </Button>
+ 
+           <AlertDialog open={confirmArchive} onOpenChange={setConfirmArchive}>
+             <AlertDialogContent>
+               <AlertDialogHeader>
+-                <AlertDialogTitle>Archive {displayName}?</AlertDialogTitle>
++                <AlertDialogTitle>
++                  {t("Archive")} {displayName}?
++                </AlertDialogTitle>
+                 <AlertDialogDescription>
+-                  New and existing connections stop and the address stays
+-                  reserved. Archiving can&apos;t be undone from here without
+-                  unarchiving, and the community keeps counting toward your
+-                  quota — it isn&apos;t deleted.
++                  {t(
++                    "New and existing connections stop and the address stays reserved. Archiving can't be undone from here without unarchiving, and the community keeps counting toward your quota — it isn't deleted.",
++                  )}{" "}
+                 </AlertDialogDescription>
+               </AlertDialogHeader>
+               <AlertDialogFooter>
+-                <AlertDialogCancel>Cancel</AlertDialogCancel>
++                <AlertDialogCancel>{t("Cancel")}</AlertDialogCancel>
+                 <AlertDialogAction
+                   className={buttonVariants({ variant: "destructive" })}
+                   onClick={onArchive}
+                 >
+-                  Archive
++                  {t("Archive")}{" "}
+                 </AlertDialogAction>
+               </AlertDialogFooter>
+             </AlertDialogContent>
+           </AlertDialog>
+@@ -934,8 +957,9 @@
+   communityName: string;
+   busy: boolean;
+   onTransfer: (npub: string) => Promise<boolean>;
+ }) {
++  useLocale();
+   const [npub, setNpub] = React.useState("");
+   const npubIsValid = npub.startsWith("npub1") && npub.length >= 50;
+ 
+   React.useEffect(() => {
+@@ -951,18 +975,19 @@
+   return (
+     <Dialog open={open} onOpenChange={onOpenChange}>
+       <DialogContent>
+         <DialogHeader>
+-          <DialogTitle>Transfer ownership</DialogTitle>
++          <DialogTitle>{t("Transfer ownership")}</DialogTitle>
+           <DialogDescription>
+-            Transfer {communityName} to another person. You become a regular
+-            member. The recipient needs a connected Buzz identity first, and
+-            this can&apos;t be undone.
++            {t("Transfer")} {communityName}{" "}
++            {t(
++              "to another person. You become a regular member. The recipient needs a connected Buzz identity first, and this can't be undone.",
++            )}{" "}
+           </DialogDescription>
+         </DialogHeader>
+         <div className="space-y-2">
+           <Input
+-            aria-label="Recipient npub"
++            aria-label={t("Recipient npub")}
+             autoComplete="off"
+             className="font-mono text-sm"
+             placeholder="npub1…"
+             spellCheck={false}
+@@ -970,23 +995,23 @@
+             onChange={(event) => setNpub(event.target.value.trim())}
+           />
+           {npub.length > 0 && !npubIsValid ? (
+             <p className="text-sm text-destructive">
+-              Enter a valid npub that starts with npub1.
++              {t("Enter a valid npub that starts with npub1.")}{" "}
+             </p>
+           ) : null}
+         </div>
+         <DialogFooter>
+           <Button variant="outline" onClick={() => onOpenChange(false)}>
+-            Cancel
++            {t("Cancel")}{" "}
+           </Button>
+           <Button
+             variant="destructive"
+             disabled={!npubIsValid || busy}
+             onClick={() => void submit()}
+           >
+             {busy ? <LoaderCircle className="h-4 w-4 animate-spin" /> : null}
+-            Transfer ownership
++            {t("Transfer ownership")}{" "}
+           </Button>
+         </DialogFooter>
+       </DialogContent>
+     </Dialog>

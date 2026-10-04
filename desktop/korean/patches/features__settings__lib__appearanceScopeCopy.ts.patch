@@ -1,0 +1,19 @@
+Index: src/features/settings/lib/appearanceScopeCopy.ts
+===================================================================
+--- src/features/settings/lib/appearanceScopeCopy.ts	
++++ src/features/settings/lib/appearanceScopeCopy.ts	
+@@ -1,4 +1,6 @@
++import { t } from "@buzz-korean/locale";
++
+ /**
+  * Copy helper for the Appearance settings panel's per-community scoping.
+  *
+  * Theme, mode, and accent are saved per community (see
+@@ -15,6 +17,6 @@
+ export function appearanceCommunityLabel(
+   communityName: string | null | undefined,
+ ): string {
+   const trimmed = communityName?.trim();
+-  return trimmed ? trimmed : "this community";
++  return trimmed ? trimmed : t("this community");
+ }
