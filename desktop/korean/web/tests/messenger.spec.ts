@@ -199,6 +199,8 @@ test("browser login, Korean messaging, replies, language persistence, and mobile
 test("local encrypted backup decrypts in the real worker and never crosses the socket", async ({
   page,
 }) => {
+  // Three real NIP-49 scrypt operations can exceed Playwright's 5s expect default under concurrent builds.
+  test.setTimeout(90_000);
   const published = await installRelay(page, true);
   await page.goto("/chat/");
   await openLegacy(page);
@@ -218,6 +220,7 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
   await page.getByRole("button", { name: "백업으로 로그인" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "백업 비밀번호가 다르거나",
+    { timeout: 30_000 },
   );
   expect(
     await page.evaluate(() =>
@@ -226,7 +229,9 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
   ).toBeNull();
   await page.getByLabel("백업 비밀번호").fill(password);
   await page.getByRole("button", { name: "백업으로 로그인" }).click();
-  await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!");
+  await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!", {
+    timeout: 30_000,
+  });
   const accountRecord = await page.evaluate(() =>
     localStorage.getItem("buzz-korean-web.account.v1"),
   );
@@ -246,7 +251,9 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
     .locator(".legacy-login")
     .getByRole("button", { name: "로그인", exact: true })
     .click();
-  await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!");
+  await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!", {
+    timeout: 30_000,
+  });
   await page.getByLabel("메시지 입력").fill("전송 실패 후 재시도");
   await page.getByRole("button", { name: "메시지 보내기" }).click();
   await expect(page.getByRole("alert")).toContainText("test rejection");

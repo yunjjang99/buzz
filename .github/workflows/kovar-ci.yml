@@ -1,0 +1,59 @@
+name: Kovar compatibility
+on:
+  workflow_dispatch:
+  workflow_call:
+  pull_request:
+    paths: ['desktop/**', 'crates/**', 'migrations/**', 'schema/**', 'Cargo.*', 'pnpm-lock.yaml', 'scripts/**', '.github/workflows/kovar-*.yml']
+  push:
+    branches: [main, 'codex/**']
+    paths: ['desktop/**', 'crates/**', 'migrations/**', 'schema/**', 'Cargo.*', 'pnpm-lock.yaml', 'scripts/**', '.github/workflows/kovar-*.yml']
+permissions:
+  contents: read
+jobs:
+  # Reuse upstream checks and tests rather than fork or reimplement them.
+  upstream-desktop:
+    uses: ./.github/workflows/_ci-desktop.yml
+    with:
+      desktop: true
+      desktop_rust: false
+      rust: false
+  compatibility:
+    if: github.repository == 'yunjjang99/buzz'
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [ui, relay]
+    steps:
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: cashapp/activate-hermit@cea9af7913204a965fd488637a8d1811bba2e616
+      - run: pnpm install --frozen-lockfile
+      - if: matrix.suite == 'ui'
+        run: pnpm -C desktop exec playwright install --with-deps chromium webkit
+      - uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32
+        if: matrix.suite == 'relay'
+        with:
+          save-if: ${{ github.event_name != 'pull_request' }}
+      - name: Run required Kovar suite
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: node desktop/korean/update/validate.mjs --suite "$SUITE" --output "$RUNNER_TEMP/kovar-$SUITE"
+      - name: Readable summary
+        if: always()
+        env:
+          SUITE: ${{ matrix.suite }}
+        run: |
+          if [[ -f "$RUNNER_TEMP/kovar-$SUITE/validation.md" ]]; then
+            cat "$RUNNER_TEMP/kovar-$SUITE/validation.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        if: always()
+        with:
+          name: kovar-${{ matrix.suite }}-${{ github.sha }}
+          path: ${{ runner.temp }}/kovar-${{ matrix.suite }}
+          if-no-files-found: error
+          retention-days: 30
