@@ -11,13 +11,18 @@
 - 워크스페이스 접속 및 초대 링크 입력
 - 채널 생성·찾아보기·공개 범위·자동 삭제 기간
 - 메시지 입력·전송·답장·서식·파일 첨부 버튼
+- DM 시작 안내·손 흔들기 카드, 날짜·시간, 메시지 추가 작업 메뉴
+- 허들 상태·참여자 수·채팅·입력 안내, 마이크·스피커 설정과 에이전트 추가
+- 프로필 정보·실행 환경·채널·기억 탭, 모델 설정 항목과 복사 알림
+- 에이전트 보관·삭제 확인창, 지침·활동 진입 버튼과 접근성 이름
 - 설정 메뉴, 프로필·백업·로그아웃 확인창, 화면 설정과 언어 선택
 - 알림·음성·단축키·모바일 연결·업데이트의 상세 설명과 오류 안내
 - 직원 초대·권한 관리, 사용자 이모지·보관함·채널 템플릿
 - 에이전트 기본값·실행 도구·제공업체 설정, 컴퓨팅·실험 기능
 
-아직 번역하지 않은 화면과 서버 오류 문구는 영어로 표시됩니다. 에이전트
-대화·프로젝트·자동화 화면과 외부 도구가 반환하는 안내는 별도 범위입니다.
+아직 번역하지 않은 화면과 서버 오류 문구는 영어로 표시됩니다. 상세 활동
+피드·프로젝트·자동화 화면과 외부 도구가 반환하는 안내는 별도 범위입니다.
+운영체제가 표시하는 허들 창 제목은 원본의 `Huddle`을 유지합니다.
 이 문서는 전체 한국어 번역이나 Windows 실행 검증이 완료되었다는 의미가 아닙니다.
 
 ## 홈서버 연결
@@ -49,6 +54,22 @@ BUZZ_RELAY_URL=wss://buzz.kovar.kr BUZZ_RELAY_HTTP=https://buzz.kovar.kr \
   node korean/native-build.mjs --target aarch64-apple-darwin --bundles app
 ```
 
+로컬 Mac 빌드 결과는
+`desktop/src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Kovar Buzz.app`입니다.
+서명하지 않은 로컬 번들을 재사용해 `codesign` 검증이 실패하면 아래처럼
+임시 서명을 적용하고 검증합니다. 배포용 인증서 서명·공증을 대신하지 않습니다.
+
+```bash
+# desktop/ 디렉터리에서 실행
+codesign --force --deep --sign - \
+  "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Kovar Buzz.app"
+codesign --verify --deep --strict \
+  "src-tauri/target/aarch64-apple-darwin/release/bundle/macos/Kovar Buzz.app"
+```
+
+기존 Kovar Buzz를 완전히 종료한 뒤 새 앱을 실행하세요. 같은 앱 식별자를
+사용하므로 기존 앱이 실행 중이면 이전 프로세스가 열릴 수 있습니다.
+
 Windows x64:
 
 ```bash
@@ -76,7 +97,8 @@ pnpm test
 node korean/check.mjs
 node --test korean/tests/overlay.test.mjs
 node --import ./test-jsdom-setup.mjs --import ./test-loader.mjs \
-  --experimental-strip-types --test-force-exit --test korean/runtime/locale.jsdom-test.mjs
+  --experimental-strip-types --test-force-exit --test \
+  korean/runtime/locale.jsdom-test.mjs korean/runtime/interaction-copy.jsdom-test.mjs
 VITE_BUZZ_EMPLOYEE_APP=1 node korean/build.mjs --e2e
 pnpm exec playwright test --config korean/playwright.config.ts
 ```
@@ -85,6 +107,12 @@ pnpm exec playwright test --config korean/playwright.config.ts
 새로고침 후 설정 유지, 한글 초안 보존과 메시지 전송을 확인합니다. 상세 설정
 탭과 로그아웃 확인창의 번역·영어 복귀도 검사합니다. 실제 서버,
 네이티브 알림, Windows IME 및 운영체제별 설치 동작은 별도 확인해야 합니다.
+
+`interactions.spec.ts`는 DM에서 추가 작업 메뉴와 종료된 허들 보기를 누르고,
+허들 별도 창에서 오디오·스피커 설정과 에이전트 추가 창을 엽니다. 프로필의
+정보·실행 환경·채널·기억 탭과 보관·삭제 확인창도 검사합니다. 확인창에서는
+취소하여 삭제나 보관이 실행되지 않았는지 검증합니다. 열린 UI의 언어 전환,
+사용자 이름·메시지 보존, 날짜 표시의 한국어·영어 복귀도 확인합니다.
 
 직원 배포 전에 Mac과 Windows에서 다음을 직접 확인하세요.
 
@@ -143,13 +171,20 @@ node korean/check-upstream.mjs desktop-v0.5.26
 ## 번역 추가
 
 일반 문구는 `desktop/korean/runtime/messages.ts`, 상세 설정 문구는
-`desktop/korean/runtime/settings-messages.json`에 추가합니다. UI 적용 규칙은
+`desktop/korean/runtime/settings-messages.json`, DM·허들·프로필 문구는
+`desktop/korean/runtime/interaction-messages.json`에 추가합니다. UI 적용 규칙은
 `desktop/korean/manifest.json`과 `patches/`에 있습니다. 원본 컴포넌트를 직접
 수정하지 않습니다. 규칙은 `useLocale()`로 변경을 구독하고 `t("English copy")`를
 표시하도록 변환합니다. 이름·메시지 등 사용자 데이터는 `t()`에 직접 넣지 말고
 `t("Message #{channel}", { channel: channelName })`처럼 매개변수로 전달합니다.
 모듈 수준 옵션은 렌더링 또는 getter에서 번역해 언어 변경을 반영합니다.
 역할·상태 식별자와 저장되는 값은 영어 원본을 유지합니다.
+
+프로필 필드의 `label`은 원본에서 필터·정렬·화면 이동에도 사용하므로 데이터
+구조의 값을 바꾸지 않고 표시 위치에서만 번역합니다. `useMemo`로 만들어지는
+번역 문구는 언어를 의존성에 포함합니다. 손 흔들기 카드는 표시할 때만 문구를
+변환하고 서버에 저장된 서명 메시지는 유지합니다. 날짜 포맷도 모듈을 불러온
+시점의 언어에 고정하지 않고 렌더링할 때 현재 언어를 선택합니다.
 
 새 규칙을 추가하거나 원본에 맞게 수정한 뒤 `node korean/check.mjs`로 전체
 적용 위치와 **변환 후 TypeScript**까지 검사하고 화면 테스트를 실행합니다.

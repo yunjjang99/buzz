@@ -1,0 +1,232 @@
+Index: src/features/messages/ui/MessageActionBar.tsx
+===================================================================
+--- src/features/messages/ui/MessageActionBar.tsx	
++++ src/features/messages/ui/MessageActionBar.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import {
+   BellOff,
+   BellRing,
+@@ -66,7 +67,7 @@
+     messageId: message.id,
+     threadRootId: rootId,
+   });
+-  copyTextToClipboard(link, "Link copied to clipboard");
++  copyTextToClipboard(link, t("Link copied to clipboard"));
+ }
+ 
+ /** Gate shared by every copy-link surface: pending sends have no delivered
+@@ -119,6 +120,7 @@
+   isFollowingThread?: boolean;
+   isUnread?: boolean;
+ }) {
++  useLocale();
+   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = React.useState(false);
+   const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
+   // Transfer focus ownership only after the menu has finished closing.
+@@ -149,7 +151,7 @@
+           <TooltipTrigger asChild>
+             <DropdownMenuTrigger asChild>
+               <Button
+-                aria-label="More actions"
++                aria-label={t("More actions")}
+                 className={ACTION_BUTTON_CLASS}
+                 data-testid={`more-actions-${message.id}`}
+                 size="sm"
+@@ -160,7 +162,7 @@
+               </Button>
+             </DropdownMenuTrigger>
+           </TooltipTrigger>
+-          <TooltipContent>More actions</TooltipContent>
++          <TooltipContent>{t("More actions")}</TooltipContent>
+         </Tooltip>
+         <DropdownMenuContent
+           align="end"
+@@ -183,7 +185,7 @@
+               }}
+             >
+               <Pencil className="h-4 w-4" />
+-              Edit message
++              {t("Edit message")}
+             </DropdownMenuItem>
+           ) : null}
+ 
+@@ -203,7 +205,7 @@
+               ) : (
+                 <MailOpen className="h-4 w-4" />
+               )}
+-              {isUnread ? "Mark read" : "Mark unread"}
++              {isUnread ? t("Mark read") : t("Mark unread")}
+             </DropdownMenuItem>
+           ) : null}
+ 
+@@ -222,7 +224,7 @@
+               ) : (
+                 <BellRing className="h-4 w-4" />
+               )}
+-              {isFollowingThread ? "Unfollow thread" : "Follow thread"}
++              {isFollowingThread ? t("Unfollow thread") : t("Follow thread")}
+             </DropdownMenuItem>
+           ) : null}
+ 
+@@ -231,7 +233,7 @@
+               onClick={() => {
+                 copyTextToClipboard(
+                   message.body,
+-                  "Message copied to clipboard",
++                  t("Message copied to clipboard"),
+                   buildMentionClipboardHtml({
+                     identities: mentionIdentities,
+                     text: message.body,
+@@ -240,7 +242,7 @@
+               }}
+             >
+               <Copy className="h-4 w-4" />
+-              Copy message
++              {t("Copy message")}
+             </DropdownMenuItem>
+           ) : null}
+ 
+@@ -251,23 +253,23 @@
+               }}
+             >
+               <Clock className="h-4 w-4" />
+-              Remind me later
++              {t("Remind me later")}
+             </DropdownMenuItem>
+           ) : null}
+ 
+           {onSendToChannel ? (
+             <DropdownMenuItem
+-              aria-label="Send to channel"
++              aria-label={t("Send to channel")}
+               data-testid={`send-to-channel-${message.id}`}
+               onClick={() => {
+                 void onSendToChannel(message)
+-                  .then(() => toast.success("Sent to channel"))
++                  .then(() => toast.success(t("Sent to channel")))
+                   .catch((error) => {
+                     console.error(
+                       "Failed to send thread message to channel",
+                       error,
+                     );
+-                    toast.error("Couldn't send to channel");
++                    toast.error(t("Couldn't send to channel"));
+                   });
+               }}
+             >
+@@ -276,7 +278,7 @@
+                 className="h-4 w-4"
+                 data-testid="send-to-channel-icon"
+               />
+-              Send to channel
++              {t("Send to channel")}
+             </DropdownMenuItem>
+           ) : null}
+ 
+@@ -288,7 +290,7 @@
+               }}
+             >
+               <Link2 className="h-4 w-4" />
+-              Copy link
++              {t("Copy link")}
+             </DropdownMenuItem>
+           ) : null}
+ 
+@@ -302,7 +304,7 @@
+               }}
+             >
+               <Flag className="h-4 w-4" />
+-              Report message
++              {t("Report message")}
+             </DropdownMenuItem>
+           ) : null}
+ 
+@@ -315,7 +317,7 @@
+               }}
+             >
+               <Trash2 className="h-4 w-4" />
+-              Delete message
++              {t("Delete message")}
+             </DropdownMenuItem>
+           ) : null}
+ 
+@@ -357,6 +359,7 @@
+   emoji: string;
+   onSelect: (emoji: string) => void;
+ }) {
++  useLocale();
+   const displayName = emojiDisplayName(emoji);
+   const mediaUrl = customEmojiUrl ? rewriteRelayUrl(customEmojiUrl) : null;
+ 
+@@ -364,7 +367,7 @@
+     <Tooltip>
+       <TooltipTrigger asChild>
+         <button
+-          aria-label={`React with ${displayName}`}
++          aria-label={t("React with {emoji}", { emoji: displayName })}
+           className="flex h-8 w-8 items-center justify-center rounded-full text-base leading-none text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+           onClick={() => onSelect(emoji)}
+           title={displayName}
+@@ -441,6 +444,7 @@
+   /** Resolves the mention identities carried by "Copy message". */
+   profiles?: UserProfileLookup;
+ }) {
++  useLocale();
+   const [isReactionPickerOpen, setIsReactionPickerOpen] = React.useState(false);
+   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
+   const customEmoji = useCustomEmoji();
+@@ -544,7 +548,7 @@
+                 <TooltipTrigger asChild>
+                   <PopoverTrigger asChild>
+                     <Button
+-                      aria-label="Open reactions"
++                      aria-label={t("Open reactions")}
+                       className={ACTION_BUTTON_CLASS}
+                       data-testid={`react-message-${message.id}`}
+                       size="sm"
+@@ -555,7 +559,7 @@
+                     </Button>
+                   </PopoverTrigger>
+                 </TooltipTrigger>
+-                <TooltipContent>React</TooltipContent>
++                <TooltipContent>{t("React")}</TooltipContent>
+               </Tooltip>
+               <PopoverContent
+                 align="end"
+@@ -596,7 +600,7 @@
+             <Tooltip>
+               <TooltipTrigger asChild>
+                 <Button
+-                  aria-label="Reply"
++                  aria-label={t("Reply")}
+                   className={ACTION_BUTTON_CLASS}
+                   data-testid={`reply-message-${message.id}`}
+                   onClick={() => {
+@@ -609,7 +613,7 @@
+                   <CornerUpLeft className={ACTION_ICON_CLASS} />
+                 </Button>
+               </TooltipTrigger>
+-              <TooltipContent>Reply</TooltipContent>
++              <TooltipContent>{t("Reply")}</TooltipContent>
+             </Tooltip>
+           ) : null}
+ 
+@@ -617,7 +621,7 @@
+             <Tooltip>
+               <TooltipTrigger asChild>
+                 <Button
+-                  aria-label="Copy link"
++                  aria-label={t("Copy link")}
+                   className={ACTION_BUTTON_CLASS}
+                   data-testid={`copy-link-message-${message.id}`}
+                   onClick={() => {
+@@ -630,7 +634,7 @@
+                   <Link2 className={ACTION_ICON_CLASS} />
+                 </Button>
+               </TooltipTrigger>
+-              <TooltipContent>Copy link</TooltipContent>
++              <TooltipContent>{t("Copy link")}</TooltipContent>
+             </Tooltip>
+           ) : null}
+ 

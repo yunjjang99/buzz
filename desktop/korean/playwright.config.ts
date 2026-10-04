@@ -12,6 +12,7 @@ export default defineConfig({
         "**/korean-locale.spec.ts",
         "**/native-account.spec.ts",
         "**/settings-details.spec.ts",
+        "**/interactions.spec.ts",
       ],
     },
   ],

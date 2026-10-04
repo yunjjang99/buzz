@@ -1,0 +1,56 @@
+Index: src/features/huddle/components/HuddleProfileControl.tsx
+===================================================================
+--- src/features/huddle/components/HuddleProfileControl.tsx	
++++ src/features/huddle/components/HuddleProfileControl.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { invoke } from "@tauri-apps/api/core";
+ import { listen } from "@tauri-apps/api/event";
+ import { Headphones } from "lucide-react";
+@@ -36,6 +37,7 @@
+   onHuddleEnded?: (ephemeralChannelId: string | null) => void;
+   visible: boolean;
+ }) {
++  useLocale();
+   const {
+     audioDevices,
+     isMuted,
+@@ -123,7 +125,7 @@
+       data-testid="profile-huddle-control"
+     >
+       <Button
+-        aria-label="Open huddle window"
++        aria-label={t("Open huddle window")}
+         className="h-auto min-w-0 flex-1 justify-start gap-2 px-0 py-0 text-left hover:bg-transparent"
+         onClick={() => void handleOpenHuddleWindow()}
+         type="button"
+@@ -135,10 +137,10 @@
+         />
+         <span className="min-w-0 flex-1">
+           <span className="block truncate text-sm font-medium leading-tight">
+-            In a huddle
++            {t("In a huddle")}
+           </span>
+           <span className="block truncate text-xs text-sidebar-foreground/65">
+-            {channelName ? `#${channelName}` : "Huddle"}
++            {channelName ? `#${channelName}` : t("Huddle")}
+           </span>
+         </span>
+       </Button>
+@@ -159,14 +161,14 @@
+         />
+         <Button
+           aria-busy={isLeaving}
+-          aria-label="Leave huddle"
++          aria-label={t("Leave huddle")}
+           className="h-8 px-2 text-sm text-sidebar-foreground/70 hover:bg-destructive/15 hover:text-destructive"
+           disabled={isLeaving}
+           onClick={(event) => void handleLeave(event)}
+           type="button"
+           variant="ghost"
+         >
+-          Leave
++          {t("Leave")}
+         </Button>
+       </div>
+     </div>

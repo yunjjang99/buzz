@@ -1,0 +1,26 @@
+Index: src/features/huddle/components/HuddleRoomHeader.tsx
+===================================================================
+--- src/features/huddle/components/HuddleRoomHeader.tsx	
++++ src/features/huddle/components/HuddleRoomHeader.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { invoke } from "@tauri-apps/api/core";
+ import { listen } from "@tauri-apps/api/event";
+ import * as React from "react";
+@@ -32,6 +33,7 @@
+ 
+ /** Larger, persistent roster for the companion huddle room window. */
+ export function HuddleRoomHeader() {
++  useLocale();
+   const { interruptAgentSpeech, isMuted, micConnected } = useHuddle();
+   const { activeSpeakers, micLevel, speakerLevels } = useHuddleLevels();
+   const identityQuery = useIdentityQuery();
+@@ -56,7 +58,7 @@
+   }, [currentPubkey, isMuted, micConnected, micLevel, speakerLevels]);
+   const handleRemoveAgent = React.useCallback(
+     async (pubkey: string) => {
+-      if (!window.confirm("Remove this agent from the huddle?")) return;
++      if (!window.confirm(t("Remove this agent from the huddle?"))) return;
+       const record = beginChannelMembershipWrite();
+       try {
+         await invoke("remove_agent_from_huddle", {

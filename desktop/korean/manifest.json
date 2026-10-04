@@ -317,6 +317,146 @@
     {
       "file": "src/features/agents/ui/agentConfigOptions.tsx",
       "patch": "features__agents__ui__agentConfigOptions.tsx.patch"
+    },
+    {
+      "file": "src/features/agent-memory/ui/MemorySection.tsx",
+      "patch": "features__agent-memory__ui__MemorySection.tsx.patch"
+    },
+    {
+      "file": "src/features/channels/ui/ChannelPane.tsx",
+      "patch": "features__channels__ui__ChannelPane.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/AddAgentDialog.tsx",
+      "patch": "features__huddle__components__AddAgentDialog.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/AgentVoiceMenu.tsx",
+      "patch": "features__huddle__components__AgentVoiceMenu.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/HuddleAttachment.tsx",
+      "patch": "features__huddle__components__HuddleAttachment.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/HuddleBar.tsx",
+      "patch": "features__huddle__components__HuddleBar.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/HuddleIndicator.tsx",
+      "patch": "features__huddle__components__HuddleIndicator.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/HuddleProfileControl.tsx",
+      "patch": "features__huddle__components__HuddleProfileControl.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/HuddleRoomHeader.tsx",
+      "patch": "features__huddle__components__HuddleRoomHeader.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/HuddleStartingView.tsx",
+      "patch": "features__huddle__components__HuddleStartingView.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/HuddleTranscriptIntro.tsx",
+      "patch": "features__huddle__components__HuddleTranscriptIntro.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/MicControls.tsx",
+      "patch": "features__huddle__components__MicControls.tsx.patch"
+    },
+    {
+      "file": "src/features/huddle/components/ParticipantList.tsx",
+      "patch": "features__huddle__components__ParticipantList.tsx.patch"
+    },
+    {
+      "file": "src/features/messages/lib/dateFormatters.ts",
+      "patch": "features__messages__lib__dateFormatters.ts.patch"
+    },
+    {
+      "file": "src/features/messages/ui/MessageActionBar.tsx",
+      "patch": "features__messages__ui__MessageActionBar.tsx.patch"
+    },
+    {
+      "file": "src/features/messages/ui/MessageTimeline.tsx",
+      "patch": "features__messages__ui__MessageTimeline.tsx.patch"
+    },
+    {
+      "file": "src/features/messages/ui/MessageTimestamp.tsx",
+      "patch": "features__messages__ui__MessageTimestamp.tsx.patch"
+    },
+    {
+      "file": "src/features/messages/ui/TimelineMessageList.tsx",
+      "patch": "features__messages__ui__TimelineMessageList.tsx.patch"
+    },
+    {
+      "file": "src/features/messages/ui/WaveMessageAttachment.tsx",
+      "patch": "features__messages__ui__WaveMessageAttachment.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/ArchiveConfirmDialog.tsx",
+      "patch": "features__profile__ui__ArchiveConfirmDialog.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/ProfileInstancesSection.tsx",
+      "patch": "features__profile__ui__ProfileInstancesSection.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfileAgentActions.tsx",
+      "patch": "features__profile__ui__UserProfileAgentActions.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfileAgentManagementRows.tsx",
+      "patch": "features__profile__ui__UserProfileAgentManagementRows.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfilePanel.tsx",
+      "patch": "features__profile__ui__UserProfilePanel.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfilePanelAgentDetails.tsx",
+      "patch": "features__profile__ui__UserProfilePanelAgentDetails.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfilePanelFields.tsx",
+      "patch": "features__profile__ui__UserProfilePanelFields.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfilePanelFocusedViews.tsx",
+      "patch": "features__profile__ui__UserProfilePanelFocusedViews.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfilePanelHeaderContent.tsx",
+      "patch": "features__profile__ui__UserProfilePanelHeaderContent.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfilePanelSections.tsx",
+      "patch": "features__profile__ui__UserProfilePanelSections.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfilePanelTabs.tsx",
+      "patch": "features__profile__ui__UserProfilePanelTabs.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfilePopover.tsx",
+      "patch": "features__profile__ui__UserProfilePopover.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/UserProfilePrimaryActions.tsx",
+      "patch": "features__profile__ui__UserProfilePrimaryActions.tsx.patch"
+    },
+    {
+      "file": "src/shared/lib/datetime.ts",
+      "patch": "shared__lib__datetime.ts.patch"
+    },
+    {
+      "file": "src/features/agents/ui/AgentConfigPanel.tsx",
+      "patch": "features__agents__ui__AgentConfigPanel.tsx.patch"
+    },
+    {
+      "file": "src/shared/ui/HoverCopyIndicator.tsx",
+      "patch": "shared__ui__HoverCopyIndicator.tsx.patch"
     }
   ]
 }

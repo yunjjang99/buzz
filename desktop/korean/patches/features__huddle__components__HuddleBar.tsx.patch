@@ -1,0 +1,214 @@
+Index: src/features/huddle/components/HuddleBar.tsx
+===================================================================
+--- src/features/huddle/components/HuddleBar.tsx	
++++ src/features/huddle/components/HuddleBar.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { invoke } from "@tauri-apps/api/core";
+ import { listen } from "@tauri-apps/api/event";
+ import { getCurrentWindow } from "@tauri-apps/api/window";
+@@ -153,6 +154,7 @@
+   onOpenHuddleWindow,
+   onVisibilityChange,
+ }: HuddleBarProps) {
++  useLocale();
+   const documentVisible = useDocumentVisible();
+   const {
+     leaveHuddle,
+@@ -488,7 +490,7 @@
+           "Failed to send huddle reaction.",
+         );
+       })().catch((error) => {
+-        setReactionError("Reaction failed");
++        setReactionError(t("Reaction failed"));
+         console.error("[huddle] Failed to send reaction:", error);
+       });
+     },
+@@ -549,7 +551,7 @@
+       setState(s);
+     } catch (e) {
+       const message = e instanceof Error ? e.message : String(e);
+-      setTranscriptError(`Transcript failed: ${message}`);
++      setTranscriptError(t("Transcript failed: {error}", { error: message }));
+       console.error("Failed to toggle huddle transcript:", e);
+     }
+   }
+@@ -591,7 +593,7 @@
+           >
+             <span className="max-w-[220px] truncate">{huddleError}</span>
+             <button
+-              aria-label="Dismiss error"
++              aria-label={t("Dismiss error")}
+               className="ml-1 opacity-60 hover:opacity-100"
+               onClick={clearHuddleError}
+               type="button"
+@@ -610,10 +612,13 @@
+                 {transcriptionEnabled &&
+                 modelStatus.stt !== "ready" &&
+                 modelStatus.tts !== "ready"
+-                  ? `Voice models: STT ${modelStatus.stt}, TTS ${modelStatus.tts}`
++                  ? t("Voice models: STT {stt}, TTS {tts}", {
++                      stt: modelStatus.stt,
++                      tts: modelStatus.tts,
++                    })
+                   : transcriptionEnabled && modelStatus.stt !== "ready"
+-                    ? `STT model: ${modelStatus.stt}`
+-                    : `TTS model: ${modelStatus.tts}`}
++                    ? t("STT model: {status}", { status: modelStatus.stt })
++                    : t("TTS model: {status}", { status: modelStatus.tts })}
+               </span>
+             </output>
+           )}
+@@ -660,7 +665,9 @@
+               return result;
+             } catch (e: unknown) {
+               const msg = e instanceof Error ? e.message : String(e);
+-              setAgentAddError(`Failed to add agent: ${msg}`);
++              setAgentAddError(
++                t("Failed to add agent: {error}", { error: msg }),
++              );
+               throw e; // Re-throw so AddAgentDialog shows its inline error.
+             }
+           }}
+@@ -725,7 +732,7 @@
+               }}
+               onRemoveAgent={async (pubkey) => {
+                 const confirmed = window.confirm(
+-                  "Remove this agent from the huddle?",
++                  t("Remove this agent from the huddle?"),
+                 );
+                 if (!confirmed) return;
+                 const record = beginChannelMembershipWrite();
+@@ -767,7 +774,7 @@
+               <TooltipTrigger asChild>
+                 <PopoverTrigger asChild>
+                   <Button
+-                    aria-label="Emoji reactions"
++                    aria-label={t("Emoji reactions")}
+                     aria-pressed={isReactionPickerOpen}
+                     className={cn(
+                       "buzz-huddle-control-button h-12 w-12 shrink-0 rounded-md",
+@@ -782,7 +789,7 @@
+                 </PopoverTrigger>
+               </TooltipTrigger>
+               <TooltipContent className="buzz-huddle-tooltip" side="top">
+-                Emoji reactions
++                {t("Emoji reactions")}
+               </TooltipContent>
+             </Tooltip>
+             <PopoverContent
+@@ -799,7 +806,9 @@
+             <TooltipTrigger asChild>
+               <Button
+                 aria-label={
+-                  transcriptionEnabled ? "Stop transcript" : "Start transcript"
++                  transcriptionEnabled
++                    ? t("Stop transcript")
++                    : t("Start transcript")
+                 }
+                 aria-pressed={transcriptionEnabled}
+                 className="buzz-huddle-control-button h-12 w-12 shrink-0 rounded-md"
+@@ -812,14 +821,16 @@
+               </Button>
+             </TooltipTrigger>
+             <TooltipContent className="buzz-huddle-tooltip" side="top">
+-              {transcriptionEnabled ? "Stop transcript" : "Start transcript"}
++              {transcriptionEnabled
++                ? t("Stop transcript")
++                : t("Start transcript")}
+             </TooltipContent>
+           </Tooltip>
+ 
+           <Tooltip>
+             <TooltipTrigger asChild>
+               <Button
+-                aria-label="Add agent to huddle"
++                aria-label={t("Add agent to huddle")}
+                 className="buzz-huddle-control-button h-12 w-12 shrink-0 rounded-md"
+                 onClick={() => setShowAddAgent(true)}
+                 size="icon"
+@@ -830,7 +841,7 @@
+               </Button>
+             </TooltipTrigger>
+             <TooltipContent className="buzz-huddle-tooltip" side="top">
+-              Add agent
++              {t("Add agent")}
+             </TooltipContent>
+           </Tooltip>
+         </div>
+@@ -841,7 +852,7 @@
+           <Tooltip>
+             <TooltipTrigger asChild>
+               <Button
+-                aria-label="Open huddle in a new window"
++                aria-label={t("Open huddle in a new window")}
+                 className="buzz-huddle-control-button h-12 w-12 shrink-0 rounded-md"
+                 onClick={() => void handleOpenHuddleWindow()}
+                 size="icon"
+@@ -852,14 +863,14 @@
+               </Button>
+             </TooltipTrigger>
+             <TooltipContent className="buzz-huddle-tooltip" side="top">
+-              Open huddle window
++              {t("Open huddle window")}
+             </TooltipContent>
+           </Tooltip>
+         ) : (
+           <Tooltip>
+             <TooltipTrigger asChild>
+               <Button
+-                aria-label="Return huddle to drawer"
++                aria-label={t("Return huddle to drawer")}
+                 className="buzz-huddle-control-button h-12 w-12 shrink-0 rounded-md"
+                 onClick={() => void handleReturnToDrawer()}
+                 size="icon"
+@@ -870,13 +881,13 @@
+               </Button>
+             </TooltipTrigger>
+             <TooltipContent className="buzz-huddle-tooltip" side="top">
+-              Return huddle to drawer
++              {t("Return huddle to drawer")}
+             </TooltipContent>
+           </Tooltip>
+         )}
+ 
+         <Button
+-          aria-label="Leave huddle"
++          aria-label={t("Leave huddle")}
+           className="h-12 gap-2 px-4"
+           disabled={isLeaving}
+           aria-busy={isLeaving}
+@@ -885,23 +896,27 @@
+           variant="destructive"
+         >
+           <PhoneOff className="h-4 w-4" />
+-          Leave
++          {t("Leave")}
+         </Button>
+       </div>
+ 
+       {/* Screen reader announcements for huddle state changes */}
+       <output aria-live="polite" className="sr-only">
+         {hasAvailableMic
+-          ? "In huddle, microphone connected"
+-          : "In huddle, no microphone"}
+-        {`, voice input: ${isPttMode ? "push to talk, press Ctrl+Space to transmit" : "voice activity detection"}`}
++          ? t("In huddle, microphone connected")
++          : t("In huddle, no microphone")}
++        {t(", voice input: {mode}", {
++          mode: isPttMode
++            ? t("push to talk, press Ctrl+Space to transmit")
++            : t("voice activity detection"),
++        })}
+         {modelStatus &&
+           transcriptionEnabled &&
+           modelStatus.stt !== "ready" &&
+-          `, STT model ${modelStatus.stt}`}
++          t(", STT model {status}", { status: modelStatus.stt })}
+         {modelStatus &&
+           modelStatus.tts !== "ready" &&
+-          `, TTS model ${modelStatus.tts}`}
++          t(", TTS model {status}", { status: modelStatus.tts })}
+       </output>
+     </div>
+   );

@@ -1,0 +1,60 @@
+Index: src/features/profile/ui/ProfileInstancesSection.tsx
+===================================================================
+--- src/features/profile/ui/ProfileInstancesSection.tsx	
++++ src/features/profile/ui/ProfileInstancesSection.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { ChevronRight } from "lucide-react";
+ 
+@@ -16,6 +17,7 @@
+   instance: ManagedAgent;
+   onOpenInstance: (pubkey: string) => void;
+ }) {
++  useLocale();
+   const isCurrent = instance.pubkey === currentPubkey;
+   return (
+     <button
+@@ -29,9 +31,9 @@
+       </span>
+       <span className="text-xs capitalize text-muted-foreground">
+         {archived
+-          ? "Archived"
++          ? t("Archived")
+           : isCurrent
+-            ? "Current"
++            ? t("Current")
+             : instance.status.replace("_", " ")}
+       </span>
+       <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+@@ -58,15 +60,19 @@
+   instances: ManagedAgent[];
+   onOpenInstance: (pubkey: string) => void;
+ }) {
++  useLocale();
+   const [expanded, setExpanded] = React.useState(false);
+   const totalCount = instances.length + archivedInstances.length;
+   if (totalCount === 0) return null;
+-  const instanceCountLabel = `${totalCount} instance${totalCount === 1 ? "" : "s"}`;
++  const instanceCountLabel = t(
++    totalCount === 1 ? "{count} instance" : "{count} instances",
++    { count: totalCount },
++  );
+ 
+   return (
+     <ProfileSectionGroup
+       testId="user-profile-instances-section"
+-      title="Instances"
++      title={t("Instances")}
+     >
+       <button
+         aria-expanded={expanded}
+@@ -101,7 +107,7 @@
+                 className="px-4 pb-1 pt-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground"
+                 data-testid="user-profile-instances-archived-header"
+               >
+-                Archived
++                {t("Archived")}
+               </p>
+               {archivedInstances.map((instance) => (
+                 <ProfileInstanceRow

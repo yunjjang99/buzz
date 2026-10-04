@@ -1,0 +1,48 @@
+Index: src/features/channels/ui/ChannelPane.tsx
+===================================================================
+--- src/features/channels/ui/ChannelPane.tsx	
++++ src/features/channels/ui/ChannelPane.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { LogIn } from "lucide-react";
+ import { AnimatePresence } from "motion/react";
+@@ -186,6 +187,7 @@
+   threadFirstUnreadReplyId,
+   typingPubkeys,
+ }: ChannelPaneProps) {
++  useLocale();
+   const timelineScrollRef = React.useRef<HTMLDivElement>(null);
+   const messageTimelineRef = React.useRef<MessageTimelineHandle>(null);
+   const composerWrapperRef = React.useRef<HTMLDivElement>(null);
+@@ -776,19 +778,23 @@
+                     showBackgroundUploadProgress={false}
+                     placeholder={
+                       timeoutActive
+-                        ? "You're timed out by community moderators."
++                        ? t("You're timed out by community moderators.")
+                         : isModerationDmChannel
+-                          ? "This channel is read-only."
++                          ? t("This channel is read-only.")
+                           : activeChannel?.archivedAt
+-                            ? "Archived channels are read-only."
++                            ? t("Archived channels are read-only.")
+                             : activeChannel?.channelType === "forum"
+-                              ? "Forum posting is not wired in this pass."
++                              ? t("Forum posting is not wired in this pass.")
+                               : activeChannel
+                                 ? activeChannel.channelType === "dm" &&
+                                   directMessageIntro
+-                                  ? `Message ${directMessageIntro.displayName}`
+-                                  : `Message #${activeChannel.name}`
+-                                : "Select a channel"
++                                  ? t("Message {name}", {
++                                      name: directMessageIntro.displayName,
++                                    })
++                                  : t("Message #{channel}", {
++                                      channel: activeChannel.name,
++                                    })
++                                : t("Select a channel")
+                     }
+                     showTopBorder={false}
+                   />
