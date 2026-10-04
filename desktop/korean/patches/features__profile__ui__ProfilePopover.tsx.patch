@@ -1,0 +1,78 @@
+Index: src/features/profile/ui/ProfilePopover.tsx
+===================================================================
+--- src/features/profile/ui/ProfilePopover.tsx	
++++ src/features/profile/ui/ProfilePopover.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { Smile } from "lucide-react";
+ 
+@@ -75,6 +76,7 @@
+   triggerContainerRef,
+   communitySwitcherSlot,
+ }: ProfilePopoverProps) {
++  useLocale();
+   const [statusDialogOpen, setStatusDialogOpen] = React.useState(false);
+   const [presenceMenuOpen, setPresenceMenuOpen] = React.useState(false);
+   const hasUserStatus = Boolean(userStatusText || userStatusEmoji);
+@@ -118,13 +120,13 @@
+             }
+           }}
+         >
+-          <div aria-label="Profile menu" role="menu">
++          <div aria-label={t("Profile menu")} role="menu">
+             {/* ── Identity block ─────────────────────────────────── */}
+             <div className="flex items-center gap-2 px-3 pt-2 pb-2">
+               <MaskedAvatarBadgeFrame
+                 badge={
+                   <span
+-                    aria-label={getPresenceLabel(currentStatus)}
++                    aria-label={t(getPresenceLabel(currentStatus))}
+                     className="flex h-3.5 w-3.5 items-center justify-center rounded-full"
+                     data-testid="profile-popover-current-status"
+                     role="img"
+@@ -170,7 +172,7 @@
+                       type="button"
+                     >
+                       <span className="truncate">
+-                        {getPresenceLabel(currentStatus)}
++                        {t(getPresenceLabel(currentStatus))}
+                       </span>
+                     </button>
+                   </PopoverTrigger>
+@@ -180,7 +182,7 @@
+                     side="bottom"
+                     sideOffset={4}
+                   >
+-                    <div aria-label="Presence status" role="menu">
++                    <div aria-label={t("Presence status")} role="menu">
+                       {ALL_STATUSES.map((status) => (
+                         <button
+                           className={MENU_ITEM_CLASS}
+@@ -195,7 +197,7 @@
+                             className="h-2.5 w-2.5"
+                             status={status}
+                           />
+-                          <span>{getPresenceLabel(status)}</span>
++                          <span>{t(getPresenceLabel(status))}</span>
+                         </button>
+                       ))}
+                     </div>
+@@ -267,7 +269,7 @@
+                 role="menuitem"
+                 type="button"
+               >
+-                <span className="flex-1">Send feedback</span>
++                <span className="flex-1">{t("Send feedback")}</span>
+               </button>
+             ) : null}
+ 
+@@ -284,7 +286,7 @@
+               role="menuitem"
+               type="button"
+             >
+-              <span className="flex-1">Settings</span>
++              <span className="flex-1">{t("Settings")}</span>
+               <kbd className="text-xs text-muted-foreground">
+                 {settingsShortcutLabel}
+               </kbd>

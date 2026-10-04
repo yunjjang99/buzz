@@ -1,0 +1,18 @@
+Index: src/main.tsx
+===================================================================
+--- src/main.tsx	
++++ src/main.tsx	
+@@ -1,4 +1,5 @@
+ import React from "react";
++import { getLocale } from "@buzz-korean/locale";
+ import ReactDOM from "react-dom/client";
+ import { App } from "@/app/App";
+ import { RootErrorBoundary } from "@/app/RootErrorBoundary";
+@@ -80,6 +81,7 @@
+ }
+ 
+ function renderApp() {
++  document.documentElement.lang = getLocale();
+   ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
+     <React.StrictMode>
+       {/* block/buzz#5078 — catch any uncaught render error so a WebKit

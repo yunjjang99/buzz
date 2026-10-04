@@ -1,0 +1,312 @@
+Index: src/features/settings/ui/AppearanceSettingsControls.tsx
+===================================================================
+--- src/features/settings/ui/AppearanceSettingsControls.tsx	
++++ src/features/settings/ui/AppearanceSettingsControls.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import type { ReactNode } from "react";
+ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+@@ -46,6 +47,7 @@
+ 
+ /** Buzz navigation can use either its production tint or a stronger tab. */
+ export function ProminentActiveTabSetting() {
++  useLocale();
+   const { prominentActiveTab, setProminentActiveTab } = useTheme();
+ 
+   return (
+@@ -55,13 +57,13 @@
+           className="text-sm font-medium"
+           htmlFor="prominent-active-tab-switch"
+         >
+-          Prominent active tab
++          {t("Prominent active tab")}
+         </label>
+         <p
+           className="text-sm font-normal text-muted-foreground/70"
+           data-settings-subcopy
+         >
+-          Give the selected navigation item a higher-contrast background.
++          {t("Give the selected navigation item a higher-contrast background.")}
+         </p>
+       </div>
+       <Switch
+@@ -161,6 +163,7 @@
+ }
+ 
+ function ConversationPreview() {
++  useLocale();
+   return (
+     <div className="px-4 py-3" data-testid="conversation-preview">
+       <div
+@@ -170,7 +173,7 @@
+       >
+         <span className="absolute right-3.5 top-3 inline-flex items-center gap-1 text-2xs font-medium text-muted-foreground/55">
+           <Eye aria-hidden="true" className="size-3" />
+-          Preview
++          {t("Preview")}
+         </span>
+         <div className="p-4" data-testid="conversation-preview-content">
+           <ConversationDensityPreviewMessage
+@@ -201,6 +204,7 @@
+ 
+ /** App-wide type sizing and conversation-specific spacing controls. */
+ export function ConversationDisplaySettings() {
++  useLocale();
+   const density = useConversationDensity();
+   const fontSize = useFontSize();
+ 
+@@ -208,42 +212,48 @@
+     <div data-testid="conversation-display-group">
+       <SettingsOptionRow data-testid="font-size-row">
+         <div className="min-w-0">
+-          <p className="text-sm font-medium">Font size</p>
++          <p className="text-sm font-medium">{t("Font size")}</p>
+           <p
+             className="text-sm font-normal text-muted-foreground/70"
+             data-settings-subcopy
+           >
+-            Applies across conversations and interface text
++            {t("Applies across conversations and interface text")}
+           </p>
+         </div>
+         <SegmentedControl
+           size="wide"
+-          legend="Font size"
++          legend={t("Font size")}
+           onPreviewChange={previewFontSize}
+           onValueChange={setFontSize}
+           optionTestIdPrefix="font-size"
+-          options={FONT_SIZE_OPTIONS}
++          options={FONT_SIZE_OPTIONS.map((option) => ({
++            ...option,
++            label: t(option.label),
++          }))}
+           testId="font-size-control"
+           value={fontSize}
+         />
+       </SettingsOptionRow>
+       <SettingsOptionRow data-testid="conversation-density-row">
+         <div className="min-w-0">
+-          <p className="text-sm font-medium">Conversation density</p>
++          <p className="text-sm font-medium">{t("Conversation density")}</p>
+           <p
+             className="text-sm font-normal text-muted-foreground/70"
+             data-settings-subcopy
+           >
+-            Spacing in conversations and Markdown content across Buzz
++            {t("Spacing in conversations and Markdown content across Buzz")}
+           </p>
+         </div>
+         <SegmentedControl
+           size="wide"
+-          legend="Conversation density"
++          legend={t("Conversation density")}
+           onPreviewChange={previewConversationDensity}
+           onValueChange={setConversationDensity}
+           optionTestIdPrefix="conversation-density"
+-          options={CONVERSATION_DENSITY_OPTIONS}
++          options={CONVERSATION_DENSITY_OPTIONS.map((option) => ({
++            ...option,
++            label: t(option.label),
++          }))}
+           testId="conversation-density-control"
+           value={density}
+         />
+@@ -304,6 +314,7 @@
+ }
+ 
+ function LinkPreviewSample({ style }: { style: LinkPreviewStyle }) {
++  useLocale();
+   const { isDark } = useTheme();
+   const preview = React.useMemo<ResolvedLinkPreview>(
+     () => ({
+@@ -322,7 +333,7 @@
+       >
+         <span className="absolute right-3.5 top-3 inline-flex items-center gap-1 text-2xs font-medium text-muted-foreground/55">
+           <Eye aria-hidden="true" className="size-3" />
+-          Preview
++          {t("Preview")}
+         </span>
+         <div className="p-4 pr-24">
+           <LinkPreviewAttachmentPresentation
+@@ -338,6 +349,7 @@
+ }
+ 
+ export function LinkPreviewStyleSetting() {
++  useLocale();
+   const style = useLinkPreviewStyle();
+   const [previewStyle, setPreviewStyle] =
+     React.useState<LinkPreviewStyle | null>(null);
+@@ -351,21 +363,24 @@
+     <div data-testid="link-preview-style-group">
+       <SettingsOptionRow>
+         <div className="min-w-0">
+-          <p className="text-sm font-medium">Link previews</p>
++          <p className="text-sm font-medium">{t("Link previews")}</p>
+           <p
+             className="text-sm font-normal text-muted-foreground/70"
+             data-settings-subcopy
+           >
+-            {activeOption.description}
++            {t(activeOption.description)}
+           </p>
+         </div>
+         <SegmentedControl
+           size="compact"
+-          legend="Link previews"
++          legend={t("Link previews")}
+           onPreviewChange={setPreviewStyle}
+           onValueChange={setLinkPreviewStyle}
+           optionTestIdPrefix="link-preview-style"
+-          options={LINK_PREVIEW_STYLE_OPTIONS}
++          options={LINK_PREVIEW_STYLE_OPTIONS.map((option) => ({
++            ...option,
++            label: t(option.label),
++          }))}
+           testId="link-preview-style-control"
+           value={style}
+         />
+@@ -394,6 +409,7 @@
+ 
+ /** Native window glass rows sit below theme and accent choices. */
+ export function GlassBackgroundSetting() {
++  useLocale();
+   const {
+     glassBackground,
+     glassBackgroundSupported,
+@@ -409,27 +425,27 @@
+   const opacityRow = (
+     <SettingsOptionRow data-testid="glass-opacity-row">
+       <div className="min-w-0">
+-        <p className="text-sm font-medium">Glass opacity</p>
++        <p className="text-sm font-medium">{t("Glass opacity")}</p>
+         <p
+           className="text-sm font-normal text-muted-foreground/70"
+           data-settings-subcopy
+           id="glass-opacity-description"
+         >
+-          Lower values reveal more of the desktop blur.
++          {t("Lower values reveal more of the desktop blur.")}
+         </p>
+       </div>
+       <div className="flex w-64 shrink-0 items-center">
+         <AvatarFramingSlider
+           ariaDescribedBy="glass-opacity-description"
+-          ariaLabel="Glass opacity"
+-          ariaValueText={`${glassOpacity}% opacity`}
++          ariaLabel={t("Glass opacity")}
++          ariaValueText={t("{value}% opacity", { value: glassOpacity })}
+           compact
+           handleAlwaysVisible
+           max={GLASS_OPACITY_MAX}
+           min={GLASS_OPACITY_MIN}
+           onChange={setGlassOpacity}
+           onReset={() => setGlassOpacity(DEFAULT_GLASS_OPACITY)}
+-          resetLabel="Reset glass opacity"
++          resetLabel={t("Reset glass opacity")}
+           resetTestId="glass-opacity-reset"
+           resetValue={DEFAULT_GLASS_OPACITY}
+           testId="glass-opacity-slider"
+@@ -447,15 +463,17 @@
+             className="text-sm font-medium"
+             htmlFor="glass-background-switch"
+           >
+-            Glass background
++            {t("Glass background")}
+           </label>
+           <p
+             className="text-sm font-normal text-muted-foreground/70"
+             data-settings-subcopy
+           >
+             {glassBackgroundSupported
+-              ? "Blur the desktop behind navigation while keeping content solid."
+-              : "Available in the macOS desktop app."}
++              ? t(
++                  "Blur the desktop behind navigation while keeping content solid.",
++                )
++              : t("Available in the macOS desktop app.")}
+           </p>
+         </div>
+         <Switch
+@@ -583,6 +601,7 @@
+ }
+ 
+ function ThreadLayoutPreview({ mode }: { mode: ThreadViewMode }) {
++  useLocale();
+   return (
+     <div className="px-4 py-3" data-testid="thread-layout-preview">
+       <div
+@@ -592,7 +611,7 @@
+       >
+         <span className="absolute right-3.5 top-3 inline-flex items-center gap-1 text-2xs font-medium text-muted-foreground/55">
+           <Eye aria-hidden="true" className="size-3" />
+-          Preview
++          {t("Preview")}
+         </span>
+         <div className="p-4 pr-24">
+           <ThreadLayoutDiagram mode={mode} />
+@@ -603,6 +622,7 @@
+ }
+ 
+ export function ThreadLayoutSetting() {
++  useLocale();
+   const threadViewMode = useThreadViewMode();
+   const [previewMode, setPreviewMode] = React.useState<ThreadViewMode | null>(
+     null,
+@@ -619,11 +639,11 @@
+       <SettingsOptionRow>
+         <div className="min-w-0">
+           <p className="text-sm font-medium">
+-            Thread layout
++            {t("Thread layout")}
+             {showCommunityScope ? (
+               <span className="font-normal text-muted-foreground">
+                 {" "}
+-                (all communities)
++                {t("(all communities)")}
+               </span>
+             ) : null}
+           </p>
+@@ -631,16 +651,19 @@
+             className="text-sm font-normal text-muted-foreground/70"
+             data-settings-subcopy
+           >
+-            {activeOption.description}
++            {t(activeOption.description)}
+           </p>
+         </div>
+         <SegmentedControl
+           size="compact"
+-          legend="Thread layout"
++          legend={t("Thread layout")}
+           onPreviewChange={setPreviewMode}
+           onValueChange={setThreadViewMode}
+           optionTestIdPrefix="thread-layout"
+-          options={THREAD_VIEW_MODE_OPTIONS}
++          options={THREAD_VIEW_MODE_OPTIONS.map((option) => ({
++            ...option,
++            label: t(option.label),
++          }))}
+           testId="thread-layout-control"
+           value={threadViewMode}
+         />
+@@ -660,15 +683,16 @@
+   isDark: boolean;
+   setAccentColor: (value: string) => void;
+ }) {
++  useLocale();
+   return (
+     <SettingsOptionRow className="items-start">
+       <div className="min-w-0">
+-        <p className="text-sm font-medium">Accent color</p>
++        <p className="text-sm font-medium">{t("Accent color")}</p>
+         <p
+           className="text-sm font-normal text-muted-foreground/70"
+           data-settings-subcopy
+         >
+-          Choose the highlight color used throughout Buzz.
++          {t("Choose the highlight color used throughout Buzz.")}
+         </p>
+       </div>
+       <div

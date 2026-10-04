@@ -1,0 +1,106 @@
+{
+  "baseCommit": "e982f70fba29cdaa9a8378f118a0e498537bd8db",
+  "baseVersion": "0.5.26",
+  "files": [
+    {
+      "file": "src/features/channels/ui/ChannelBrowserDialog.tsx",
+      "patch": "features__channels__ui__ChannelBrowserDialog.tsx.patch"
+    },
+    {
+      "file": "src/features/channels/ui/ChannelPermissionsSettings.tsx",
+      "patch": "features__channels__ui__ChannelPermissionsSettings.tsx.patch"
+    },
+    {
+      "file": "src/features/channels/ui/ChannelTypeSettings.tsx",
+      "patch": "features__channels__ui__ChannelTypeSettings.tsx.patch"
+    },
+    {
+      "file": "src/features/communities/ui/CommunitySwitcher.tsx",
+      "patch": "features__communities__ui__CommunitySwitcher.tsx.patch"
+    },
+    {
+      "file": "src/features/communities/ui/WelcomeSetup.tsx",
+      "patch": "features__communities__ui__WelcomeSetup.tsx.patch"
+    },
+    {
+      "file": "src/features/messages/ui/ComposerAddressControls.tsx",
+      "patch": "features__messages__ui__ComposerAddressControls.tsx.patch"
+    },
+    {
+      "file": "src/features/messages/ui/ComposerEmojiPicker.tsx",
+      "patch": "features__messages__ui__ComposerEmojiPicker.tsx.patch"
+    },
+    {
+      "file": "src/features/messages/ui/ComposerReplyEditBanner.tsx",
+      "patch": "features__messages__ui__ComposerReplyEditBanner.tsx.patch"
+    },
+    {
+      "file": "src/features/messages/ui/MessageComposer.tsx",
+      "patch": "features__messages__ui__MessageComposer.tsx.patch"
+    },
+    {
+      "file": "src/features/messages/ui/MessageComposerToolbar.tsx",
+      "patch": "features__messages__ui__MessageComposerToolbar.tsx.patch"
+    },
+    {
+      "file": "src/features/onboarding/ui/InviteRedeemForm.tsx",
+      "patch": "features__onboarding__ui__InviteRedeemForm.tsx.patch"
+    },
+    {
+      "file": "src/features/profile/ui/ProfilePopover.tsx",
+      "patch": "features__profile__ui__ProfilePopover.tsx.patch"
+    },
+    {
+      "file": "src/features/search/ui/SearchScopeControls.tsx",
+      "patch": "features__search__ui__SearchScopeControls.tsx.patch"
+    },
+    {
+      "file": "src/features/search/ui/TopbarSearch.tsx",
+      "patch": "features__search__ui__TopbarSearch.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/AppearanceSettingsControls.tsx",
+      "patch": "features__settings__ui__AppearanceSettingsControls.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/ProfileSettingsCard.tsx",
+      "patch": "features__settings__ui__ProfileSettingsCard.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/SettingsPanels.tsx",
+      "patch": "features__settings__ui__SettingsPanels.tsx.patch"
+    },
+    {
+      "file": "src/features/settings/ui/SettingsView.tsx",
+      "patch": "features__settings__ui__SettingsView.tsx.patch"
+    },
+    {
+      "file": "src/features/sidebar/ui/AppSidebar.tsx",
+      "patch": "features__sidebar__ui__AppSidebar.tsx.patch"
+    },
+    {
+      "file": "src/features/sidebar/ui/AppSidebarPinnedHeader.tsx",
+      "patch": "features__sidebar__ui__AppSidebarPinnedHeader.tsx.patch"
+    },
+    {
+      "file": "src/features/sidebar/ui/CreateChannelDialog.tsx",
+      "patch": "features__sidebar__ui__CreateChannelDialog.tsx.patch"
+    },
+    {
+      "file": "src/features/sidebar/ui/CreateChannelFormFields.tsx",
+      "patch": "features__sidebar__ui__CreateChannelFormFields.tsx.patch"
+    },
+    {
+      "file": "src/features/sidebar/ui/SidebarProfileCard.tsx",
+      "patch": "features__sidebar__ui__SidebarProfileCard.tsx.patch"
+    },
+    {
+      "file": "src/features/sidebar/ui/SidebarSection.tsx",
+      "patch": "features__sidebar__ui__SidebarSection.tsx.patch"
+    },
+    {
+      "file": "src/main.tsx",
+      "patch": "main.tsx.patch"
+    }
+  ]
+}

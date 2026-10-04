@@ -1,0 +1,89 @@
+Index: src/features/sidebar/ui/AppSidebar.tsx
+===================================================================
+--- src/features/sidebar/ui/AppSidebar.tsx	
++++ src/features/sidebar/ui/AppSidebar.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ // biome-ignore format: keep compact to stay within file size limit
+ import * as React from "react";
+ import { FeatureGate } from "@/shared/features";
+@@ -145,6 +146,7 @@
+   onStarChannel,
+   onUnstarChannel,
+ }: AppSidebarProps) {
++  useLocale();
+   const activeWorkingByChannelId = useActiveWorkingChannelsById();
+   const { status: updateStatus } = useUpdaterContext();
+   const canShowSidebarUpdateCard = shouldShowSidebarUpdateCard(updateStatus);
+@@ -461,7 +463,7 @@
+   const resolvedDisplayName =
+     profile?.displayName?.trim() ||
+     fallbackDisplayName?.trim() ||
+-    "Current identity";
++    t("Current identity");
+   const isCreatingAny =
+     createDialogKind === "stream"
+       ? isCreatingChannel
+@@ -607,7 +609,7 @@
+                       onSelectChannel={onSelectChannel}
+                       onToggleCollapsed={() => toggleCollapsedGroup("starred")}
+                       selectedChannelId={selectedChannelId}
+-                      title="Starred"
++                      title={t("Starred")}
+                       unreadChannelIds={unreadChannelIds}
+                       mutedChannelIds={mutedChannelIds}
+                       onMuteChannel={onMuteChannel}
+@@ -701,7 +703,7 @@
+                       }
+                       actionsTestId="section-actions-channels"
+                       listTestId="stream-list"
+-                      quickCreateLabel="Browse channels"
++                      quickCreateLabel={t("Browse channels")}
+                       onQuickCreateClick={() => onBrowseChannels?.()}
+                       showQuickCreate
+                       onMarkAllRead={onMarkAllChannelsRead}
+@@ -710,7 +712,7 @@
+                       onSelectChannel={onSelectChannel}
+                       onToggleCollapsed={() => toggleCollapsedGroup("channels")}
+                       selectedChannelId={selectedChannelId}
+-                      title="Channels"
++                      title={t("Channels")}
+                       unreadChannelIds={unreadChannelIds}
+                       sections={channelSections}
+                       assignments={channelAssignments}
+@@ -729,7 +731,7 @@
+                   </SidebarDndContext>
+                   <FeatureGate feature="forum">
+                     <ChannelGroupSection
+-                      createLabel="New forum"
++                      createLabel={t("New forum")}
+                       hasUnread={unreadChannelIds.size > 0}
+                       isCollapsed={collapsedGroups.forums}
+                       isActiveChannel={selectedView === "channel"}
+@@ -748,7 +750,7 @@
+                       onSelectChannel={onSelectChannel}
+                       onToggleCollapsed={() => toggleCollapsedGroup("forums")}
+                       selectedChannelId={selectedChannelId}
+-                      title="Forums"
++                      title={t("Forums")}
+                       unreadChannelIds={unreadChannelIds}
+                       mutedChannelIds={mutedChannelIds}
+                       onMuteChannel={onMuteChannel}
+@@ -760,7 +762,7 @@
+                     action={
+                       <div className="absolute right-1 top-1/2 z-10 flex -translate-y-1/2 items-center gap-0.5">
+                         <SectionQuickAction
+-                          label="New message"
++                          label={t("New message")}
+                           onClick={onNewMessage}
+                           testId="section-actions-dms-quick-create"
+                         />
+@@ -792,7 +794,7 @@
+                     presenceByChannelId={dmPresenceByChannelId}
+                     selectedChannelId={selectedChannelId}
+                     testId="dm-list"
+-                    title="Direct messages"
++                    title={t("Direct messages")}
+                     sectionActionsOpen={dmActionsMenuOpen}
+                     unreadChannelCounts={unreadChannelCounts}
+                     unreadChannelIds={unreadChannelIds}

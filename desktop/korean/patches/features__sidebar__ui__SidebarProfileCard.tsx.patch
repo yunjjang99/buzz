@@ -1,0 +1,57 @@
+Index: src/features/sidebar/ui/SidebarProfileCard.tsx
+===================================================================
+--- src/features/sidebar/ui/SidebarProfileCard.tsx	
++++ src/features/sidebar/ui/SidebarProfileCard.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ 
+ import { getPresenceLabel } from "@/features/presence/lib/presence";
+@@ -61,6 +62,7 @@
+   selfUserStatus,
+   communities,
+ }: SidebarProfileCardProps) {
++  useLocale();
+   const selfProfileCache = useSelfProfileCache();
+   const myMembershipQuery = useMyRelayMembershipLookupQuery();
+   const activeRole = myMembershipQuery.data?.membership?.role;
+@@ -85,7 +87,7 @@
+     [toggleProfilePopover],
+   );
+   const hasStatus = Boolean(selfUserStatus?.text || selfUserStatus?.emoji);
+-  const communityLabel = activeCommunity?.name ?? "No community";
++  const communityLabel = activeCommunity?.name ?? t("No community");
+   const readonlyCommunityLabel = (
+     <span
+       className="flex min-w-0 cursor-pointer items-center gap-1 text-xs leading-snug text-sidebar-foreground/70"
+@@ -111,7 +113,9 @@
+     >
+       <div className="flex min-w-0 items-center gap-3">
+         <button
+-          aria-label={`Open profile menu for ${resolvedDisplayName}`}
++          aria-label={t("Open profile menu for {name}", {
++            name: resolvedDisplayName,
++          })}
+           className="relative shrink-0 rounded-xl outline-hidden focus:outline-none focus-visible:outline-none"
+           data-testid="sidebar-profile-avatar-button"
+           onClick={(event) => {
+@@ -123,7 +127,7 @@
+           <MaskedAvatarBadgeFrame
+             badge={
+               <span
+-                aria-label={getPresenceLabel(selfPresenceStatus)}
++                aria-label={t(getPresenceLabel(selfPresenceStatus))}
+                 className="flex h-3.5 w-3.5 items-center justify-center rounded-full"
+                 data-testid="self-presence-badge"
+                 role="img"
+@@ -209,7 +213,9 @@
+           {hasStatus ? (
+             <div className="relative mt-0.5">
+               <button
+-                aria-label={`Open profile menu for ${resolvedDisplayName}`}
++                aria-label={t("Open profile menu for {name}", {
++                  name: resolvedDisplayName,
++                })}
+                 className={cn(
+                   "flex w-full min-w-0 items-center truncate rounded-sm text-left text-xs leading-snug text-sidebar-foreground/70 outline-hidden transition-opacity duration-150 focus:outline-none focus-visible:outline-none group-hover/profile-card:opacity-0",
+                   profilePopoverOpen && "opacity-100",

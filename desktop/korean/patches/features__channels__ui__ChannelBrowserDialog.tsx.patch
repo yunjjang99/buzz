@@ -1,0 +1,205 @@
+Index: src/features/channels/ui/ChannelBrowserDialog.tsx
+===================================================================
+--- src/features/channels/ui/ChannelBrowserDialog.tsx	
++++ src/features/channels/ui/ChannelBrowserDialog.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import {
+   ArrowLeft,
+@@ -109,6 +110,7 @@
+   onCreateChannel,
+   isCreatingChannel = false,
+ }: ChannelBrowserDialogProps) {
++  useLocale();
+   const [query, setQuery] = React.useState("");
+   const [activeTab, setActiveTab] = React.useState<BrowserTab>("all");
+   const [sort, setSort] = React.useState<ChannelSort>("alpha");
+@@ -142,14 +144,14 @@
+   const isForumMode = channelTypeFilter === "forum";
+   const canCreate = Boolean(onCreateChannel);
+   const createKind = isForumMode ? "forum" : "stream";
+-  const browseTitle = isForumMode ? "Add a forum" : "Browse channels";
++  const browseTitle = isForumMode ? t("Add a forum") : t("Browse channels");
+   const searchPlaceholder = canCreate
+     ? isForumMode
+-      ? "Search or create a forum"
+-      : "Search or create a channel"
++      ? t("Search or create a forum")
++      : t("Search or create a channel")
+     : isForumMode
+-      ? "Search forums by name or description"
+-      : "Search channels by name or description";
++      ? t("Search forums by name or description")
++      : t("Search channels by name or description");
+   const entityLabel = isForumMode ? "forum" : "channel";
+ 
+   const noopCreate = React.useCallback(async () => {}, []);
+@@ -238,9 +240,9 @@
+ 
+   const selectedSortLabel =
+     CHANNEL_SORT_OPTIONS.find((option) => option.value === sort)?.label ??
+-    "Alphabetical";
++    t("Alphabetical");
+ 
+-  const allTabLabel = isForumMode ? "All forums" : "All channels";
++  const allTabLabel = isForumMode ? t("All forums") : t("All channels");
+ 
+   // Whether an exact name match already exists — if so we don't offer to
+   // create a duplicate, mirroring how you'd never make two "#general"s.
+@@ -394,22 +396,29 @@
+       : undefined;
+   const emptyTitle =
+     deferredQuery.length > 0
+-      ? `No ${entityLabel}s match your search`
++      ? t("No {kind}s match your search", { kind: t(entityLabel) })
+       : activeTab === "archived"
+-        ? `No archived ${entityLabel}s`
++        ? t("No archived {kind}s", { kind: t(entityLabel) })
+         : activeTab === "joined"
+-          ? `No joined ${entityLabel}s`
+-          : `No ${entityLabel}s to browse`;
++          ? t("No joined {kind}s", { kind: t(entityLabel) })
++          : t("No {kind}s to browse", { kind: t(entityLabel) });
+   const emptyDescription =
+     deferredQuery.length > 0
+       ? canCreate
+-        ? `No ${entityLabel} by that name yet — create it to get started.`
+-        : "Try a different name or keyword."
++        ? t("No {kind} by that name yet — create it to get started.", {
++            kind: t(entityLabel),
++          })
++        : t("Try a different name or keyword.")
+       : activeTab === "archived"
+-        ? `Archived ${entityLabel}s you have joined will appear here.`
++        ? t("Archived {kind}s you have joined will appear here.", {
++            kind: t(entityLabel),
++          })
+         : activeTab === "joined"
+-          ? `${entityLabel[0].toUpperCase()}${entityLabel.slice(1)}s you join will appear here.`
+-          : `All open ${entityLabel}s are available in the sidebar. Create a new ${entityLabel} to get started.`;
++          ? t("Joined {kind}s will appear here.", { kind: t(entityLabel) })
++          : t(
++              "All open {kind}s are available in the sidebar. Create a new {kind} to get started.",
++              { kind: t(entityLabel) },
++            );
+ 
+   return (
+     <Dialog onOpenChange={onOpenChange} open={open}>
+@@ -441,7 +450,7 @@
+                 <DialogTitle>{browseTitle}</DialogTitle>
+                 <DialogClose className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out hover:bg-accent hover:text-accent-foreground focus:outline-hidden focus:ring-1 focus:ring-ring">
+                   <X className="h-4 w-4" />
+-                  <span className="sr-only">Close</span>
++                  <span className="sr-only">{t("Close")}</span>
+                 </DialogClose>
+               </div>
+               <div className={MODAL_SEARCH_SHELL_CLASS}>
+@@ -517,7 +526,10 @@
+                 <DropdownMenu>
+                   <DropdownMenuTrigger asChild>
+                     <Button
+-                      aria-label={`Sort ${entityLabel}s: ${selectedSortLabel}`}
++                      aria-label={t("Sort {kind}s: {sort}", {
++                        kind: t(entityLabel),
++                        sort: t(selectedSortLabel),
++                      })}
+                       data-testid="channel-browser-sort"
+                       size="icon-xs"
+                       type="button"
+@@ -527,7 +539,7 @@
+                     </Button>
+                   </DropdownMenuTrigger>
+                   <DropdownMenuContent align="end">
+-                    <DropdownMenuLabel>Sort by</DropdownMenuLabel>
++                    <DropdownMenuLabel>{t("Sort by")}</DropdownMenuLabel>
+                     <DropdownMenuRadioGroup
+                       onValueChange={(value) => {
+                         setSort(value as ChannelSort);
+@@ -541,7 +553,7 @@
+                           key={option.value}
+                           value={option.value}
+                         >
+-                          {option.label}
++                          {t(option.label)}
+                         </DropdownMenuRadioItem>
+                       ))}
+                     </DropdownMenuRadioGroup>
+@@ -664,6 +676,7 @@
+   onClick: () => void;
+   query: string;
+ }) {
++  useLocale();
+   const hasQuery = query.length > 0;
+   return (
+     <button
+@@ -683,13 +696,13 @@
+       {hasQuery ? (
+         <span className="min-w-0 text-sm">
+           <span className="font-medium text-foreground">
+-            Create {entityLabel}{" "}
++            {t("Create {kind}", { kind: t(entityLabel) })}{" "}
+           </span>
+           <span className="font-semibold text-foreground">“{query}”</span>
+         </span>
+       ) : (
+         <span className="min-w-0 text-sm font-medium text-foreground">
+-          Create a new {entityLabel}
++          {t("Create a new {kind}", { kind: t(entityLabel) })}
+         </span>
+       )}
+     </button>
+@@ -707,13 +720,14 @@
+   onBack: () => void;
+   onClose: () => void;
+ }) {
++  useLocale();
+   return (
+     <div className="flex h-[min(72vh,38rem)] flex-col">
+       <DialogHeader className="space-y-0 pb-4">
+         <div className="flex items-center justify-between gap-4">
+           <div className="flex min-w-0 items-center gap-2">
+             <button
+-              aria-label="Back to search"
++              aria-label={t("Back to search")}
+               className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out hover:bg-accent hover:text-accent-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
+               data-testid="channel-browser-create-back"
+               onClick={onBack}
+@@ -722,17 +736,17 @@
+               <ArrowLeft className="h-4 w-4" />
+             </button>
+             <DialogTitle className="truncate">
+-              {`New ${entityLabel}`}
++              {t("New {kind}", { kind: t(entityLabel) })}
+             </DialogTitle>
+           </div>
+           <button
+-            aria-label="Close"
++            aria-label={t("Close")}
+             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors duration-150 ease-out hover:bg-accent hover:text-accent-foreground focus:outline-hidden focus:ring-1 focus:ring-ring"
+             onClick={onClose}
+             type="button"
+           >
+             <X className="h-4 w-4" />
+-            <span className="sr-only">Close</span>
++            <span className="sr-only">{t("Close")}</span>
+           </button>
+         </div>
+       </DialogHeader>
+@@ -767,6 +781,7 @@
+   onJoin?: () => void;
+   onSelect: () => void;
+ }) {
++  useLocale();
+   const memberLabel = `${channel.memberCount} ${
+     channel.memberCount === 1 ? "member" : "members"
+   }`;
+@@ -830,7 +845,7 @@
+           type="button"
+           variant="default"
+         >
+-          {isJoining ? "Joining..." : "Join"}
++          {isJoining ? t("Joining...") : t("Join")}
+         </Button>
+       ) : null}
+     </div>

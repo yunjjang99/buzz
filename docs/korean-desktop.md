@@ -1,0 +1,151 @@
+# 한국어 Buzz 데스크톱
+
+이 포크는 첫 실행에서 한국어를 사용합니다. **프로필 메뉴 → 설정 → 화면 설정 →
+언어**에서 한국어와 English를 선택할 수 있습니다. 설정은 기기에 저장되어
+앱을 다시 실행해도 유지됩니다. 언어 변경은 계정이나 서버 데이터를 변경하지
+않으며, 작성한 메시지와 채널 이름은 번역하지 않습니다.
+
+## 현재 번역 범위
+
+- 사이드바, 검색, 워크스페이스 메뉴와 프로필 메뉴
+- 워크스페이스 접속 및 초대 링크 입력
+- 채널 생성·찾아보기·공개 범위·자동 삭제 기간
+- 메시지 입력·전송·답장·서식·파일 첨부 버튼
+- 설정 메뉴, 프로필, 화면 설정과 언어 선택
+
+아직 번역하지 않은 화면과 서버 오류 문구는 영어로 표시됩니다. AI 에이전트,
+프로젝트, 자동화, 초기 계정 생성, 알림 상세 설정 등에는 추가 번역이 필요합니다.
+이 문서는 전체 한국어 번역이나 Windows 실행 검증이 완료되었다는 의미가 아닙니다.
+
+## 홈서버 연결
+
+현재 홈서버 주소는 `wss://buzz.kovar.kr`입니다. 직원은 각자의 계정을 만들고
+관리자가 발급한 초대 링크로 참여합니다. 소유자의 개인 키를 직원에게 공유하지
+않습니다. UI 언어 변경을 위해 서버나 데이터베이스를 다시 설치할 필요는 없습니다.
+
+## 빌드
+
+빌드에는 저장소의 Hermit 환경을 사용합니다. Windows는 Windows 빌드 머신과
+MSVC 개발 도구가 필요하며, 아래 명령은 Git Bash 기준입니다. Mac의 파일을
+Windows 설치 파일로 사용할 수는 없습니다.
+
+```bash
+. ./bin/activate-hermit
+pnpm install --frozen-lockfile
+```
+
+Apple Silicon Mac:
+
+```bash
+cargo build --release --target aarch64-apple-darwin \
+  -p buzz-acp -p buzz-agent -p buzz-backend-kubernetes \
+  -p buzz-dev-mcp -p git-credential-nostr -p buzz-cli
+./scripts/bundle-sidecars.sh aarch64-apple-darwin
+cd desktop
+BUZZ_RELAY_URL=wss://buzz.kovar.kr BUZZ_RELAY_HTTP=https://buzz.kovar.kr \
+  node korean/native-build.mjs --target aarch64-apple-darwin --bundles app
+```
+
+Windows x64:
+
+```bash
+cargo build --release --target x86_64-pc-windows-msvc \
+  -p buzz-acp -p buzz-agent -p buzz-dev-mcp \
+  -p git-credential-nostr -p buzz-cli
+./scripts/bundle-sidecars.sh x86_64-pc-windows-msvc
+cd desktop
+BUZZ_RELAY_URL=wss://buzz.kovar.kr BUZZ_RELAY_HTTP=https://buzz.kovar.kr \
+  node korean/native-build.mjs --target x86_64-pc-windows-msvc --bundles nsis \
+  --config src-tauri/tauri.windows.conf.json
+```
+
+이 명령은 공개 배포용 코드 서명이나 공증을 수행하지 않습니다. 최초 로컬
+Mac UI 빌드는 설치된 Buzz 0.5.26의 보조 실행 파일 6개를 재사용합니다.
+직원 배포용 빌드는 위의 명령으로 보조 실행 파일도 동일한 소스에서 빌드하세요.
+
+## 검증
+
+```bash
+cd desktop
+pnpm typecheck
+pnpm check
+pnpm test
+node korean/check.mjs
+node --test korean/tests/overlay.test.mjs
+node --import ./test-jsdom-setup.mjs --import ./test-loader.mjs \
+  --experimental-strip-types --test-force-exit --test korean/runtime/locale.jsdom-test.mjs
+node korean/build.mjs --e2e
+pnpm exec playwright test --config korean/playwright.config.ts
+```
+
+화면 테스트는 실제 UI에서 한국어·영어 전환, 키보드 선택, 재실행에 해당하는
+새로고침 후 설정 유지, 한글 초안 보존과 메시지 전송을 확인합니다. 실제 서버,
+네이티브 알림, Windows IME 및 운영체제별 설치 동작은 별도 확인해야 합니다.
+
+직원 배포 전에 Mac과 Windows에서 다음을 직접 확인하세요.
+
+1. 초대 링크로 각자의 계정이 워크스페이스에 접속되는지 확인합니다.
+2. 한글 메시지, 답장, 파일을 상대방이 받을 수 있는지 확인합니다.
+3. 언어를 바꾼 뒤 앱을 종료하고 다시 열어 선택이 유지되는지 확인합니다.
+4. 한글 조합 중 Enter를 누르면 글자가 확정되고, 의도치 않게 메시지가
+   전송되지 않는지 확인합니다.
+
+## 원본 업데이트와 충돌 범위
+
+한국어 파일은 `desktop/korean/`과 이 문서에만 추가했습니다. 기존 원본 소스,
+패키지 설정, 테스트, Rust 코드, 릴리즈 설정에는 수정이 없습니다. 일반 원본
+빌드 명령은 원래 영어판을 만듭니다. 한국어판은 위의 별도 빌드 명령을 사용합니다.
+
+`korean/vite.config.ts`가 원본 Vite 설정을 불러오고, 원본 파일을 저장하지 않고
+메모리에서 UI 번역 변경을 적용합니다. 프로토콜·서버·메시지 데이터는 건드리지
+않습니다. 원본의 공개/내부 기능 검사와 Tauri 패키징 절차도 재사용합니다.
+
+이 구조는 한국어 수정 때문에 원본 파일에서 발생하던 **Git 병합 충돌**을
+피합니다. 다만 원본이 같은 폴더를 새로 만들거나 UI 구조를 바꾸는 경우까지
+무조건 호환된다고 보장할 수는 없습니다. 적용 문맥이 바뀌거나 중복되면
+검사가 실패하며, 원본을 변경하거나 이전 한국어판을 덮어쓰지 않습니다.
+실패 시 `korean/patches/`의 해당 UI 적용 규칙을 새 원본에 맞게 검토해야 합니다.
+검사를 끄거나 부분 적용으로 출시하지 마세요.
+
+업데이트 전에 저장소 루트에서:
+
+```bash
+. ./bin/activate-hermit
+git fetch upstream main --tags
+cd desktop
+node korean/check-upstream.mjs upstream/main
+# 특정 릴리즈를 설치할 때는 그 태그로 검사합니다.
+node korean/check-upstream.mjs desktop-v0.5.26
+```
+
+이 검사는 읽기 전용입니다. 브랜치, 설치된 앱, 홈서버는 변경하지 않습니다.
+통과한 검사도 새 원본의 컴파일·실행 호환성까지 보장하지 않으므로 변경을
+저장한 작업 브랜치에 선택한 원본 커밋을 병합한 뒤 의존성 설치, 위의 검사,
+화면 테스트, 해당 운영체제 네이티브 빌드와 직접 사용 테스트를 다시 수행하세요.
+원본 버전 번호와 설치 파일 이름을 임의로 최신 버전으로 올리지 마세요.
+
+현재 적용 기준은 원본 main `e982f70fba29cdaa9a8378f118a0e498537bd8db`
+(패키지 버전 0.5.26)입니다. 같은 버전 번호를 가진 정식
+`desktop-v0.5.26` 태그는 더 이전 커밋이며 CommunitySwitcher의 함수 인자가
+달라 현재 적용 검사에서 중단됩니다. 버전 번호만으로 호환을 판단하지 않고
+정확한 커밋별로 검사하는 이유입니다. 해당 태그용 한국어판이 검증됐다고
+주장하지 않습니다.
+
+공식 설치 파일이나 공식 자동 업데이트는 한국어 기능을 포함하지 않습니다.
+한국어판을 유지하려면 원본 업데이트마다 이 계층을 검사하고 자체 설치 파일을
+다시 만들어 배포해야 합니다. 자체 서명·릴리즈 서버·자동 업데이트 배포는
+아직 구성하지 않았습니다. 기존 계정과 홈서버는 그대로 연결합니다.
+
+## 번역 추가
+
+문구는 `desktop/korean/runtime/messages.ts`에 추가합니다. UI 적용 규칙은
+`desktop/korean/manifest.json`과 `patches/`에 있습니다. 원본 컴포넌트를 직접
+수정하지 않습니다. 규칙은 `useLocale()`로 변경을 구독하고 `t("English copy")`를
+표시하도록 변환합니다. 이름·메시지 등 사용자 데이터는 `t()`에 직접 넣지 말고
+`t("Message #{channel}", { channel: channelName })`처럼 매개변수로 전달합니다.
+모듈 수준 옵션 배열은 영어 원문으로 유지하고 렌더링할 때 번역합니다.
+
+새 규칙을 추가하거나 원본에 맞게 수정한 뒤 `node korean/check.mjs`로 전체
+적용 위치와 **변환 후 TypeScript**까지 검사하고 화면 테스트를 실행합니다.
+기존 원본 단위 테스트는 기존 소스에 대해 실행되고, 한국어 전용 테스트는
+변환된 실제 UI에서 실행됩니다.

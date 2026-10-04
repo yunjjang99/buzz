@@ -1,0 +1,87 @@
+Index: src/features/sidebar/ui/AppSidebarPinnedHeader.tsx
+===================================================================
+--- src/features/sidebar/ui/AppSidebarPinnedHeader.tsx	
++++ src/features/sidebar/ui/AppSidebarPinnedHeader.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { Activity, Bot, Folders, Inbox, Zap } from "lucide-react";
+ 
+ import { TopbarSearch } from "@/features/search/ui/TopbarSearch";
+@@ -99,6 +100,7 @@
+   projectsOverviewActive,
+   selectedView,
+ }: AppSidebarPrimaryMenuProps) {
++  useLocale();
+   return (
+     <>
+       <SidebarHeader
+@@ -112,11 +114,11 @@
+               className="data-[active=true]:font-normal"
+               isActive={selectedView === "home"}
+               onClick={onSelectHome}
+-              tooltip="Inbox"
++              tooltip={t("Inbox")}
+               type="button"
+             >
+               <Inbox className="h-4 w-4" />
+-              <SidebarMenuLabel>Inbox</SidebarMenuLabel>
++              <SidebarMenuLabel>{t("Inbox")}</SidebarMenuLabel>
+             </SidebarMenuButton>
+             {homeBadgeCount > 0 ? (
+               <SidebarMenuBadge
+@@ -133,11 +135,11 @@
+                 data-testid="open-pulse-view"
+                 isActive={selectedView === "pulse"}
+                 onClick={onSelectPulse}
+-                tooltip="Pulse"
++                tooltip={t("Pulse")}
+                 type="button"
+               >
+                 <Activity className="h-4 w-4" />
+-                <SidebarMenuLabel>Pulse</SidebarMenuLabel>
++                <SidebarMenuLabel>{t("Pulse")}</SidebarMenuLabel>
+               </SidebarMenuButton>
+             </SidebarMenuItem>
+           </FeatureGate>
+@@ -147,11 +149,11 @@
+                 data-testid="open-projects-view"
+                 isActive={selectedView === "projects" && projectsOverviewActive}
+                 onClick={onSelectProjects}
+-                tooltip="Projects"
++                tooltip={t("Projects")}
+                 type="button"
+               >
+                 <Folders className="h-4 w-4" />
+-                <SidebarMenuLabel>Projects</SidebarMenuLabel>
++                <SidebarMenuLabel>{t("Projects")}</SidebarMenuLabel>
+               </SidebarMenuButton>
+             </SidebarMenuItem>
+           </FeatureGate>
+@@ -161,11 +163,11 @@
+               data-testid="open-agents-view"
+               isActive={selectedView === "agents"}
+               onClick={onSelectAgents}
+-              tooltip="Agents"
++              tooltip={t("Agents")}
+               type="button"
+             >
+               <Bot className="h-4 w-4" />
+-              <SidebarMenuLabel>Agents</SidebarMenuLabel>
++              <SidebarMenuLabel>{t("Agents")}</SidebarMenuLabel>
+             </SidebarMenuButton>
+           </SidebarMenuItem>
+           <ProtectedBestieSidebarEntry />
+@@ -175,11 +177,11 @@
+                 data-testid="open-workflows-view"
+                 isActive={selectedView === "workflows"}
+                 onClick={onSelectWorkflows}
+-                tooltip="Workflows"
++                tooltip={t("Workflows")}
+                 type="button"
+               >
+                 <Zap className="h-4 w-4" />
+-                <SidebarMenuLabel>Workflows</SidebarMenuLabel>
++                <SidebarMenuLabel>{t("Workflows")}</SidebarMenuLabel>
+               </SidebarMenuButton>
+             </SidebarMenuItem>
+           </FeatureGate>

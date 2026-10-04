@@ -1,0 +1,108 @@
+Index: src/features/channels/ui/ChannelTypeSettings.tsx
+===================================================================
+--- src/features/channels/ui/ChannelTypeSettings.tsx	
++++ src/features/channels/ui/ChannelTypeSettings.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { ChevronDown, ClockFading, Hash } from "lucide-react";
+ import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+ 
+@@ -55,6 +56,7 @@
+   channel: Channel;
+   onEdit?: () => void;
+ }) {
++  useLocale();
+   const projectHome = useIsProjectHomeChannel(channel.id);
+   const lifecycle = channelLifecycle({
+     projectHome,
+@@ -64,7 +66,7 @@
+   return (
+     <EditableInfoFieldRow
+       editTestId="channel-management-edit-channel-type"
+-      label="Channel type"
++      label={t("Channel type")}
+       onEdit={canEdit ? onEdit : undefined}
+       testId="channel-management-type"
+       value={channelLifecycleLabel(lifecycle, channel.ttlSeconds)}
+@@ -75,7 +77,7 @@
+ export function ChannelTypeSettings({
+   channelId,
+   disabled,
+-  label = "Channel type",
++  label = t("Channel type"),
+   onOpenChange,
+   onTemporaryChange,
+   onTtlSecondsChange,
+@@ -97,6 +99,7 @@
+   ttlSeconds: number;
+   variant?: "dropdown" | "segmented";
+ }) {
++  useLocale();
+   const projectHome = useIsProjectHomeChannel(channelId);
+   const lifecycle = channelLifecycle({ projectHome, temporary });
+   const shouldReduceMotion = useReducedMotion();
+@@ -110,7 +113,9 @@
+     ? EPHEMERAL_TIMEOUT_OPTIONS
+     : [
+         {
+-          label: `Current (${formatTtlDuration(ttlSeconds)})`,
++          label: t("Current ({duration})", {
++            duration: formatTtlDuration(ttlSeconds),
++          }),
+           seconds: ttlSeconds,
+         },
+         ...EPHEMERAL_TIMEOUT_OPTIONS,
+@@ -136,10 +141,13 @@
+         {variant === "segmented" ? (
+           <SegmentedControl
+             disabled={disabled}
+-            legend="Channel type"
++            legend={t("Channel type")}
+             onValueChange={(value) => onTemporaryChange(value === "temporary")}
+             optionTestIdPrefix={`${testIdPrefix}-channel-type-option`}
+-            options={CHANNEL_TYPE_OPTIONS}
++            options={CHANNEL_TYPE_OPTIONS.map((option) => ({
++              ...option,
++              label: t(option.label),
++            }))}
+             testId={`${testIdPrefix}-channel-type`}
+             value={temporary ? "temporary" : "ongoing"}
+           />
+@@ -180,12 +188,12 @@
+                 )}
+                 htmlFor={`${testIdPrefix}-ttl`}
+               >
+-                Expires after
++                {t("Expires after")}
+               </label>
+               <DropdownMenu modal={false}>
+                 <DropdownMenuTrigger asChild>
+                   <Button
+-                    aria-label="Expires after"
++                    aria-label={t("Expires after")}
+                     className="-mr-2.5 ml-auto h-9 w-fit justify-end px-2.5 text-right text-sm font-medium text-foreground hover:bg-muted/50"
+                     data-testid={`${testIdPrefix}-ttl`}
+                     disabled={disabled}
+@@ -194,8 +202,11 @@
+                     variant="ghost"
+                   >
+                     <span className="text-right">
+-                      {selectedTimeoutOption?.label ??
+-                        `Current (${formatTtlDuration(ttlSeconds)})`}
++                      {selectedTimeoutOption
++                        ? t(selectedTimeoutOption.label)
++                        : t("Current ({duration})", {
++                            duration: formatTtlDuration(ttlSeconds),
++                          })}
+                     </span>
+                     <ChevronDown className="size-4 shrink-0 text-muted-foreground/70" />
+                   </Button>
+@@ -217,7 +228,7 @@
+                         key={option.seconds}
+                         value={String(option.seconds)}
+                       >
+-                        {option.label}
++                        {t(option.label)}
+                       </DropdownMenuRadioItem>
+                     ))}
+                   </DropdownMenuRadioGroup>

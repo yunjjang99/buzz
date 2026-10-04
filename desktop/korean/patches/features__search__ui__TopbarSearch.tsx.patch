@@ -1,0 +1,131 @@
+Index: src/features/search/ui/TopbarSearch.tsx
+===================================================================
+--- src/features/search/ui/TopbarSearch.tsx	
++++ src/features/search/ui/TopbarSearch.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { Search } from "lucide-react";
+ import * as React from "react";
+ import { resolveUserLabel } from "@/features/profile/lib/identity";
+@@ -183,7 +184,7 @@
+   if (channel?.channelType === "dm") {
+     return {
+       channelLabel: null,
+-      text: "Direct message",
++      text: t("Direct message"),
+     };
+   }
+ 
+@@ -192,10 +193,10 @@
+   return {
+     channelLabel: channelName,
+     text: channelName
+-      ? `${isThread ? "Thread" : "Message"} in`
++      ? `${isThread ? t("Thread") : t("Message")} in`
+       : isThread
+-        ? "Thread"
+-        : "Message",
++        ? t("Thread")
++        : t("Message"),
+   };
+ }
+ 
+@@ -390,6 +391,7 @@
+   suggestionChannels,
+   variant = "bar",
+ }: TopbarSearchProps) {
++  useLocale();
+   const [isOpen, setIsOpen] = React.useState(false);
+   const [scopeChannelId, setScopeChannelId] = React.useState<string | null>(
+     null,
+@@ -677,7 +679,7 @@
+       result.kind === "channel"
+         ? channelDisplayName
+         : result.kind === "action"
+-          ? result.action.title
++          ? t(result.action.title)
+           : result.kind === "user"
+             ? userDisplayName
+             : messageAuthorLabel;
+@@ -800,7 +802,7 @@
+ 
+     return sections.map((section) => (
+       <div data-search-section={section.key} key={section.key}>
+-        <div className={SEARCH_SECTION_TITLE_CLASS}>{section.title}</div>
++        <div className={SEARCH_SECTION_TITLE_CLASS}>{t(section.title)}</div>
+         {section.results.map((result) =>
+           renderSearchResultRow(result, resultIndex++),
+         )}
+@@ -831,12 +833,12 @@
+             currentChannelSearchAction ? "pb-5" : "py-5",
+           )}
+         >
+-          <p>No recent activity yet.</p>
++          <p>{t("No recent activity yet.")}</p>
+         </div>
+       </div>
+     ) : (
+       <div
+-        aria-label="Recent activity"
++        aria-label={t("Recent activity")}
+         className="max-h-96 overflow-y-auto"
+         role="listbox"
+       >
+@@ -850,7 +852,7 @@
+                 {suggestedResults.length > 0 ? (
+                   <div>
+                     <div className={SEARCH_SECTION_TITLE_CLASS}>
+-                      Recent activity
++                      {t("Recent activity")}
+                     </div>
+                     {suggestedResults.map((result) =>
+                       renderSearchResultRow(result, resultIndex++),
+@@ -859,7 +861,9 @@
+                 ) : null}
+                 {suggestionActionResults.length > 0 ? (
+                   <div>
+-                    <div className={SEARCH_SECTION_TITLE_CLASS}>Actions</div>
++                    <div className={SEARCH_SECTION_TITLE_CLASS}>
++                      {t("Actions")}
++                    </div>
+                     {suggestionActionResults.map((result) =>
+                       renderSearchResultRow(result, resultIndex++),
+                     )}
+@@ -925,7 +929,7 @@
+     <div className={cn("relative", className)}>
+       <Dialog open={isOpen} onOpenChange={handleSearchOpenChange}>
+         <button
+-          aria-label="Search everything"
++          aria-label={t("Search everything")}
+           className={
+             isIconVariant
+               ? "group/search flex size-6 items-center justify-center rounded p-1 text-sidebar-foreground/50 transition-colors hover:bg-sidebar-border/35 hover:text-sidebar-foreground focus-visible:bg-sidebar-border/35 focus-visible:text-sidebar-foreground focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-sidebar-ring"
+@@ -934,7 +938,7 @@
+           data-testid="open-search"
+           onClick={() => openSearchDialog(null)}
+           ref={triggerRef}
+-          title="Search everything"
++          title={t("Search everything")}
+           type="button"
+         >
+           <Search
+@@ -954,7 +958,7 @@
+                     : "text-sidebar-foreground/55",
+                 )}
+               >
+-                {query || "Search everything"}
++                {query || t("Search everything")}
+               </span>
+               <kbd className="shrink-0 text-2xs text-sidebar-foreground/45">
+                 &#x2318;K
+@@ -977,7 +981,9 @@
+           showCloseButton={false}
+         >
+           <DialogTitle className="sr-only">
+-            {scopeLabel ? `Search in ${scopeLabel}` : "Search everything"}
++            {scopeLabel
++              ? t("Search in {scope}", { scope: scopeLabel })
++              : t("Search everything")}
+           </DialogTitle>
+           <SearchDialogInputRow
+             inputRef={dialogInputRef}

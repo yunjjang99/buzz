@@ -1,0 +1,109 @@
+Index: src/features/settings/ui/SettingsView.tsx
+===================================================================
+--- src/features/settings/ui/SettingsView.tsx	
++++ src/features/settings/ui/SettingsView.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { getVersion } from "@tauri-apps/api/app";
+ import { AlertCircle, ArrowLeft, LoaderCircle, RefreshCw } from "lucide-react";
+@@ -84,6 +85,7 @@
+   onSelect: (section: SettingsSection) => void;
+   section: (typeof settingsSections)[number];
+ }) {
++  useLocale();
+   const Icon = section.icon;
+ 
+   return (
+@@ -93,7 +95,7 @@
+         data-testid={`settings-nav-${section.value}`}
+         isActive={active}
+         onClick={() => onSelect(section.value)}
+-        tooltip={section.label}
++        tooltip={t(section.label)}
+         type="button"
+       >
+         <Icon
+@@ -104,7 +106,7 @@
+               : "text-sidebar-foreground/70",
+           )}
+         />
+-        <SidebarMenuLabel>{section.label}</SidebarMenuLabel>
++        <SidebarMenuLabel>{t(section.label)}</SidebarMenuLabel>
+       </SidebarMenuButton>
+     </SidebarMenuItem>
+   );
+@@ -127,6 +129,7 @@
+   onSetSoundForSlot,
+   section,
+ }: SettingsViewProps) {
++  useLocale();
+   const { isMobile, open: sidebarOpen, setOpen: setSidebarOpen } = useSidebar();
+   const myMembershipQuery = useMyRelayMembershipLookupQuery();
+   const featureState = useFeatureSnapshot();
+@@ -241,11 +244,11 @@
+               <SidebarMenuButton
+                 data-testid="settings-back-to-app"
+                 onClick={onClose}
+-                tooltip="Back to app"
++                tooltip={t("Back to app")}
+                 type="button"
+               >
+                 <ArrowLeft className="h-4 w-4" />
+-                <span>Back to app</span>
++                <span>{t("Back to app")}</span>
+               </SidebarMenuButton>
+             </SidebarMenuItem>
+           </SidebarMenu>
+@@ -258,7 +261,7 @@
+               data-testid="community-access-loading"
+             >
+               <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
+-              Checking invite permissions…
++              {t("Checking invite permissions…")}
+             </div>
+           ) : null}
+           {myMembershipQuery.isError ? (
+@@ -268,7 +271,7 @@
+             >
+               <div className="flex items-center gap-2">
+                 <AlertCircle className="h-3.5 w-3.5 text-destructive" />
+-                Invite settings could not be checked.
++                {t("Invite settings could not be checked.")}
+               </div>
+               <button
+                 className="flex items-center gap-1.5 font-medium text-sidebar-foreground underline-offset-2 hover:underline"
+@@ -276,7 +279,7 @@
+                 type="button"
+               >
+                 <RefreshCw className="h-3.5 w-3.5" />
+-                Try again
++                {t("Try again")}
+               </button>
+             </div>
+           ) : null}
+@@ -286,15 +289,20 @@
+               data-testid="community-access-snapshot-missing"
+             >
+               <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-500" />
+-              Invite settings are unavailable. Relay recovery may still be in
+-              progress.
++              {t(
++                "Invite settings are unavailable. Relay recovery may still be in progress.",
++              )}
+             </div>
+           ) : null}
+           {visibleNavGroups.map((group) => (
+             <SidebarGroup key={group.label}>
+-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
++              <SidebarGroupLabel>{t(group.label)}</SidebarGroupLabel>
+               <SidebarGroupContent>
+-                <SidebarMenu aria-label={`${group.label} settings sections`}>
++                <SidebarMenu
++                  aria-label={t("{group} settings sections", {
++                    group: t(group.label),
++                  })}
++                >
+                   {group.sections.map((entry) => (
+                     <SettingsSectionButton
+                       active={entry.value === section}

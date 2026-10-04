@@ -1,0 +1,215 @@
+Index: src/features/settings/ui/ProfileSettingsCard.tsx
+===================================================================
+--- src/features/settings/ui/ProfileSettingsCard.tsx	
++++ src/features/settings/ui/ProfileSettingsCard.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { Check, ChevronDown, Copy, Pencil } from "lucide-react";
+ import {
+   AnimatePresence,
+@@ -62,6 +63,7 @@
+   testId: string;
+   copyValue?: string;
+ }) {
++  useLocale();
+   return (
+     <div className="flex min-h-16 items-center justify-between gap-4 px-4 py-3">
+       <div className="min-w-0 space-y-1">
+@@ -76,18 +78,18 @@
+       </div>
+       {copyValue ? (
+         <button
+-          aria-label={`Copy ${label}`}
++          aria-label={t("Copy {label}", { label })}
+           className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+           data-testid={`copy-${testId}`}
+           onClick={async () => {
+             await writeTextToClipboard(copyValue);
+-            toast.success("Copied to clipboard");
++            toast.success(t("Copied to clipboard"));
+           }}
+-          title={`Copy ${label}`}
++          title={t("Copy {label}", { label })}
+           type="button"
+         >
+           <Copy className="h-4 w-4 shrink-0" />
+-          Copy
++          {t("Copy")}
+         </button>
+       ) : null}
+     </div>
+@@ -107,9 +109,12 @@
+   disabled: boolean;
+   isEditing: boolean;
+ }) {
++  useLocale();
+   const Icon = isEditing ? Check : Pencil;
+-  const actionLabel = isEditing ? "Done" : "Edit";
+-  const accessibleLabel = isEditing ? `Done editing ${label}` : `Edit ${label}`;
++  const actionLabel = isEditing ? t("Done") : t("Edit");
++  const accessibleLabel = isEditing
++    ? t("Done editing {label}", { label })
++    : t("Edit {label}", { label });
+ 
+   return (
+     <button
+@@ -136,6 +141,7 @@
+   currentPubkey,
+   fallbackDisplayName,
+ }: ProfileSettingsCardProps) {
++  useLocale();
+   const shouldReduceMotion = useReducedMotion();
+   const profileQuery = useProfileQuery();
+   const updateProfileMutation = useUpdateProfileMutation();
+@@ -302,12 +308,12 @@
+     nextDisplayName ||
+     profile?.displayName ||
+     fallbackDisplayName ||
+-    "Your profile";
++    t("Your profile");
+   // Identity details show and copy the full canonical npub; a key that
+   // cannot be encoded renders the neutral label and is never copyable.
+   const identityNpub = canonicalNpub(profile?.pubkey ?? currentPubkey ?? "");
+   const resolvedPubkey = identityNpub ?? UNAVAILABLE_KEY_LABEL;
+-  const nip05Handle = profile?.nip05Handle ?? "Not set";
++  const nip05Handle = profile?.nip05Handle ?? t("Not set");
+   const emojiAvatarPreview = React.useMemo(
+     () => parseEmojiAvatarDataUrl(avatarUrlDraft),
+     [avatarUrlDraft],
+@@ -406,7 +412,7 @@
+     setDisplayNameDraft(updatePayload.displayName ?? currentDisplayName);
+     setAvatarUrlDraft(updatePayload.avatarUrl ?? currentAvatarUrl);
+     setAboutDraft(updatePayload.about ?? currentAbout);
+-    toast.success("Profile saved");
++    toast.success(t("Profile saved"));
+     return true;
+   }, [
+     canSave,
+@@ -489,8 +495,10 @@
+     >
+       <div>
+         <SettingsSectionHeader
+-          title="Profile"
+-          description="Update how your name, avatar, and bio appear across Buzz."
++          title={t("Profile")}
++          description={t(
++            "Update how your name, avatar, and bio appear across Buzz.",
++          )}
+         />
+ 
+         <div className="space-y-3">
+@@ -565,8 +573,8 @@
+                                 aria-expanded={isAvatarEditorOpen}
+                                 aria-label={
+                                   isAvatarEditorSaving
+-                                    ? "Saving profile photo"
+-                                    : "Edit profile photo"
++                                    ? t("Saving profile photo")
++                                    : t("Edit profile photo")
+                                 }
+                                 className={avatarEditButtonClassName}
+                                 data-testid="profile-avatar-edit"
+@@ -574,14 +582,14 @@
+                                 onClick={openAvatarEditor}
+                                 title={
+                                   isAvatarEditorSaving
+-                                    ? "Saving profile photo"
+-                                    : "Edit profile photo"
++                                    ? t("Saving profile photo")
++                                    : t("Edit profile photo")
+                                 }
+                                 type="button"
+                               >
+                                 {isAvatarEditorSaving && !isAvatarEditorOpen ? (
+                                   <Spinner
+-                                    aria-label="Saving avatar"
++                                    aria-label={t("Saving avatar")}
+                                     className="h-4 w-4 border-2"
+                                   />
+                                 ) : (
+@@ -688,7 +696,7 @@
+                             />
+                           }
+                           data-testid="profile-metadata-card"
+-                          title="Profile info"
++                          title={t("Profile info")}
+                         >
+                           <div className="flex min-h-16 items-center gap-4 px-4 py-3">
+                             <div className="min-w-0 flex-1 space-y-1">
+@@ -696,7 +704,7 @@
+                                 className="block text-sm font-medium"
+                                 htmlFor="profile-display-name"
+                               >
+-                                Display name
++                                {t("Display name")}
+                               </label>
+                               {isEditingProfileMetadata ? (
+                                 <Input
+@@ -707,7 +715,7 @@
+                                   onChange={(event) =>
+                                     setDisplayNameDraft(event.target.value)
+                                   }
+-                                  placeholder="Display name"
++                                  placeholder={t("Display name")}
+                                   ref={displayNameInputRef}
+                                   value={displayNameDraft}
+                                 />
+@@ -715,9 +723,9 @@
+                                 <p
+                                   className="min-w-0 truncate text-sm text-muted-foreground"
+                                   data-testid="profile-display-name-value"
+-                                  title={displayNameDraft || "Not set"}
++                                  title={displayNameDraft || t("Not set")}
+                                 >
+-                                  {displayNameDraft || "Not set"}
++                                  {displayNameDraft || t("Not set")}
+                                 </p>
+                               )}
+                             </div>
+@@ -729,7 +737,7 @@
+                                 className="block text-sm font-medium"
+                                 htmlFor="profile-about"
+                               >
+-                                Profile description
++                                {t("Profile description")}
+                               </label>
+                               {isEditingProfileMetadata ? (
+                                 <Textarea
+@@ -740,7 +748,7 @@
+                                   onChange={(event) =>
+                                     setAboutDraft(event.target.value)
+                                   }
+-                                  placeholder="Profile description"
++                                  placeholder={t("Profile description")}
+                                   ref={aboutTextareaRef}
+                                   value={aboutDraft}
+                                 />
+@@ -753,16 +761,16 @@
+                                       : "text-muted-foreground/55",
+                                   )}
+                                   data-testid="profile-about-value"
+-                                  title={aboutDraft || "Not set"}
++                                  title={aboutDraft || t("Not set")}
+                                 >
+-                                  {aboutDraft || "Not set"}
++                                  {aboutDraft || t("Not set")}
+                                 </p>
+                               )}
+                             </div>
+                           </div>
+                         </SettingsOptionGroup>
+ 
+-                        <SettingsOptionGroup title="Identity">
++                        <SettingsOptionGroup title={t("Identity")}>
+                           <details
+                             className="group divide-y divide-border/55"
+                             data-testid="profile-identity-card"
+@@ -791,7 +799,7 @@
+                             >
+                               <IdentityRow
+                                 copyValue={identityNpub ?? undefined}
+-                                label="Public key"
++                                label={t("Public key")}
+                                 testId="profile-pubkey"
+                                 value={resolvedPubkey}
+                               />

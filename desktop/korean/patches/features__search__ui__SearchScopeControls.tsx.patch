@@ -1,0 +1,39 @@
+Index: src/features/search/ui/SearchScopeControls.tsx
+===================================================================
+--- src/features/search/ui/SearchScopeControls.tsx	
++++ src/features/search/ui/SearchScopeControls.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { Search, X } from "lucide-react";
+ import type * as React from "react";
+ 
+@@ -42,6 +43,7 @@
+   query,
+   scopeLabel,
+ }: SearchDialogInputRowProps) {
++  useLocale();
+   return (
+     <div
+       className="flex h-12 items-center gap-3 border-b border-border/70 px-4"
+@@ -65,7 +67,9 @@
+         {query.length === 0 ? (
+           <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center text-base leading-none">
+             {scopeLabel ? (
+-              <span className="text-muted-foreground">Search messages</span>
++              <span className="text-muted-foreground">
++                {t("Search messages")}
++              </span>
+             ) : (
+               <SearchPromptPlaceholder />
+             )}
+@@ -73,7 +77,9 @@
+         ) : null}
+         <input
+           aria-label={
+-            scopeLabel ? `Search in ${scopeLabel}` : "Search everything"
++            scopeLabel
++              ? t("Search in {scope}", { scope: scopeLabel })
++              : t("Search everything")
+           }
+           autoCapitalize="none"
+           autoCorrect="off"

@@ -1,0 +1,66 @@
+Index: src/features/channels/ui/ChannelPermissionsSettings.tsx
+===================================================================
+--- src/features/channels/ui/ChannelPermissionsSettings.tsx	
++++ src/features/channels/ui/ChannelPermissionsSettings.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { ChevronDown, Globe, Lock } from "lucide-react";
+ 
+ import type { ChannelVisibility } from "@/shared/api/types";
+@@ -30,7 +31,8 @@
+   visibility: ChannelVisibility;
+   variant?: "dropdown" | "segmented";
+ }) {
+-  const visibilityLabel = visibility === "private" ? "Private" : "Public";
++  useLocale();
++  const visibilityLabel = visibility === "private" ? t("Private") : t("Public");
+ 
+   return (
+     <div
+@@ -46,15 +48,18 @@
+           disabled && variant === "segmented" && "opacity-50",
+         )}
+       >
+-        Visibility
++        {t("Visibility")}
+       </span>
+       {variant === "segmented" ? (
+         <SegmentedControl
+           disabled={disabled}
+-          legend="Visibility"
++          legend={t("Visibility")}
+           onValueChange={onVisibilityChange}
+           optionTestIdPrefix={`${testIdPrefix}-permissions-option`}
+-          options={VISIBILITY_OPTIONS}
++          options={VISIBILITY_OPTIONS.map((option) => ({
++            ...option,
++            label: t(option.label),
++          }))}
+           testId={`${testIdPrefix}-permissions`}
+           value={visibility}
+         />
+@@ -62,7 +67,7 @@
+         <DropdownMenu modal={false}>
+           <DropdownMenuTrigger asChild>
+             <Button
+-              aria-label={`Visibility: ${visibilityLabel}`}
++              aria-label={t("Visibility: {label}", { label: visibilityLabel })}
+               className="-mr-2.5 ml-auto h-9 w-fit justify-end px-2.5 text-right text-sm font-medium text-foreground hover:bg-muted/50"
+               data-testid={`${testIdPrefix}-permissions`}
+               disabled={disabled}
+@@ -94,13 +99,13 @@
+                 data-testid={`${testIdPrefix}-permissions-option-open`}
+                 value="open"
+               >
+-                Public
++                {t("Public")}
+               </DropdownMenuRadioItem>
+               <DropdownMenuRadioItem
+                 data-testid={`${testIdPrefix}-permissions-option-private`}
+                 value="private"
+               >
+-                Private
++                {t("Private")}
+               </DropdownMenuRadioItem>
+             </DropdownMenuRadioGroup>
+           </DropdownMenuContent>

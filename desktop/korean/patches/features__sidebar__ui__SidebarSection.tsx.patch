@@ -1,0 +1,26 @@
+Index: src/features/sidebar/ui/SidebarSection.tsx
+===================================================================
+--- src/features/sidebar/ui/SidebarSection.tsx	
++++ src/features/sidebar/ui/SidebarSection.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import type * as React from "react";
+ import { BellOff, ChevronDown, CircleDot, X } from "lucide-react";
+ 
+@@ -425,6 +426,7 @@
+   onUnmuteChannel?: (channelId: string) => void;
+   sectionActionsOpen?: boolean;
+ }) {
++  useLocale();
+   if (items.length === 0 && !action && !emptyState) {
+     return null;
+   }
+@@ -504,7 +506,7 @@
+                     ) : null}
+                     {channel.channelType === "dm" && onHideDm ? (
+                       <button
+-                        aria-label="Close direct message"
++                        aria-label={t("Close direct message")}
+                         className={cn(
+                           "absolute right-1 top-1/2 z-10 -translate-y-1/2 after:absolute after:-inset-2 after:md:hidden group-data-[collapsible=icon]:hidden",
+                           SIDEBAR_ROW_ICON_ACTION_CLASS,

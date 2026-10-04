@@ -1,0 +1,42 @@
+Index: src/features/sidebar/ui/CreateChannelDialog.tsx
+===================================================================
+--- src/features/sidebar/ui/CreateChannelDialog.tsx	
++++ src/features/sidebar/ui/CreateChannelDialog.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import type { ReactNode } from "react";
+ 
+ import type { ChannelVisibility } from "@/shared/api/types";
+@@ -44,6 +45,7 @@
+   testId = "create-channel-dialog",
+   title,
+ }: CreateChannelDialogProps) {
++  useLocale();
+   const open = channelKind !== null;
+ 
+   const form = useCreateChannelForm({
+@@ -54,7 +56,7 @@
+     onCreated: () => onOpenChange(false),
+   });
+ 
+-  const kindLabel = channelKind === "forum" ? "forum" : "channel";
++  const kindLabel = channelKind === "forum" ? t("forum") : t("channel");
+ 
+   return (
+     <Dialog
+@@ -70,12 +72,12 @@
+         data-testid={testId}
+         footerClassName="border-t-0 pt-0"
+         headerClassName="pb-2"
+-        title={title ?? `Create a new ${kindLabel}`}
++        title={title ?? t("Create a new {kind}", { kind: kindLabel })}
+         description={
+           description ??
+           (channelKind === "forum"
+-            ? "Forums organize threaded discussions around a topic."
+-            : "Channels are real-time streams for team conversation.")
++            ? t("Forums organize threaded discussions around a topic.")
++            : t("Channels are real-time streams for team conversation."))
+         }
+         footer={<CreateChannelFormFooter form={form} />}
+       >
