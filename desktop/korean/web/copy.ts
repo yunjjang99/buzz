@@ -31,6 +31,14 @@ export const copy = {
     logout: "로그아웃",
     refresh: "채널 새로고침",
     send: "메시지 보내기",
+    attach: "파일 첨부",
+    attachments: "첨부 파일",
+    removeFile: "첨부 삭제",
+    fileLimit: "최대 5개 · 합계 100 MB · 붙여넣기 또는 끌어놓기",
+    uploading: "업로드 중",
+    cancelUpload: "업로드 취소",
+    download: "다운로드",
+    downloading: "다운로드 중…",
     input: "메시지 입력",
     placeholder: "팀에 메시지를 보내세요…",
     empty: "아직 메시지가 없습니다. 첫 대화를 시작하세요.",
@@ -55,7 +63,7 @@ export const copy = {
     closeThread: "답글 대화 닫기",
     back: "채널 목록",
     limitations:
-      "채널·개인 대화·답글을 지원합니다. 파일 업로드, 음성, 에이전트 관리 등은 데스크톱 앱을 사용하세요.",
+      "채널·개인 대화·답글·파일 첨부를 지원합니다. 음성, 에이전트 관리 등은 데스크톱 앱을 사용하세요.",
   },
   en: {
     title: "Web messenger",
@@ -90,6 +98,14 @@ export const copy = {
     logout: "Sign out",
     refresh: "Refresh channels",
     send: "Send message",
+    attach: "Attach files",
+    attachments: "Attachments",
+    removeFile: "Remove attachment",
+    fileLimit: "Up to 5 files · 100 MB total · paste or drop files",
+    uploading: "Uploading",
+    cancelUpload: "Cancel upload",
+    download: "Download",
+    downloading: "Downloading…",
     input: "Message input",
     placeholder: "Send a message to your team…",
     empty: "No messages yet. Start a conversation.",
@@ -114,14 +130,66 @@ export const copy = {
     closeThread: "Close thread",
     back: "Channel list",
     limitations:
-      "Channels, direct messages and replies are supported. Use the desktop app for file uploads, voice and agent management.",
+      "Channels, direct messages, replies and attachments are supported. Use the desktop app for voice and agent management.",
   },
 };
 
 /** Explain known recovery actions while retaining the actual relay failure reason. */
 export function errorText(error: unknown, language: "ko" | "en"): string {
-  const code = error instanceof Error ? error.message : "operation-failed";
+  if (error instanceof Error && error.message === "login-locked") {
+    const seconds = (error as Error & { retryAfter?: number }).retryAfter;
+    if (
+      typeof seconds === "number" &&
+      Number.isFinite(seconds) &&
+      seconds > 0
+    ) {
+      const minutes = Math.ceil(seconds / 60);
+      return language === "ko"
+        ? `로그인 실패가 반복되어 잠겼습니다. 약 ${minutes}분 후 다시 시도해 주세요.`
+        : `Login is temporarily locked after repeated failures. Try again in about ${minutes} minute(s).`;
+    }
+    return language === "ko"
+      ? "로그인 실패가 반복되어 잠겼습니다. 잠시 후 다시 시도해 주세요."
+      : "Login is temporarily locked after repeated failures. Please try again later.";
+  }
+
+  const code =
+    error instanceof Error
+      ? error.name === "AbortError"
+        ? "media-cancelled"
+        : error.name === "TimeoutError"
+          ? "media-request-failed"
+          : error.message
+      : "operation-failed";
   const messages: Record<string, [string, string]> = {
+    "too-many-files": [
+      "첨부는 모든 대화를 합쳐 최대 5개입니다. 전송하거나 삭제한 뒤 다시 선택하세요.",
+      "Select up to 5 files across drafts. Send or remove existing files first.",
+    ],
+    "file-too-large": [
+      "빈 파일은 첨부할 수 없으며, 첨부 합계와 다운로드는 100 MB까지 지원합니다. 릴레이 제한은 더 작을 수 있습니다.",
+      "Files must not be empty. Attachments total and downloads are limited to 100 MB; the relay may impose a lower limit.",
+    ],
+    "media-access-denied": [
+      "파일 접근이 거부되었습니다. 로그인과 커뮤니티 권한을 확인하세요.",
+      "File access denied. Check your login and community membership.",
+    ],
+    "file-type-rejected": [
+      "릴레이에서 허용하지 않는 파일 형식입니다.",
+      "The relay does not allow this file type.",
+    ],
+    "media-request-failed": [
+      "파일을 전송하지 못했습니다. 네트워크를 확인하고 다시 시도하세요.",
+      "File transfer failed. Check your connection and retry.",
+    ],
+    "invalid-media": [
+      "파일 주소 또는 무결성을 확인할 수 없습니다.",
+      "The file address or integrity could not be verified.",
+    ],
+    "media-cancelled": [
+      "파일 전송을 취소했습니다. 첨부는 유지됩니다.",
+      "Transfer cancelled. Your attachments are retained.",
+    ],
     "login-service-unavailable": [
       "로그인 서버에 연결할 수 없습니다. 잠시 후 다시 시도하세요.",
       "The login service is unavailable. Try again shortly.",

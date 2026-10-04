@@ -29,12 +29,16 @@ import {
   type Channel,
   type ChatMessage,
 } from "./protocol";
+import { AttachmentPicker, MessageAttachments } from "./AttachmentList";
+import { useAttachments } from "./useAttachments";
+import {
+  attachmentMarkdown,
+  attachmentTag,
+  messageText,
+} from "./media-protocol";
 import "./style.css";
 
-const localPreview = ["localhost", "127.0.0.1"].includes(location.hostname);
-const relayUrl = localPreview
-  ? "wss://buzz.kovar.kr"
-  : `wss://${location.host}`;
+import { relayUrl } from "./config";
 document.documentElement.lang = getLocale();
 
 function LanguageControl() {
@@ -72,6 +76,8 @@ function App() {
   const [accountPanel, setAccountPanel] = useState(false);
   const [legacyOpen, setLegacyOpen] = useState(false);
   const [identity, setIdentity] = useState<Signer | null>(null);
+  const attachments = useAttachments(identity, relayUrl);
+  const sendLock = useRef<symbol | null>(null);
   const [connected, setConnected] = useState(false);
   const [busy, setBusy] = useState(false);
   const [sending, setSending] = useState(false);
@@ -359,6 +365,7 @@ function App() {
     setConnected(false);
     setBusy(false);
     setSending(false);
+    sendLock.current = null;
     setLoading(false);
     setChannels([]);
     setChannelId("");
@@ -428,18 +435,35 @@ function App() {
     event?.preventDefault();
     const connection = client.current;
     const account = identity;
-    if (!connection || !account || !connected || sending) return;
+    if (!connection || !account || !connected || sendLock.current) return;
+    if (
+      !pending &&
+      !(drafts[channelId] ?? "").trim() &&
+      !attachments.files[channelId]?.length
+    )
+      return;
+    const sendingOperation = Symbol();
+    sendLock.current = sendingOperation;
     const currentGeneration = generation.current;
     const target = pending ? tag(pending, "h") : channelId;
     const selectedGeneration = channelGeneration.current;
     setSending(true);
     setError(null);
     try {
-      const signed =
-        pending ??
-        (await connection.prepare(
-          messageTemplate(target, drafts[target] ?? "", reply),
-        ));
+      const files = pending ? [] : await attachments.prepare(target);
+      if (currentGeneration !== generation.current) return;
+      let signed = pending;
+      if (!signed) {
+        const template = messageTemplate(
+          target,
+          [drafts[target] ?? "", ...files.map(attachmentMarkdown)]
+            .filter(Boolean)
+            .join("\n\n"),
+          reply,
+        );
+        template.tags.push(...files.map(attachmentTag));
+        signed = await connection.prepare(template);
+      }
       if (currentGeneration !== generation.current) return;
       saveOutbox(relayUrl, signed);
       setPending(signed);
@@ -447,6 +471,7 @@ function App() {
       acknowledgeOutbox(signed.id);
       if (currentGeneration !== generation.current) return;
       setPending(null);
+      attachments.clear(target);
       setDrafts((previous) => ({ ...previous, [target]: "" }));
       if (
         target === channelId &&
@@ -458,7 +483,10 @@ function App() {
     } catch (failure) {
       if (currentGeneration === generation.current) setError(failure);
     } finally {
-      if (currentGeneration === generation.current) setSending(false);
+      if (sendLock.current === sendingOperation) {
+        setSending(false);
+        sendLock.current = null;
+      }
     }
   }
 
@@ -494,8 +522,23 @@ function App() {
             {message.edited && !message.deleted && <span>{text.edited}</span>}
           </div>
           <p className={message.deleted ? "deleted" : ""}>
-            {message.deleted ? text.deleted : message.content}
+            {message.deleted ? text.deleted : messageText(message, relayUrl)}
           </p>
+          {!message.deleted && (
+            <MessageAttachments
+              message={message}
+              relay={relayUrl}
+              language={language}
+              downloading={attachments.downloading}
+              onDownload={(file) => {
+                const currentGeneration = generation.current;
+                void attachments.download(file).catch((failure) => {
+                  if (currentGeneration === generation.current)
+                    setError(failure);
+                });
+              }}
+            />
+          )}
           {!message.deleted && supported && (
             <button
               className="reply-button"
@@ -523,6 +566,17 @@ function App() {
         </div>
       </article>
     );
+  }
+
+  const attachmentsDisabled = !supported || Boolean(pending) || sending;
+  function addFiles(files: File[]) {
+    if (attachmentsDisabled || !files.length) return;
+    try {
+      attachments.add(channelId, files);
+      setError(null);
+    } catch (failure) {
+      setError(failure);
+    }
   }
 
   return (
@@ -894,7 +948,29 @@ function App() {
                   .map((message) => renderMessage(message, true))}
               </section>
             )}
-            <form className="composer" onSubmit={(event) => void send(event)}>
+            <form
+              className="composer"
+              onSubmit={(event) => void send(event)}
+              onDragOver={(event) => {
+                if (event.dataTransfer.types.includes("Files"))
+                  event.preventDefault();
+              }}
+              onDrop={(event) => {
+                if (event.dataTransfer.types.includes("Files")) {
+                  event.preventDefault();
+                  addFiles(Array.from(event.dataTransfer.files));
+                }
+              }}
+            >
+              <AttachmentPicker
+                files={attachments.files[channelId] ?? []}
+                disabled={attachmentsDisabled}
+                uploading={attachments.uploading}
+                language={language}
+                onAdd={addFiles}
+                onRemove={(id) => attachments.remove(channelId, id)}
+                onCancel={attachments.cancel}
+              />
               {reply && (
                 <div className="reply-preview">
                   <span>
@@ -925,6 +1001,12 @@ function App() {
                     [channelId]: event.target.value,
                   }))
                 }
+                onPaste={(event) => {
+                  if (event.clipboardData.files.length) {
+                    event.preventDefault();
+                    addFiles(Array.from(event.clipboardData.files));
+                  }
+                }}
                 onKeyDown={(event) => {
                   if (
                     event.key === "Enter" &&
@@ -950,7 +1032,8 @@ function App() {
                     !supported ||
                     sending ||
                     Boolean(pending) ||
-                    !(drafts[channelId] ?? "").trim()
+                    (!(drafts[channelId] ?? "").trim() &&
+                      !attachments.files[channelId]?.length)
                   }
                 >
                   {sending ? text.loading : text.send}

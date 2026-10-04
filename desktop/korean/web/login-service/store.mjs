@@ -141,11 +141,12 @@ export class Store {
 
 /** Bounded fixed-window limiter; saturation rejects rather than evicting live limits. */
 export class Limiter {
-  constructor() {
+  constructor(clock = Date.now) {
+    this.clock = clock;
     this.records = new Map();
   }
   take(key, maximum, windowMs) {
-    const now = Date.now();
+    const now = this.clock();
     for (const [id, record] of this.records)
       if (record.until <= now) this.records.delete(id);
     const record = this.records.get(key);

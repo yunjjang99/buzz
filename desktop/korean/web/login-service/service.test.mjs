@@ -50,7 +50,7 @@ const membership = finalizeEvent(
   },
   secret,
 );
-async function fixture() {
+async function fixture(options = {}) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), "buzz-login-test-"));
   const published = [];
   let reject = false;
@@ -63,17 +63,19 @@ async function fixture() {
       published.push(event);
     },
   };
-  const service = await createLoginService({
+  const configuration = {
     origin,
     owner,
     directory,
     bridge,
     disableJobs: true,
-  });
+    ...options,
+  };
+  let service = await createLoginService(configuration);
   await new Promise((resolve) =>
     service.server.listen(0, "127.0.0.1", resolve),
   );
-  const base = `http://127.0.0.1:${service.server.address().port}/chat-api/`;
+  let base = `http://127.0.0.1:${service.server.address().port}/chat-api/`;
   async function api(route, data, cookie = "", extra = {}) {
     const result = await fetch(base + route, {
       method: data ? "POST" : "GET",
@@ -90,10 +92,21 @@ async function fixture() {
       value: await result.json(),
       cookie: result.headers.get("set-cookie")?.split(";")[0],
       cookieHeader: result.headers.get("set-cookie"),
+      retryAfter: result.headers.get("retry-after"),
     };
   }
   return {
-    service,
+    get service() {
+      return service;
+    },
+    restart: async () => {
+      await service.close();
+      service = await createLoginService(configuration);
+      await new Promise((resolve) =>
+        service.server.listen(0, "127.0.0.1", resolve),
+      );
+      base = `http://127.0.0.1:${service.server.address().port}/chat-api/`;
+    },
     directory,
     published,
     api,
@@ -255,6 +268,16 @@ test("owner migration, employee issue, password changes and reset retain one ide
       ).status,
       403,
     );
+    for (let attempt = 0; attempt < 5; attempt++)
+      await f.api("login", {
+        username: "staff01",
+        password: "incorrect password",
+      });
+    assert.equal(
+      (await f.api("login", { username: "staff01", password: permanent })).value
+        .error,
+      "login-locked",
+    );
     assert.equal(
       (
         await f.api(
@@ -388,7 +411,7 @@ test("durable failures do not publish memory; encrypted identities bind their pu
 test("credential retries and limiter storage are bounded", async () => {
   const f = await fixture();
   try {
-    for (let attempt = 0; attempt < 15; attempt++)
+    for (let attempt = 0; attempt < 4; attempt++)
       assert.equal(
         (await f.api("login", { username: "unknown", password: temporary }))
           .status,
@@ -597,6 +620,185 @@ test("email IDs provision and sign in case-insensitively without aliasing malfor
       );
       assert.equal(result.value.error, "invalid-username", id);
     }
+  } finally {
+    await f.finish();
+  }
+});
+
+test("file signing is session-bound, hash-scoped, short-lived and limited to upload/get", async () => {
+  const f = await fixture();
+  try {
+    const admin = await f.setup();
+    const created_at = Math.floor(Date.now() / 1000);
+    const template = {
+      kind: 24242,
+      created_at,
+      content: "Buzz file transfer",
+      tags: [
+        ["t", "upload"],
+        ["x", "a".repeat(64)],
+        ["server", "buzz.test"],
+        ["expiration", String(created_at + 60)],
+      ],
+    };
+    assert.equal((await f.api("sign", { template })).status, 401);
+    for (const verb of ["upload", "get"]) {
+      const proof = structuredClone(template);
+      proof.tags[0][1] = verb;
+      const result = await f.api("sign", { template: proof }, admin.cookie);
+      assert.equal(result.status, 200);
+      assert.equal(result.value.pubkey, owner);
+      assert.ok(verifyEvent(result.value));
+      assert.deepEqual(result.value.tags, proof.tags);
+    }
+    const invalid = [
+      { ...template, content: "" },
+      { ...template, content: "not an auth proof" },
+      { ...template, tags: template.tags.slice(0, 3) },
+      { ...template, tags: [...template.tags, ["x", "b".repeat(64)]] },
+    ];
+    for (const [index, value] of [
+      [0, "delete"],
+      [1, "not-a-hash"],
+      [2, "foreign.test"],
+      [3, String(created_at + 3600)],
+      [3, String(created_at - 1)],
+    ]) {
+      const proof = structuredClone(template);
+      proof.tags[index][1] = value;
+      invalid.push(proof);
+    }
+    for (const proof of invalid)
+      assert.equal(
+        (await f.api("sign", { template: proof }, admin.cookie)).status,
+        403,
+      );
+    const message = {
+      kind: 9,
+      created_at,
+      content: `[file](https://buzz.test/media/${"a".repeat(64)}.bin)`,
+      tags: [
+        ["h", "general"],
+        [
+          "imeta",
+          `url https://buzz.test/media/${"a".repeat(64)}.bin`,
+          "m application/octet-stream",
+          `x ${"a".repeat(64)}`,
+          "size 3",
+          "filename 업무 자료.txt",
+        ],
+      ],
+    };
+    assert.equal(
+      (await f.api("sign", { template: message }, admin.cookie)).status,
+      200,
+    );
+    f.service.store.transaction((state) => {
+      state.accounts.admin.mustChangePassword = true;
+    });
+    assert.equal((await f.api("sign", { template }, admin.cookie)).status, 403);
+  } finally {
+    await f.finish();
+  }
+});
+
+test("login lock escalation is durable, shared across clients and does not slide", async () => {
+  let time = Date.now();
+  const f = await fixture({ clock: () => time });
+  try {
+    assert.equal((await f.setup()).status, 200);
+    const attempt = (password = "wrong password", desktop = false) =>
+      f.api(
+        desktop ? "desktop/login" : "login",
+        { username: "ADMIN", password },
+        "",
+        desktop ? { Origin: "tauri://localhost" } : {},
+      );
+    for (const seconds of [60, 300, 3600, 86400, 86400]) {
+      for (let i = 0; i < 4; i++) assert.equal((await attempt()).status, 401);
+      const locked = await attempt("wrong password", true);
+      assert.equal(locked.status, 429);
+      assert.equal(locked.value.error, "login-locked");
+      assert.equal(locked.retryAfter, String(seconds));
+      await f.restart();
+      time += 1000;
+      const correctButLocked = await attempt(permanent);
+      assert.equal(correctButLocked.value.error, "login-locked");
+      assert.equal(correctButLocked.value.retryAfter, seconds - 1);
+      time += (seconds - 1) * 1000;
+    }
+    assert.equal((await attempt(permanent)).status, 200);
+    for (let i = 0; i < 4; i++) assert.equal((await attempt()).status, 401);
+    assert.equal((await attempt()).value.retryAfter, 60);
+    assert.equal(f.service.store.state.loginAudit.length, 6);
+  } finally {
+    await f.finish();
+  }
+});
+
+test("unknown accounts get the same lock responses without creating accounts", async () => {
+  const f = await fixture();
+  try {
+    for (let i = 0; i < 4; i++)
+      assert.equal(
+        (await f.api("login", { username: "missing", password: "wrong" }))
+          .status,
+        401,
+      );
+    const result = await f.api("login", {
+      username: "missing",
+      password: "wrong",
+    });
+    assert.equal(result.value.error, "login-locked");
+    assert.equal(result.value.retryAfter, 60);
+    assert.equal(Object.keys(f.service.store.state.accounts).length, 0);
+  } finally {
+    await f.finish();
+  }
+});
+
+test("concurrent fifth failure cannot issue a session past the lock", async () => {
+  const f = await fixture();
+  try {
+    await f.setup();
+    for (let i = 0; i < 4; i++)
+      await f.api("login", { username: "admin", password: "wrong" });
+    const results = await Promise.all(
+      Array.from({ length: 8 }, () =>
+        f.api("login", { username: "admin", password: "wrong" }),
+      ),
+    );
+    assert.ok(results.every((result) => result.status === 429));
+    assert.equal(f.service.store.state.loginAudit.length, 1);
+    assert.equal(
+      (await f.api("login", { username: "admin", password: permanent })).value
+        .error,
+      "login-locked",
+    );
+  } finally {
+    await f.finish();
+  }
+});
+
+test("failure persistence errors never become authentication success", async () => {
+  const f = await fixture();
+  try {
+    await f.setup();
+    const original = f.service.store.transaction.bind(f.service.store);
+    f.service.store.transaction = () => {
+      throw new Error("synthetic-disk-failure");
+    };
+    const failed = await f.api("login", {
+      username: "admin",
+      password: "wrong",
+    });
+    assert.equal(failed.status, 500);
+    assert.equal(failed.cookie, undefined);
+    f.service.store.transaction = original;
+    assert.equal(
+      (await f.api("login", { username: "admin", password: "wrong" })).status,
+      401,
+    );
   } finally {
     await f.finish();
   }

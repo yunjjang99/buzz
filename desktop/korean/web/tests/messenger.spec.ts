@@ -1,11 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { encrypt } from "nostr-tools/nip49";
-import {
-  finalizeEvent,
-  getPublicKey,
-  type EventTemplate,
-  type Event,
-} from "nostr-tools/pure";
+import { key, root, installRelay, signInWithExtension } from "./fixtures";
 import { waitForAnimations } from "../../../tests/helpers/animations";
 
 test.beforeEach(async ({ page }) => {
@@ -23,96 +18,6 @@ test.beforeEach(async ({ page }) => {
 });
 async function openLegacy(page: import("@playwright/test").Page) {
   await page.locator("summary").click();
-}
-
-const key = new Uint8Array(32).fill(1);
-const relayKey = new Uint8Array(32).fill(2);
-const pubkey = getPublicKey(key);
-const makeEvent = (
-  kind: number,
-  tags: string[][],
-  content = "",
-  secret = relayKey,
-) => finalizeEvent({ kind, tags, content, created_at: 100 }, secret);
-const root = makeEvent(9, [["h", "general"]], "안녕하세요, 팀 여러분!", key);
-
-async function installRelay(
-  page: import("@playwright/test").Page,
-  rejectFirst = false,
-) {
-  let rejected = false;
-  const published: Event[] = [];
-  await page.routeWebSocket("wss://buzz.kovar.kr", (socket) => {
-    const subscriptions = new Map<string, Record<string, unknown>>();
-    socket.send(JSON.stringify(["AUTH", "browser-test-challenge"]));
-    socket.onMessage((data) => {
-      const [kind, id, filter] = JSON.parse(String(data));
-      if (kind === "AUTH") socket.send(JSON.stringify(["OK", id.id, true, ""]));
-      if (kind === "REQ") {
-        subscriptions.set(id, filter);
-        const send = (event: Event) =>
-          socket.send(JSON.stringify(["EVENT", id, event]));
-        if (filter.kinds[0] === 39002)
-          send(
-            makeEvent(39002, [
-              ["d", "general"],
-              ["p", pubkey],
-            ]),
-          );
-        if (filter.kinds[0] === 39000)
-          send(
-            makeEvent(39000, [
-              ["d", "general"],
-              ["name", "일반"],
-              ["t", "stream"],
-            ]),
-          );
-        if (filter.kinds[0] === 0)
-          send(makeEvent(0, [], JSON.stringify({ name: "테스트 직원" }), key));
-        if (filter.kinds.includes(9)) send(root);
-        socket.send(JSON.stringify(["EOSE", id]));
-      }
-      if (kind === "CLOSE") subscriptions.delete(id);
-      if (kind === "EVENT") {
-        published.push(id);
-        if (rejectFirst && !rejected) {
-          rejected = true;
-          socket.send(JSON.stringify(["OK", id.id, false, "test rejection"]));
-          return;
-        }
-        socket.send(JSON.stringify(["OK", id.id, true, ""]));
-        for (const [subscriptionId, subscription] of subscriptions) {
-          if ((subscription.kinds as number[]).includes(9))
-            socket.send(JSON.stringify(["EVENT", subscriptionId, id]));
-        }
-      }
-    });
-  });
-  return published;
-}
-
-async function signInWithExtension(page: import("@playwright/test").Page) {
-  await page.exposeFunction("fixtureSign", (template: EventTemplate) =>
-    finalizeEvent(template, key),
-  );
-  await page.addInitScript((pubkey) => {
-    window.nostr = {
-      getPublicKey: async () => pubkey,
-      signEvent: async (template) => {
-        return (
-          window as unknown as {
-            fixtureSign(event: EventTemplate): Promise<Event>;
-          }
-        ).fixtureSign(template);
-      },
-    };
-  }, pubkey);
-  await page.goto("/chat/");
-  await openLegacy(page);
-  await page
-    .getByRole("button", { name: "브라우저 서명 확장으로 로그인" })
-    .click();
-  await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!");
 }
 
 test("browser login, Korean messaging, replies, language persistence, and mobile layout", async ({
@@ -199,8 +104,6 @@ test("browser login, Korean messaging, replies, language persistence, and mobile
 test("local encrypted backup decrypts in the real worker and never crosses the socket", async ({
   page,
 }) => {
-  // Three real NIP-49 scrypt operations can exceed Playwright's 5s expect default under concurrent builds.
-  test.setTimeout(90_000);
   const published = await installRelay(page, true);
   await page.goto("/chat/");
   await openLegacy(page);
@@ -220,7 +123,6 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
   await page.getByRole("button", { name: "백업으로 로그인" }).click();
   await expect(page.getByRole("alert")).toContainText(
     "백업 비밀번호가 다르거나",
-    { timeout: 30_000 },
   );
   expect(
     await page.evaluate(() =>
@@ -229,9 +131,7 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
   ).toBeNull();
   await page.getByLabel("백업 비밀번호").fill(password);
   await page.getByRole("button", { name: "백업으로 로그인" }).click();
-  await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!", {
-    timeout: 30_000,
-  });
+  await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!");
   const accountRecord = await page.evaluate(() =>
     localStorage.getItem("buzz-korean-web.account.v1"),
   );
@@ -251,9 +151,7 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
     .locator(".legacy-login")
     .getByRole("button", { name: "로그인", exact: true })
     .click();
-  await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!", {
-    timeout: 30_000,
-  });
+  await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!");
   await page.getByLabel("메시지 입력").fill("전송 실패 후 재시도");
   await page.getByRole("button", { name: "메시지 보내기" }).click();
   await expect(page.getByRole("alert")).toContainText("test rejection");

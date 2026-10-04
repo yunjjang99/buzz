@@ -28,14 +28,19 @@ export async function loginApi<T>(route: string, input?: object): Promise<T> {
     headers: input ? { "Content-Type": "application/json" } : {},
     body: input ? JSON.stringify(input) : undefined,
   });
-  let result: { error?: string };
+  let result: { error?: string; retryAfter?: number };
   try {
     result = await response.json();
   } catch {
     throw new Error("login-service-unavailable");
   }
   if (!response.ok)
-    throw new Error(result.error ?? "login-service-unavailable");
+    throw Object.assign(
+      new Error(result.error ?? "login-service-unavailable"),
+      {
+        retryAfter: result.retryAfter,
+      },
+    );
   return result as T;
 }
 

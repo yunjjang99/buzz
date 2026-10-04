@@ -6,6 +6,9 @@ import {
 } from "nostr-tools/pure";
 import { assertNoKeys, KINDS, validateBackup } from "./protocol";
 
+import { relayUrl } from "./config";
+import { validMediaAuth } from "./media-protocol";
+
 let secret: Uint8Array | null = null;
 self.onmessage = (
   message: MessageEvent<{
@@ -27,7 +30,11 @@ self.onmessage = (
       self.postMessage({ id, result: getPublicKey(secret) });
     } else if (operation === "sign" && secret && message.data.template) {
       const template = message.data.template;
-      if (template.kind !== KINDS.auth && template.kind !== KINDS.message)
+      if (
+        template.kind !== KINDS.auth &&
+        template.kind !== KINDS.message &&
+        !validMediaAuth(template, relayUrl, Math.floor(Date.now() / 1000))
+      )
         throw new Error("unsupported-operation");
       assertNoKeys(template.content);
       self.postMessage({ id, result: finalizeEvent(template, secret) });

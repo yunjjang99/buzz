@@ -100,7 +100,6 @@ if (destination / "index.html").is_file():
 shutil.copytree(build / "assets", destination / "assets", dirs_exist_ok=True)
 entry = destination / ".index-next.html"
 shutil.copy2(build / "index.html", entry)
-entry.replace(destination / "index.html")
 try:
     caddy_file.write_text(new_caddy)
     home_file.write_text(new_home)
@@ -110,6 +109,8 @@ try:
     run(["/usr/local/bin/docker", "exec", "buzz-home-buzz-login-1", "node", "-e", "fetch('http://127.0.0.1:3101/chat-api/status').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"])
     run(compose + ["up", "-d", "--no-deps", "--no-build", "caddy"])
     run(["/usr/local/bin/docker", "exec", "buzz-home-caddy-1", "caddy", "reload", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"])
+    # Publish only after the compatible login service and edge are ready.
+    entry.replace(destination / "index.html")
 except Exception:
     if (backup / "index.html").is_file():
         shutil.copy2(backup / "index.html", destination / ".index-rollback.html")

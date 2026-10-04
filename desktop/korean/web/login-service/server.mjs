@@ -24,7 +24,10 @@ import {
   hashToken,
 } from "./store.mjs";
 import { RelayBridge } from "./relay.mjs";
+import { checkLogin, failLogin, clearLogin } from "./login-protection.mjs";
 import { assertNoKeys, validateBackup } from "../protocol.ts";
+
+import { validMediaAuth } from "../media-protocol.ts";
 
 const DESKTOP_ORIGINS = new Set([
   "tauri://localhost",
@@ -69,7 +72,9 @@ export async function createLoginService(options) {
     throw new Error("invalid-configuration");
   const store = new Store(options.directory);
   const bridge = options.bridge ?? new RelayBridge(origin, options.internal);
-  const limiter = new Limiter();
+  const clock = options.clock ?? Date.now;
+  const limiter = new Limiter(clock);
+  const activeLogins = new Set();
   const dummyHash = await passwordHash(randomBytes(32).toString("hex"));
   let hashing = 0;
   let importing = false;
@@ -449,56 +454,75 @@ export async function createLoginService(options) {
         const name = username(input.username);
         password(input.password, 1);
         limiter.take(`login-ip:${ip}`, 30, 5 * 60000);
-        limiter.take(`login-user:${name}`, 15, 5 * 60000);
-        const account = store.state.accounts[name];
-        const encoded = account?.hash ?? dummyHash;
-        const valid = await limitedHash(() =>
-          passwordMatches(input.password, encoded),
-        );
-        if (!valid || !account?.enabled) throw failure("invalid-login", 401);
-        if (account.job && account.job.status !== "ready")
-          throw failure("account-provisioning", 409);
-        let replacementHash = null;
-        if (desktop && account.mustChangePassword) {
-          if (!input.newPassword)
-            throw failure("password-change-required", 409);
-          password(input.newPassword);
-          if (input.newPassword === input.password)
-            throw failure("password-unchanged");
-          replacementHash = await limitedHash(() =>
-            passwordHash(input.newPassword),
+        checkLogin(store.state, name, clock());
+        if (activeLogins.has(name)) throw failure("rate-limited", 429);
+        activeLogins.add(name);
+        try {
+          const account = store.state.accounts[name];
+          const encoded = account?.hash ?? dummyHash;
+          const valid = await limitedHash(() =>
+            passwordMatches(input.password, encoded),
           );
-        }
-        const encrypted = desktop
-          ? await exportKey(
-              account,
-              input.newPassword && replacementHash
-                ? input.newPassword
-                : input.password,
-            )
-          : null;
-        const cookie = store.transaction((state) => {
-          const current = state.accounts[name];
-          if (current.hash !== encoded || !current.enabled)
+          if (!valid || !account?.enabled) {
+            // Hashing yields: a password reset must not be overwritten by stale attempts.
+            if ((store.state.accounts[name]?.hash ?? dummyHash) !== encoded)
+              throw failure("invalid-login", 401);
+            store.transaction((state) => failLogin(state, name, clock()));
+            checkLogin(store.state, name, clock());
             throw failure("invalid-login", 401);
-          if (replacementHash) {
-            current.hash = replacementHash;
-            current.mustChangePassword = false;
-            for (const [id, saved] of Object.entries(state.sessions))
-              if (saved.username === name) delete state.sessions[id];
           }
-          return issueSession(state, current, input.remember === true, desktop);
-        });
-        response.setHeader("Set-Cookie", cookie);
-        return send(
-          desktop
-            ? {
-                account: publicAccount(store.state.accounts[name]),
-                backup: encrypted,
-                token: cookie.split(";")[0].split("=")[1],
-              }
-            : publicAccount(store.state.accounts[name]),
-        );
+          if (account.job && account.job.status !== "ready")
+            throw failure("account-provisioning", 409);
+          let replacementHash = null;
+          if (desktop && account.mustChangePassword) {
+            if (!input.newPassword)
+              throw failure("password-change-required", 409);
+            password(input.newPassword);
+            if (input.newPassword === input.password)
+              throw failure("password-unchanged");
+            replacementHash = await limitedHash(() =>
+              passwordHash(input.newPassword),
+            );
+          }
+          const encrypted = desktop
+            ? await exportKey(
+                account,
+                input.newPassword && replacementHash
+                  ? input.newPassword
+                  : input.password,
+              )
+            : null;
+          const cookie = store.transaction((state) => {
+            const current = state.accounts[name];
+            if (current.hash !== encoded || !current.enabled)
+              throw failure("invalid-login", 401);
+            if (replacementHash) {
+              current.hash = replacementHash;
+              current.mustChangePassword = false;
+              for (const [id, saved] of Object.entries(state.sessions))
+                if (saved.username === name) delete state.sessions[id];
+            }
+            clearLogin(state, name);
+            return issueSession(
+              state,
+              current,
+              input.remember === true,
+              desktop,
+            );
+          });
+          response.setHeader("Set-Cookie", cookie);
+          return send(
+            desktop
+              ? {
+                  account: publicAccount(store.state.accounts[name]),
+                  backup: encrypted,
+                  token: cookie.split(";")[0].split("=")[1],
+                }
+              : publicAccount(store.state.accounts[name]),
+          );
+        } finally {
+          activeLogins.delete(name);
+        }
       }
       const current = session(request);
       if (route === "/chat-api/logout") {
@@ -528,6 +552,7 @@ export async function createLoginService(options) {
           if (account.hash !== encoded || !state.sessions[current.id])
             throw failure("login-required", 401);
           account.hash = hash;
+          clearLogin(state, account.username);
           account.mustChangePassword = false;
           for (const [id, saved] of Object.entries(state.sessions))
             if (saved.username === account.username && id !== current.id)
@@ -549,9 +574,13 @@ export async function createLoginService(options) {
           template.tags.some(
             (tag) =>
               !Array.isArray(tag) ||
-              tag.length > 5 ||
+              tag.length >
+                (template.kind === 9 && tag[0] === "imeta" ? 8 : 5) ||
               tag.some(
-                (value) => typeof value !== "string" || value.length > 256,
+                (value) =>
+                  typeof value !== "string" ||
+                  value.length >
+                    (template.kind === 9 && tag[0] === "imeta" ? 512 : 256),
               ),
           )
         )
@@ -567,6 +596,11 @@ export async function createLoginService(options) {
             !template.tags[1]?.[1]
           )
             throw failure("invalid-auth-event");
+        } else if (template.kind === 24242) {
+          if (current.account.mustChangePassword)
+            throw failure("password-change-required", 403);
+          if (!validMediaAuth(template, origin, now()))
+            throw failure("invalid-media-auth", 403);
         } else if (template.kind === 9) {
           if (current.account.mustChangePassword)
             throw failure("password-change-required", 403);
@@ -700,6 +734,7 @@ export async function createLoginService(options) {
         store.transaction((state) => {
           if (!state.sessions[current.id]) throw failure("login-required", 401);
           state.accounts[name].hash = hash;
+          clearLogin(state, name);
           state.accounts[name].mustChangePassword = true;
           for (const [id, saved] of Object.entries(state.sessions))
             if (saved.username === name) delete state.sessions[id];
@@ -721,7 +756,15 @@ export async function createLoginService(options) {
               ].includes(error.message)
             ? 400
             : 500);
-      send({ error: status === 500 ? "service-error" : error.message }, status);
+      if (error.retryAfter)
+        response.setHeader("Retry-After", String(error.retryAfter));
+      send(
+        {
+          error: status === 500 ? "service-error" : error.message,
+          ...(error.retryAfter ? { retryAfter: error.retryAfter } : {}),
+        },
+        status,
+      );
     }
   });
   server.requestTimeout = 15000;

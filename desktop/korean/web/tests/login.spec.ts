@@ -245,3 +245,27 @@ test("choosing legacy sign-in fences a delayed automatic session restore", async
   ).toBeVisible();
   await expect(page.getByRole("log")).toHaveCount(0);
 });
+
+test("locked login explains server retry time and clears the password", async ({
+  page,
+}) => {
+  await fixture(page);
+  await page.route("**/chat-api/login", (route) =>
+    route.fulfill({
+      status: 429,
+      contentType: "application/json",
+      headers: { "Retry-After": "300" },
+      body: JSON.stringify({ error: "login-locked", retryAfter: 300 }),
+    }),
+  );
+  await page.goto("./");
+  await page
+    .getByRole("textbox", { name: "아이디", exact: true })
+    .fill("admin");
+  await page
+    .getByLabel("비밀번호", { exact: true })
+    .fill("fixture wrong password");
+  await page.getByRole("button", { name: "로그인", exact: true }).click();
+  await expect(page.getByRole("alert")).toContainText("약 5분 후 다시 시도");
+  await expect(page.getByLabel("비밀번호", { exact: true })).toHaveValue("");
+});

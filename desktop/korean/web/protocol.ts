@@ -101,6 +101,15 @@ export function timeline(events: Event[], channel: string): ChatMessage[] {
       return {
         ...message,
         content: edits[0]?.content ?? message.content,
+        tags: edits[0]
+          ? [
+              ...message.tags.filter((parts) => parts[0] !== "imeta"),
+              ...(edits[0].tags.some((parts) => parts[0] === "imeta")
+                ? edits[0].tags
+                : message.tags
+              ).filter((parts) => parts[0] === "imeta"),
+            ]
+          : message.tags,
         edited: Boolean(edits[0]),
         deleted,
       };
