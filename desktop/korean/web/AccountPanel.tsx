@@ -15,10 +15,12 @@ export function AccountPanel({
   account,
   onChange,
   onClose,
+  employeesOnly = false,
 }: {
   account: WebAccount;
   onChange(account: WebAccount): void;
   onClose(): void;
+  employeesOnly?: boolean;
 }) {
   const language = useLocale();
   const t = (ko: string, en: string) => (language === "ko" ? ko : en);
@@ -47,10 +49,11 @@ export function AccountPanel({
   const alive = useRef(true);
   const dialog = useRef<HTMLDialogElement>(null);
   useEffect(() => {
+    if (employeesOnly) return;
     const element = dialog.current;
     element?.showModal();
     return () => element?.close();
-  }, []);
+  }, [employeesOnly]);
   const refresh = useCallback(async () => {
     const version = ++requestVersion.current;
     const records = await loginApi<WebAccount[]>("admin/accounts");
@@ -159,44 +162,44 @@ export function AccountPanel({
       );
     });
   }
-  return (
-    <dialog
-      ref={dialog}
-      className="account-overlay"
-      aria-labelledby="account-title"
-      onCancel={(event) => {
-        event.preventDefault();
-        onClose();
-      }}
-    >
-      <section className="account-panel">
-        <div className="account-panel-heading">
+  const content = (
+    <section className="account-panel">
+      <div className="account-panel-heading">
+        {!employeesOnly && (
           <h2 id="account-title">
             {account.mustChangePassword
               ? t("초기 비밀번호 변경", "Change your temporary password")
               : t("계정 관리", "Account management")}
           </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label={t("계정 관리 닫기", "Close account management")}
-          >
-            {t("닫기", "Close")}
-          </button>
-        </div>
-        <p>
-          {account.name} · {account.username}
+        )}
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label={
+            employeesOnly
+              ? t("관리자 다시 인증", "Sign in again")
+              : t("계정 관리 닫기", "Close account management")
+          }
+        >
+          {employeesOnly
+            ? t("관리자 다시 인증", "Sign in again")
+            : t("닫기", "Close")}
+        </button>
+      </div>
+      <p>
+        {account.name} · {account.username}
+      </p>
+      {Boolean(error) && (
+        <p className="error" role="alert">
+          {errorText(error, language)}
         </p>
-        {Boolean(error) && (
-          <p className="error" role="alert">
-            {errorText(error, language)}
-          </p>
-        )}
-        {notice && (
-          <p className="account-notice" role="status">
-            {notice}
-          </p>
-        )}
+      )}
+      {notice && (
+        <p className="account-notice" role="status">
+          {notice}
+        </p>
+      )}
+      {(!employeesOnly || account.mustChangePassword) && (
         <form onSubmit={changePassword} className="account-form">
           <h3>{t("내 비밀번호 변경", "Change my password")}</h3>
           {account.mustChangePassword && (
@@ -257,233 +260,256 @@ export function AccountPanel({
             {t("비밀번호 변경", "Change password")}
           </button>
         </form>
-        {account.role === "admin" && (
-          <>
-            <form onSubmit={create} className="account-form">
-              <h3>{t("직원 계정 발급", "Issue employee account")}</h3>
-              <label htmlFor="new-employee-id">
-                {t("직원 아이디", "New employee ID")}
-              </label>
+      )}
+      {account.role === "admin" && !account.mustChangePassword && (
+        <>
+          <form onSubmit={create} className="account-form">
+            <h3>{t("직원 계정 발급", "Issue employee account")}</h3>
+            <label htmlFor="new-employee-id">
+              {t("직원 아이디", "New employee ID")}
+            </label>
+            <input
+              id="new-employee-id"
+              required
+              minLength={3}
+              maxLength={254}
+              autoCapitalize="none"
+              spellCheck={false}
+              autoComplete="off"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              disabled={busy}
+            />
+            <label htmlFor="new-employee-name">
+              {t("직원 이름", "Employee name")}
+            </label>
+            <input
+              id="new-employee-name"
+              required
+              maxLength={80}
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              disabled={busy}
+            />
+            <label htmlFor="temporary-password">
+              {t("초기 비밀번호", "Temporary password")}
+            </label>
+            <input
+              id="temporary-password"
+              type="password"
+              autoComplete="new-password"
+              required
+              minLength={12}
+              maxLength={128}
+              value={temporaryPassword}
+              onChange={(event) => setTemporaryPassword(event.target.value)}
+              disabled={busy}
+            />
+            <fieldset disabled={busy}>
+              <legend>{t("참여할 채널", "Channels to join")}</legend>
+              {channels.length ? (
+                channels.map((channel) => (
+                  <label className="remember-account" key={channel.id}>
+                    <input
+                      type="checkbox"
+                      checked={selected.includes(channel.id)}
+                      onChange={(event) =>
+                        setSelected(
+                          event.target.checked
+                            ? [...selected, channel.id]
+                            : selected.filter((id) => id !== channel.id),
+                        )
+                      }
+                    />
+                    <span>{channel.name}</span>
+                  </label>
+                ))
+              ) : (
+                <p className="help">
+                  {t(
+                    "선택할 채널이 없습니다. 기존 Buzz 앱에서 채널을 확인하세요.",
+                    "No channels available. Check your channels in the Buzz app.",
+                  )}
+                </p>
+              )}
+            </fieldset>
+            <label className="remember-account">
               <input
-                id="new-employee-id"
-                required
-                minLength={3}
-                maxLength={254}
-                autoCapitalize="none"
-                spellCheck={false}
-                autoComplete="off"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
+                type="checkbox"
+                checked={importExisting}
+                onChange={(event) => setImportExisting(event.target.checked)}
                 disabled={busy}
               />
-              <label htmlFor="new-employee-name">
-                {t("직원 이름", "Employee name")}
-              </label>
-              <input
-                id="new-employee-name"
-                required
-                maxLength={80}
-                value={name}
-                onChange={(event) => setName(event.target.value)}
+              <span>
+                {t(
+                  "기존 직원 Buzz 계정 연결",
+                  "Connect an existing employee Buzz account",
+                )}
+              </span>
+            </label>
+            {importExisting && (
+              <>
+                <p className="help">
+                  {t(
+                    "기존 계정 백업을 연결하면 이전 대화·채널·프로필이 유지됩니다.",
+                    "Importing the existing identity keeps its previous conversations, channels and profile.",
+                  )}
+                </p>
+                <label htmlFor="employee-account-backup">
+                  {t("직원 계정 백업 파일", "Employee account backup file")}
+                </label>
+                <input
+                  id="employee-account-backup"
+                  type="file"
+                  accept=".ncryptsec,.txt"
+                  required
+                  onChange={(event) =>
+                    setBackup(event.target.files?.[0] ?? null)
+                  }
+                  disabled={busy}
+                />
+                <label htmlFor="employee-backup-password">
+                  {t("직원 백업 비밀번호", "Employee backup password")}
+                </label>
+                <input
+                  id="employee-backup-password"
+                  type="password"
+                  autoComplete="off"
+                  required
+                  value={backupPassword}
+                  onChange={(event) => setBackupPassword(event.target.value)}
+                  disabled={busy}
+                />
+              </>
+            )}
+            <button className="primary" type="submit" disabled={busy}>
+              {t("직원 계정 만들기", "Create employee account")}
+            </button>
+          </form>
+          <div className="account-form">
+            <div className="account-panel-heading">
+              <h3>{t("직원 계정 목록", "Employee accounts")}</h3>
+              <button
+                type="button"
                 disabled={busy}
-              />
-              <label htmlFor="temporary-password">
-                {t("초기 비밀번호", "Temporary password")}
+                onClick={() => void action(refresh)}
+              >
+                {t("목록 새로고침", "Refresh accounts")}
+              </button>
+            </div>
+            {accounts.map((item) => (
+              <div className="employee-row" key={item.username}>
+                <div>
+                  <strong>{item.name}</strong>
+                  <span>
+                    {item.username} ·{" "}
+                    {item.status === "ready"
+                      ? t("사용 가능", "Ready")
+                      : item.status === "failed"
+                        ? t("등록 실패", "Registration failed")
+                        : t("채널 등록 중…", "Registering channels…")}
+                  </span>
+                </div>
+                {item.status === "failed" && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() =>
+                      void action(async () => {
+                        await loginApi("admin/retry", {
+                          username: item.username,
+                        });
+                        await refresh();
+                        setWatchVersion((version) => version + 1);
+                      })
+                    }
+                  >
+                    {t("등록 재시도", "Retry registration")}
+                  </button>
+                )}
+                {item.role !== "admin" && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      setResetTarget(item.username);
+                      setResetPassword("");
+                    }}
+                  >
+                    {t("비밀번호 초기화", "Reset password")}
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          {resetTarget && (
+            <form
+              className="account-form"
+              onSubmit={(event) => {
+                event.preventDefault();
+                void action(async () => {
+                  await loginApi("admin/reset", {
+                    username: resetTarget,
+                    password: resetPassword,
+                  });
+                  setResetPassword("");
+                  setResetTarget("");
+                  setNotice(
+                    t(
+                      "초기 비밀번호로 변경했습니다. 직원의 기존 계정과 대화는 유지됩니다.",
+                      "Password reset. The employee's identity and conversations are unchanged.",
+                    ),
+                  );
+                });
+              }}
+            >
+              <h3>
+                {resetTarget} · {t("비밀번호 초기화", "Reset password")}
+              </h3>
+              <label htmlFor="reset-password">
+                {t("새 초기 비밀번호", "New temporary password")}
               </label>
               <input
-                id="temporary-password"
+                id="reset-password"
                 type="password"
                 autoComplete="new-password"
                 required
                 minLength={12}
                 maxLength={128}
-                value={temporaryPassword}
-                onChange={(event) => setTemporaryPassword(event.target.value)}
+                value={resetPassword}
+                onChange={(event) => setResetPassword(event.target.value)}
                 disabled={busy}
               />
-              <fieldset disabled={busy}>
-                <legend>{t("참여할 채널", "Channels to join")}</legend>
-                {channels.length ? (
-                  channels.map((channel) => (
-                    <label className="remember-account" key={channel.id}>
-                      <input
-                        type="checkbox"
-                        checked={selected.includes(channel.id)}
-                        onChange={(event) =>
-                          setSelected(
-                            event.target.checked
-                              ? [...selected, channel.id]
-                              : selected.filter((id) => id !== channel.id),
-                          )
-                        }
-                      />
-                      <span>{channel.name}</span>
-                    </label>
-                  ))
-                ) : (
-                  <p className="help">
-                    {t(
-                      "선택할 채널이 없습니다. 기존 Buzz 앱에서 채널을 확인하세요.",
-                      "No channels available. Check your channels in the Buzz app.",
-                    )}
-                  </p>
-                )}
-              </fieldset>
-              <label className="remember-account">
-                <input
-                  type="checkbox"
-                  checked={importExisting}
-                  onChange={(event) => setImportExisting(event.target.checked)}
-                  disabled={busy}
-                />
-                <span>
-                  {t(
-                    "기존 직원 Buzz 계정 연결",
-                    "Connect an existing employee Buzz account",
-                  )}
-                </span>
-              </label>
-              {importExisting && (
-                <>
-                  <p className="help">
-                    {t(
-                      "기존 계정 백업을 연결하면 이전 대화·채널·프로필이 유지됩니다.",
-                      "Importing the existing identity keeps its previous conversations, channels and profile.",
-                    )}
-                  </p>
-                  <label htmlFor="employee-account-backup">
-                    {t("직원 계정 백업 파일", "Employee account backup file")}
-                  </label>
-                  <input
-                    id="employee-account-backup"
-                    type="file"
-                    accept=".ncryptsec,.txt"
-                    required
-                    onChange={(event) =>
-                      setBackup(event.target.files?.[0] ?? null)
-                    }
-                    disabled={busy}
-                  />
-                  <label htmlFor="employee-backup-password">
-                    {t("직원 백업 비밀번호", "Employee backup password")}
-                  </label>
-                  <input
-                    id="employee-backup-password"
-                    type="password"
-                    autoComplete="off"
-                    required
-                    value={backupPassword}
-                    onChange={(event) => setBackupPassword(event.target.value)}
-                    disabled={busy}
-                  />
-                </>
-              )}
-              <button className="primary" type="submit" disabled={busy}>
-                {t("직원 계정 만들기", "Create employee account")}
+              <button type="submit" className="primary" disabled={busy}>
+                {t("초기화 적용", "Apply reset")}
               </button>
             </form>
-            <div className="account-form">
-              <div className="account-panel-heading">
-                <h3>{t("직원 계정 목록", "Employee accounts")}</h3>
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={() => void action(refresh)}
-                >
-                  {t("목록 새로고침", "Refresh accounts")}
-                </button>
-              </div>
-              {accounts.map((item) => (
-                <div className="employee-row" key={item.username}>
-                  <div>
-                    <strong>{item.name}</strong>
-                    <span>
-                      {item.username} ·{" "}
-                      {item.status === "ready"
-                        ? t("사용 가능", "Ready")
-                        : item.status === "failed"
-                          ? t("등록 실패", "Registration failed")
-                          : t("채널 등록 중…", "Registering channels…")}
-                    </span>
-                  </div>
-                  {item.status === "failed" && (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() =>
-                        void action(async () => {
-                          await loginApi("admin/retry", {
-                            username: item.username,
-                          });
-                          await refresh();
-                          setWatchVersion((version) => version + 1);
-                        })
-                      }
-                    >
-                      {t("등록 재시도", "Retry registration")}
-                    </button>
-                  )}
-                  {item.role !== "admin" && (
-                    <button
-                      type="button"
-                      disabled={busy}
-                      onClick={() => {
-                        setResetTarget(item.username);
-                        setResetPassword("");
-                      }}
-                    >
-                      {t("비밀번호 초기화", "Reset password")}
-                    </button>
-                  )}
-                </div>
-              ))}
-            </div>
-            {resetTarget && (
-              <form
-                className="account-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  void action(async () => {
-                    await loginApi("admin/reset", {
-                      username: resetTarget,
-                      password: resetPassword,
-                    });
-                    setResetPassword("");
-                    setResetTarget("");
-                    setNotice(
-                      t(
-                        "초기 비밀번호로 변경했습니다. 직원의 기존 계정과 대화는 유지됩니다.",
-                        "Password reset. The employee's identity and conversations are unchanged.",
-                      ),
-                    );
-                  });
-                }}
-              >
-                <h3>
-                  {resetTarget} · {t("비밀번호 초기화", "Reset password")}
-                </h3>
-                <label htmlFor="reset-password">
-                  {t("새 초기 비밀번호", "New temporary password")}
-                </label>
-                <input
-                  id="reset-password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  minLength={12}
-                  maxLength={128}
-                  value={resetPassword}
-                  onChange={(event) => setResetPassword(event.target.value)}
-                  disabled={busy}
-                />
-                <button type="submit" className="primary" disabled={busy}>
-                  {t("초기화 적용", "Apply reset")}
-                </button>
-              </form>
-            )}
-          </>
-        )}
-      </section>
+          )}
+        </>
+      )}
+    </section>
+  );
+  return employeesOnly ? (
+    <section
+      className="employee-account-page"
+      aria-label={t(
+        "직원 계정 발급 및 목록",
+        "Employee account administration",
+      )}
+    >
+      {content}
+    </section>
+  ) : (
+    <dialog
+      ref={dialog}
+      className="account-overlay"
+      aria-labelledby="account-title"
+      onCancel={(event) => {
+        event.preventDefault();
+        onClose();
+      }}
+    >
+      {content}
     </dialog>
   );
 }

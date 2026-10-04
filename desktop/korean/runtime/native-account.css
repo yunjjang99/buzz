@@ -104,3 +104,43 @@
 .account-overlay .error {
   color: #b42318;
 }
+
+.employee-account-page {
+  color: hsl(var(--foreground));
+}
+.employee-account-page .account-panel {
+  padding: 0;
+}
+.employee-account-page .account-panel > .account-panel-heading {
+  justify-content: flex-end;
+}
+.employee-account-page .account-form,
+.employee-account-page .employee-row {
+  border-color: hsl(var(--border));
+}
+.employee-account-page .account-form input,
+.employee-account-page .account-form fieldset {
+  border-color: hsl(var(--border));
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+.employee-account-page .account-panel-heading button,
+.employee-account-page .employee-row button,
+.employee-account-page .account-notice {
+  background: hsl(var(--muted));
+  color: hsl(var(--foreground));
+}
+.employee-account-page .primary {
+  min-height: 2.75rem;
+  padding: 0.65rem 1rem;
+  border-radius: 0.5rem;
+  background: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
+.employee-account-page .help,
+.employee-account-page .employee-row span {
+  color: hsl(var(--muted-foreground));
+}
+.employee-account-page .error {
+  color: hsl(var(--destructive));
+}

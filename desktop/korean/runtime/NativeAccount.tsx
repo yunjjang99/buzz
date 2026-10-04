@@ -18,16 +18,39 @@ import {
   type NativeLogin,
 } from "./native-account";
 
+async function loadManagementAccount() {
+  const [saved, identity] = await Promise.all([
+    nativeApi<WebAccount>("session"),
+    getIdentity(),
+  ]);
+  if (
+    saved.pubkey !== identity.pubkey ||
+    identity.locked ||
+    identity.resetFailed
+  )
+    throw new Error("현재 앱 계정과 같은 아이디로 로그인해 주세요.");
+  return saved;
+}
+
+function managementError(cause: unknown) {
+  const message = cause instanceof Error ? cause.message : String(cause);
+  return message === "login-required"
+    ? "로그인이 만료되었습니다. 다시 로그인해 주세요."
+    : message;
+}
+
 /** Full native client enrollment, using the upstream Rust NIP-49/keyring path. */
 export function NativeAccount({
   onConnected,
   manage = false,
+  employeePage = false,
 }: {
   onConnected?: (pubkey: string) => void | Promise<void>;
   manage?: boolean;
+  employeePage?: boolean;
 }) {
   const communities = useCommunities();
-  const [open, setOpen] = useState(!manage);
+  const [open, setOpen] = useState(!manage || employeePage);
   const [account, setAccount] = useState<WebAccount | null>(null);
   const [panel, setPanel] = useState(false);
   const [setup, setSetup] = useState(false);
@@ -40,12 +63,40 @@ export function NativeAccount({
   const [busy, setBusy] = useState(false);
   const pending = useRef(false);
   const alive = useRef(true);
+  const [checkingSession, setCheckingSession] = useState(employeePage);
   useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
     };
   }, []);
+  useEffect(() => {
+    if (!employeePage) return;
+    let active = true;
+    if (!hasNativeSession()) {
+      setCheckingSession(false);
+      return;
+    }
+    pending.current = true;
+    void loadManagementAccount()
+      .then((saved) => {
+        if (!active) return;
+        setAccount(saved);
+        setOpen(false);
+        setPanel(true);
+      })
+      .catch((cause) => {
+        if (active) setError(managementError(cause));
+      })
+      .finally(() => {
+        if (!active) return;
+        pending.current = false;
+        setCheckingSession(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [employeePage]);
   const requireActive = () => {
     if (!alive.current) throw new Error("계정 연결이 취소되었습니다.");
   };
@@ -59,29 +110,15 @@ export function NativeAccount({
     setBusy(true);
     setError("");
     try {
-      const [saved, identity] = await Promise.all([
-        nativeApi<WebAccount>("session"),
-        getIdentity(),
-      ]);
+      const saved = await loadManagementAccount();
       requireActive();
-      if (
-        saved.pubkey !== identity.pubkey ||
-        identity.locked ||
-        identity.resetFailed
-      )
-        throw new Error("현재 앱 계정과 같은 아이디로 로그인해 주세요.");
       setAccount(saved);
       setOpen(false);
       setPanel(true);
     } catch (cause) {
       if (!alive.current) return;
       setOpen(true);
-      const message = cause instanceof Error ? cause.message : String(cause);
-      setError(
-        message === "login-required"
-          ? "로그인이 만료되었습니다. 다시 로그인해 주세요."
-          : message,
-      );
+      setError(managementError(cause));
     } finally {
       pending.current = false;
       if (alive.current) setBusy(false);
@@ -192,8 +229,13 @@ export function NativeAccount({
     }
   }
   return (
-    <div className="w-full max-w-sm text-left">
-      {manage && (
+    <div
+      className={
+        employeePage ? "w-full text-left" : "w-full max-w-sm text-left"
+      }
+    >
+      {checkingSession && <p role="status">관리자 로그인 확인 중…</p>}
+      {manage && !employeePage && (
         <button
           type="button"
           className="m-2 rounded-md border px-3 py-2 text-sm"
@@ -203,7 +245,7 @@ export function NativeAccount({
           직원 계정 · 아이디 로그인
         </button>
       )}
-      {open && (
+      {open && !checkingSession && (
         <form
           onSubmit={submit}
           className="flex flex-col gap-3 rounded-lg border bg-background p-5 text-foreground"
@@ -306,13 +348,31 @@ export function NativeAccount({
           </button>
         </form>
       )}
-      {panel && account && (
+      {panel && account && employeePage && account.role !== "admin" && (
+        <div role="alert" className="rounded-lg border p-5">
+          <p>직원 계정은 관리자만 발급할 수 있습니다.</p>
+          <button
+            type="button"
+            className="mt-3 underline"
+            onClick={() => {
+              setPanel(false);
+              setAccount(null);
+              setOpen(true);
+            }}
+          >
+            관리자 아이디로 다시 인증
+          </button>
+        </div>
+      )}
+      {panel && account && (!employeePage || account.role === "admin") && (
         <AccountPanel
           account={account}
+          employeesOnly={employeePage}
           onChange={setAccount}
           onClose={() => {
             setPanel(false);
             setAccount(null);
+            if (employeePage) setOpen(true);
           }}
         />
       )}

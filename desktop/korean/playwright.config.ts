@@ -11,6 +11,7 @@ export default defineConfig({
       testMatch: [
         "**/korean-locale.spec.ts",
         "**/native-account.spec.ts",
+        "**/employee-page.spec.ts",
         "**/settings-details.spec.ts",
       ],
     },

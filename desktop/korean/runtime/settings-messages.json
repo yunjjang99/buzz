@@ -872,5 +872,8 @@
   "Use agent defaults ({name})": "에이전트 기본값 사용 ({name})",
   "Default model": "기본 모델",
   "Buzz shared compute": "Buzz 공유 컴퓨팅",
-  "{name} (current)": "{name} (현재)"
+  "{name} (current)": "{name} (현재)",
+  "Employee accounts": "직원 계정 관리",
+  "Create employee logins, choose their channels, and manage their accounts here in the app.": "앱에서 직원 아이디를 발급하고 참여할 채널과 직원 계정을 관리하세요.",
+  "Employee accounts are available to KOVAR administrators.": "KOVAR 관리자 계정에서 직원 계정을 관리할 수 있습니다."
 }
