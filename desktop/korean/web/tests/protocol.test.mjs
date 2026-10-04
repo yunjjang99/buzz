@@ -12,6 +12,7 @@ import {
 } from "../protocol.ts";
 import { acknowledgeOutbox, readOutbox, saveOutbox } from "../outbox.ts";
 import { checkedEvent } from "../signer.ts";
+import { readAccount, saveAccount, forgetAccount } from "../account.ts";
 import { Relay } from "../relay.ts";
 
 const key = new Uint8Array(32).fill(1);
@@ -21,9 +22,11 @@ const makeEvent = (kind, tags, content = "", created_at = 100, secret = key) =>
   finalizeEvent({ kind, tags, content, created_at }, secret);
 const originalSocket = globalThis.WebSocket;
 const originalStorage = globalThis.sessionStorage;
+const originalLocalStorage = globalThis.localStorage;
 afterEach(() => {
   globalThis.WebSocket = originalSocket;
   globalThis.sessionStorage = originalStorage;
+  globalThis.localStorage = originalLocalStorage;
 });
 
 test("membership metadata uses d tags and resolves newer removals", () => {
@@ -249,4 +252,29 @@ test("unexpected socket close rejects finite history rather than returning an em
   const rejected = assert.rejects(result, /connection-closed/);
   socket.onclose();
   await rejected;
+});
+
+
+test("device account persists only encrypted identity atomically and preserves recovery", () => {
+  const dom = new JSDOM("", { url: "https://buzz.kovar.kr/chat/" });
+  globalThis.localStorage = dom.window.localStorage;
+  const password = "synthetic test password";
+  const backup = encrypt(key, password, 10);
+  const relay = "wss://buzz.kovar.kr";
+  assert.equal(readAccount(relay), null);
+  const expected = saveAccount(relay, pubkey, backup);
+  assert.deepEqual(readAccount(relay), expected);
+  const raw = localStorage.getItem("buzz-korean-web.account.v1");
+  assert.ok(!raw.includes(password));
+  assert.ok(!raw.includes(Buffer.from(key).toString("hex")));
+  assert.throws(() => readAccount("wss://other.example"), /saved-account-invalid/);
+  assert.throws(() => saveAccount(relay, pubkey, "plaintext secret"));
+  assert.deepEqual(readAccount(relay), expected);
+  globalThis.localStorage = { setItem() { throw new Error("quota-exceeded"); } };
+  assert.throws(() => saveAccount(relay, pubkey, backup), /quota-exceeded/);
+  globalThis.localStorage = dom.window.localStorage;
+  localStorage.setItem("buzz-korean-web.account.v1", "corrupt");
+  assert.throws(() => readAccount(relay), /saved-account-invalid/);
+  forgetAccount();
+  assert.equal(readAccount(relay), null);
 });

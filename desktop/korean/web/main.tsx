@@ -5,6 +5,12 @@ import { npubEncode } from "nostr-tools/nip19";
 import { getLocale, setLocale, useLocale } from "../runtime/locale";
 import { copy, errorText } from "./copy";
 import { backupSigner, extensionSigner, type Signer } from "./signer";
+import {
+  readAccount,
+  saveAccount,
+  forgetAccount,
+  type SavedAccount,
+} from "./account";
 import { Relay } from "./relay";
 import { acknowledgeOutbox, readOutbox, saveOutbox } from "./outbox";
 import {
@@ -74,6 +80,19 @@ function App() {
   const [reply, setReply] = useState<Event | undefined>();
   const [thread, setThread] = useState<ChatMessage | null>(null);
   const [pending, setPending] = useState<Event | null>(null);
+  const [savedState] = useState(() => {
+    try {
+      return { account: readAccount(relayUrl), error: null as unknown };
+    } catch (error) {
+      return { account: null, error };
+    }
+  });
+  const [savedAccount, setSavedAccount] = useState<SavedAccount | null>(
+    savedState.account,
+  );
+  const [accountError, setAccountError] = useState<unknown>(savedState.error);
+  const [useSaved, setUseSaved] = useState(Boolean(savedState.account));
+  const [remember, setRemember] = useState(false);
   const [password, setPassword] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [mobileList, setMobileList] = useState(false);
@@ -241,9 +260,24 @@ function App() {
     let account: Signer | null = null;
     try {
       if (kind === "backup") {
-        if (!file || file.size > 4096)
+        if (!useSaved && (!file || file.size > 4096))
           throw new Error("encrypted-backup-required");
-        account = await backupSigner(await file.text(), password);
+        const backup =
+          useSaved && savedAccount
+            ? savedAccount.backup
+            : await (file as File).text();
+        account = await backupSigner(backup, password);
+        if (currentGeneration !== generation.current) {
+          account.dispose();
+          return;
+        }
+        if (useSaved && account.pubkey !== savedAccount?.pubkey)
+          throw new Error("saved-account-invalid");
+        if (!useSaved && remember) {
+          setSavedAccount(saveAccount(relayUrl, account.pubkey, backup));
+          setUseSaved(true);
+          setAccountError(null);
+        }
       } else account = await extensionSigner();
       if (currentGeneration !== generation.current) {
         account.dispose();
@@ -263,6 +297,20 @@ function App() {
       }
     } finally {
       setPassword("");
+    }
+  }
+
+  function removeSavedAccount() {
+    try {
+      forgetAccount();
+      setSavedAccount(null);
+      setUseSaved(false);
+      setAccountError(null);
+      setError(null);
+      setPassword("");
+      setFile(null);
+    } catch (failure) {
+      setAccountError(failure);
     }
   }
 
@@ -474,21 +522,52 @@ function App() {
                 void login("backup");
               }}
             >
-              <label htmlFor="backup-file">{text.backup}</label>
-              <input
-                ref={fileInput}
-                id="backup-file"
-                type="file"
-                accept=".ncryptsec,.txt"
-                disabled={busy}
-                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-              />
-              <p className="help">{text.backupHelp}</p>
+              {useSaved && savedAccount ? (
+                <div className="saved-account">
+                  <strong>{text.savedAccount}</strong>
+                  <span>{npubEncode(savedAccount.pubkey).slice(0, 20)}…</span>
+                  <p className="help">{text.savedHelp}</p>
+                  <input
+                    type="text"
+                    name="username"
+                    autoComplete="username"
+                    value={savedAccount.pubkey}
+                    readOnly
+                    hidden
+                  />
+                </div>
+              ) : (
+                <>
+                  <label htmlFor="backup-file">{text.backup}</label>
+                  <input
+                    ref={fileInput}
+                    id="backup-file"
+                    type="file"
+                    accept=".ncryptsec,.txt"
+                    disabled={busy}
+                    onChange={(event) =>
+                      setFile(event.target.files?.[0] ?? null)
+                    }
+                  />
+                  <p className="help">{text.backupHelp}</p>
+                  <label className="remember-account">
+                    <input
+                      type="checkbox"
+                      checked={remember}
+                      disabled={busy}
+                      onChange={(event) => setRemember(event.target.checked)}
+                    />
+                    <span>{text.remember}</span>
+                  </label>
+                  <p className="help">{text.rememberHelp}</p>
+                </>
+              )}
               <label htmlFor="backup-password">{text.password}</label>
               <input
                 id="backup-password"
                 type="password"
-                autoComplete="off"
+                name="password"
+                autoComplete="current-password"
                 value={password}
                 disabled={busy}
                 onChange={(event) => setPassword(event.target.value)}
@@ -496,11 +575,41 @@ function App() {
               <button
                 className="primary"
                 type="submit"
-                disabled={busy || !file || !password}
+                disabled={busy || (!useSaved && !file) || !password}
               >
-                {busy ? text.connecting : text.unlock}
+                {busy ? text.connecting : useSaved ? text.signIn : text.unlock}
               </button>
             </form>
+            {Boolean(savedAccount || accountError) && (
+              <div className="account-actions">
+                {savedAccount && (
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => {
+                      setUseSaved(!useSaved);
+                      setPassword("");
+                      setFile(null);
+                      setError(null);
+                    }}
+                  >
+                    {useSaved ? text.otherAccount : text.backToSaved}
+                  </button>
+                )}
+                <button
+                  type="button"
+                  disabled={busy}
+                  onClick={removeSavedAccount}
+                >
+                  {text.forget}
+                </button>
+              </div>
+            )}
+            {Boolean(accountError) && (
+              <p className="error" role="alert">
+                {errorText(accountError, language)}
+              </p>
+            )}
             <div className="divider">
               <span>{language === "ko" ? "또는" : "or"}</span>
             </div>

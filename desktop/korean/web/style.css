@@ -712,3 +712,41 @@ a {
     max-height: 25%;
   }
 }
+
+.saved-account {
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: #f4f5ef;
+  border-radius: 0.75rem;
+  overflow-wrap: anywhere;
+}
+.saved-account span {
+  font-size: 0.875rem;
+  color: #626658;
+}
+.login-card .remember-account {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+}
+.login-card .remember-account input {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  margin: 0;
+}
+.account-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+.account-actions button {
+  min-height: 44px;
+  font-size: 0.875rem;
+  background: transparent;
+  text-decoration: underline;
+  padding: 0.5rem;
+}

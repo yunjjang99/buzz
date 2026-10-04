@@ -10,8 +10,17 @@ export const copy = {
     password: "백업 비밀번호",
     unlock: "백업으로 로그인",
     extension: "브라우저 서명 확장으로 로그인",
+    savedAccount: "이 기기에 연결된 계정",
+    savedHelp: "파일을 다시 선택할 필요 없이 백업 비밀번호로 로그인하세요.",
+    remember: "이 기기에 암호화된 계정 저장",
+    rememberHelp:
+      "개인 기기에서 선택하세요. 다음부터 비밀번호만 입력하면 됩니다.",
+    signIn: "로그인",
+    otherAccount: "다른 계정 연결",
+    backToSaved: "저장된 계정으로 돌아가기",
+    forget: "기기에 저장된 계정 지우기",
     privacy:
-      "백업과 비밀번호는 이 브라우저에서만 처리합니다. 복호화한 키는 저장하지 않으며, 탭을 새로고침하면 다시 로그인합니다.",
+      "비밀번호와 복호화한 키는 저장하지 않습니다. 계정 저장을 선택하면 암호화된 백업만 이 기기에 보관합니다. 로그아웃하면 계정이 잠깁니다.",
     channels: "채널",
     direct: "개인 대화",
     loading: "불러오는 중…",
@@ -59,8 +68,18 @@ export const copy = {
     password: "Backup password",
     unlock: "Sign in with backup",
     extension: "Sign in with browser signer",
+    savedAccount: "Account connected on this device",
+    savedHelp:
+      "Sign in with your backup password. No need to choose the file again.",
+    remember: "Save encrypted account on this device",
+    rememberHelp:
+      "Choose this on a personal device. Next time, only your password is needed.",
+    signIn: "Sign in",
+    otherAccount: "Connect another account",
+    backToSaved: "Return to saved account",
+    forget: "Remove saved account from device",
     privacy:
-      "Your backup and password are processed only in this browser. The decrypted key is never saved. Reloading this tab requires signing in again.",
+      "Your password and decrypted key are never saved. Saving your account keeps only the encrypted backup on this device. Signing out locks your account.",
     channels: "Channels",
     direct: "Direct messages",
     loading: "Loading…",
@@ -103,6 +122,10 @@ export const copy = {
 export function errorText(error: unknown, language: "ko" | "en"): string {
   const code = error instanceof Error ? error.message : "operation-failed";
   const messages: Record<string, [string, string]> = {
+    "saved-account-invalid": [
+      "저장된 계정을 읽을 수 없습니다. 기기에 저장된 계정을 지우고 백업 파일을 다시 연결하세요.",
+      "Could not read the saved account. Remove the device copy and reconnect your backup.",
+    ],
     "extension-required": [
       "NIP-07 서명 확장이 없으면 암호화 백업으로 로그인하세요.",
       "Use an encrypted backup if no NIP-07 extension is installed.",

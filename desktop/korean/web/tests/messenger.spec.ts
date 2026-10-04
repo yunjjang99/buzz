@@ -192,8 +192,37 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
     mimeType: "text/plain",
     buffer: Buffer.from(encrypted),
   });
+  await page.getByLabel("백업 비밀번호").fill("incorrect password");
+  await page
+    .getByLabel("이 기기에 암호화된 계정 저장", { exact: true })
+    .check();
+  await page.getByRole("button", { name: "백업으로 로그인" }).click();
+  await expect(page.getByRole("alert")).toContainText(
+    "백업 비밀번호가 다르거나",
+  );
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("buzz-korean-web.account.v1"),
+    ),
+  ).toBeNull();
   await page.getByLabel("백업 비밀번호").fill(password);
   await page.getByRole("button", { name: "백업으로 로그인" }).click();
+  await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!");
+  const accountRecord = await page.evaluate(() =>
+    localStorage.getItem("buzz-korean-web.account.v1"),
+  );
+  expect(accountRecord).toContain(encrypted);
+  expect(accountRecord).not.toContain(password);
+  expect(accountRecord).not.toContain(Buffer.from(key).toString("hex"));
+  await page.reload();
+  await expect(
+    page.getByText("이 기기에 연결된 계정", { exact: true }),
+  ).toBeVisible();
+  await expect(
+    page.getByLabel("암호화 계정 백업", { exact: true }),
+  ).toHaveCount(0);
+  await page.getByLabel("백업 비밀번호").fill(password);
+  await page.getByRole("button", { name: "로그인", exact: true }).click();
   await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!");
   await page.getByLabel("메시지 입력").fill("전송 실패 후 재시도");
   await page.getByRole("button", { name: "메시지 보내기" }).click();
@@ -214,4 +243,48 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
       sessionStorage.getItem("buzz-korean-web.outbox.v1"),
     ),
   ).toBeNull();
+  const channelList = page.getByRole("button", {
+    name: "채널 목록",
+    exact: true,
+  });
+  if (await channelList.isVisible()) await channelList.click();
+  await page.getByRole("button", { name: "로그아웃", exact: true }).click();
+  await expect(
+    page.getByText("이 기기에 연결된 계정", { exact: true }),
+  ).toBeVisible();
+  await waitForAnimations(page);
+  await page.screenshot({
+    path: "test-results/korean-web/05-saved-account-login.png",
+  });
+  await page.getByRole("button", { name: "다른 계정 연결" }).click();
+  await expect(
+    page.getByLabel("암호화 계정 백업", { exact: true }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "저장된 계정으로 돌아가기" }).click();
+  await page.getByRole("button", { name: "기기에 저장된 계정 지우기" }).click();
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("buzz-korean-web.account.v1"),
+    ),
+  ).toBeNull();
+});
+
+test("corrupt saved account preserves a recovery path", async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem("buzz-korean-web.account.v1", "corrupt record");
+  });
+  await page.goto("/chat/");
+  await expect(page.getByRole("alert")).toContainText(
+    "저장된 계정을 읽을 수 없습니다",
+  );
+  await page.getByRole("button", { name: "기기에 저장된 계정 지우기" }).click();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+  expect(
+    await page.evaluate(() =>
+      localStorage.getItem("buzz-korean-web.account.v1"),
+    ),
+  ).toBeNull();
+  await expect(
+    page.getByLabel("암호화 계정 백업", { exact: true }),
+  ).toBeVisible();
 });
