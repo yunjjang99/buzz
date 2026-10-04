@@ -2,6 +2,9 @@ import { runTauriCommand } from "../scripts/tauri-command.mjs";
 import { nativeBuildConfig } from "./native-build-config.mjs";
 
 const build = nativeBuildConfig(process.argv.slice(2));
+// Kovar is distributed separately. Never compile an inherited official updater.
+delete process.env.BUZZ_UPDATER_PUBLIC_KEY;
+delete process.env.BUZZ_UPDATER_ENDPOINT;
 // Upstream's named identity isolates keyring, nest, OAuth caches and legacy
 // migration. The distinct Tauri identifier also isolates webview/app storage
 // and the single-instance lock. Pin both so ambient build flags cannot revert it.

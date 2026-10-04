@@ -8,6 +8,8 @@ test("employee build isolates app data, keyring/nest identity, deep links and in
   assert.notEqual(build.config.identifier, "xyz.block.buzz.app");
   assert.equal(build.config.productName, "Kovar Buzz");
   assert.equal(build.slug, "kovar-accounts");
+  assert.equal(build.config.bundle.createUpdaterArtifacts, false);
+  assert.deepEqual(build.config.plugins.updater.endpoints, []);
   assert.deepEqual(build.config.plugins["deep-link"].desktop.schemes, [
     `buzz-demo-${build.slug}`,
   ]);

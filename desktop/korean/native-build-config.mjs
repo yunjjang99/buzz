@@ -6,12 +6,14 @@ export function nativeBuildConfig(args) {
     slug: shared ? null : "kovar-accounts",
     config: {
       build: { beforeBuildCommand: "node korean/build.mjs" },
+      bundle: { createUpdaterArtifacts: false },
       ...(shared
         ? {}
         : {
             productName: "Kovar Buzz",
             identifier: "kr.kovar.buzz.desktop",
             plugins: {
+              updater: { endpoints: [] },
               "deep-link": {
                 desktop: { schemes: ["buzz-demo-kovar-accounts"] },
               },
