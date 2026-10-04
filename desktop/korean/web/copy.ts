@@ -1,0 +1,131 @@
+export const copy = {
+  ko: {
+    title: "웹 메신저",
+    subtitle: "팀의 대화, 어느 기기에서든.",
+    welcome: "Buzz에 오신 것을 환영합니다",
+    intro: "설치 없이 기존 계정으로 팀의 대화를 이어가세요.",
+    backup: "암호화 계정 백업",
+    backupHelp:
+      "Mac 앱의 설정 → 프로필 → 계정 정보에서 내보낸 .ncryptsec 파일을 선택하세요.",
+    password: "백업 비밀번호",
+    unlock: "백업으로 로그인",
+    extension: "브라우저 서명 확장으로 로그인",
+    privacy:
+      "백업과 비밀번호는 이 브라우저에서만 처리합니다. 복호화한 키는 저장하지 않으며, 탭을 새로고침하면 다시 로그인합니다.",
+    channels: "채널",
+    direct: "개인 대화",
+    loading: "불러오는 중…",
+    connecting: "로그인하는 중…",
+    connected: "연결됨",
+    disconnected: "연결 끊김",
+    reconnect: "다시 연결",
+    logout: "로그아웃",
+    refresh: "채널 새로고침",
+    send: "메시지 보내기",
+    input: "메시지 입력",
+    placeholder: "팀에 메시지를 보내세요…",
+    empty: "아직 메시지가 없습니다. 첫 대화를 시작하세요.",
+    noChannels:
+      "참여 중인 채널이 없습니다. 관리자의 초대로 먼저 워크스페이스에 참여하세요.",
+    choose: "채널을 선택하세요",
+    reply: "답장",
+    cancel: "답장 취소",
+    deleted: "삭제된 메시지",
+    edited: "수정됨",
+    history: "최근 메시지 200개 · 실시간 수신",
+    newLine: "Enter 전송 · Shift+Enter 줄바꿈",
+    members: "참여한 대화",
+    retry: "같은 메시지 다시 전송",
+    outbox:
+      "전송 결과를 확인하지 못한 메시지가 남아 있습니다. 다시 전송하면 같은 ID를 사용해 중복을 방지합니다.",
+    readOnly: "이 채널 유형의 작성은 데스크톱 앱에서 지원합니다.",
+    language: "언어",
+    error: "작업을 완료하지 못했습니다",
+    identity: "내 계정",
+    thread: "답글 대화",
+    closeThread: "답글 대화 닫기",
+    back: "채널 목록",
+    limitations:
+      "채널·개인 대화·답글을 지원합니다. 파일 업로드, 음성, 에이전트 관리 등은 데스크톱 앱을 사용하세요.",
+  },
+  en: {
+    title: "Web messenger",
+    subtitle: "Your team, wherever you are.",
+    welcome: "Welcome to Buzz",
+    intro: "Continue your team's conversations with your existing account.",
+    backup: "Encrypted account backup",
+    backupHelp:
+      "Choose the .ncryptsec file exported from Mac Settings → Profile → Identity details.",
+    password: "Backup password",
+    unlock: "Sign in with backup",
+    extension: "Sign in with browser signer",
+    privacy:
+      "Your backup and password are processed only in this browser. The decrypted key is never saved. Reloading this tab requires signing in again.",
+    channels: "Channels",
+    direct: "Direct messages",
+    loading: "Loading…",
+    connecting: "Signing in…",
+    connected: "Connected",
+    disconnected: "Disconnected",
+    reconnect: "Reconnect",
+    logout: "Sign out",
+    refresh: "Refresh channels",
+    send: "Send message",
+    input: "Message input",
+    placeholder: "Send a message to your team…",
+    empty: "No messages yet. Start a conversation.",
+    noChannels:
+      "No joined channels. First join the workspace using an invitation from your administrator.",
+    choose: "Choose a channel",
+    reply: "Reply",
+    cancel: "Cancel reply",
+    deleted: "Deleted message",
+    edited: "Edited",
+    history: "Latest 200 messages · live updates",
+    newLine: "Enter to send · Shift+Enter for a new line",
+    members: "Your conversations",
+    retry: "Retry the same message",
+    outbox:
+      "A message has an unconfirmed delivery outcome. Retrying uses the same ID to prevent duplicates.",
+    readOnly: "Use the desktop app to write in this channel type.",
+    language: "Language",
+    error: "Could not complete the operation",
+    identity: "My account",
+    thread: "Thread",
+    closeThread: "Close thread",
+    back: "Channel list",
+    limitations:
+      "Channels, direct messages and replies are supported. Use the desktop app for file uploads, voice and agent management.",
+  },
+};
+
+/** Explain known recovery actions while retaining the actual relay failure reason. */
+export function errorText(error: unknown, language: "ko" | "en"): string {
+  const code = error instanceof Error ? error.message : "operation-failed";
+  const messages: Record<string, [string, string]> = {
+    "extension-required": [
+      "NIP-07 서명 확장이 없으면 암호화 백업으로 로그인하세요.",
+      "Use an encrypted backup if no NIP-07 extension is installed.",
+    ],
+    "backup-unlock-failed": [
+      "백업 비밀번호가 다르거나 파일이 손상되었습니다. 다시 선택해 주세요.",
+      "Wrong backup password or damaged backup. Try again.",
+    ],
+    "encrypted-backup-required": [
+      "암호화된 .ncryptsec 계정 백업 파일이 필요합니다.",
+      "An encrypted .ncryptsec account backup is required.",
+    ],
+    "unsupported-backup": [
+      "이 백업의 암호화 형식 또는 메모리 요구량을 지원하지 않습니다.",
+      "Unsupported backup format or memory requirements.",
+    ],
+    "key-in-message": [
+      "계정 키가 포함된 메시지는 전송할 수 없습니다.",
+      "Messages containing account keys cannot be sent.",
+    ],
+  };
+  return (
+    messages[code]?.[language === "ko" ? 0 : 1] ??
+    `${copy[language].error}: ${code}`
+  );
+}
