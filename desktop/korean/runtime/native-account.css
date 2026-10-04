@@ -1,0 +1,106 @@
+.account-overlay {
+  width: min(95vw, 44rem);
+  max-height: 90dvh;
+  overflow-y: auto;
+  border: 1px solid #e3e4db;
+  border-radius: 1rem;
+  padding: 0;
+  color: #282b23;
+  background: #fff;
+}
+.account-overlay::backdrop {
+  background: rgb(0 0 0 / 45%);
+}
+.account-panel {
+  padding: 1.25rem;
+}
+.account-panel-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+.account-panel-heading button,
+.employee-row button {
+  min-height: 44px;
+  padding: 0.5rem;
+  background: #f4f5ef;
+  border-radius: 0.5rem;
+}
+.account-form {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e3e4db;
+}
+.account-form h3 {
+  font-size: 1rem;
+}
+.account-form label,
+.account-form legend {
+  font-size: 0.875rem;
+}
+.account-form input {
+  min-height: 44px;
+  width: 100%;
+  padding: 0.65rem;
+  border: 1px solid #d8dacd;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+}
+.account-form .remember-account {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+}
+.account-form .remember-account input {
+  width: 1.25rem;
+  min-height: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+.account-form fieldset {
+  border: 1px solid #e3e4db;
+  border-radius: 0.5rem;
+  padding: 0.75rem;
+}
+.employee-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #e3e4db;
+}
+.employee-row div {
+  display: grid;
+  gap: 0.25rem;
+}
+.employee-row span {
+  font-size: 0.875rem;
+  color: #626658;
+}
+.account-notice {
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  background: #f4f5ef;
+  line-height: 1.6;
+}
+
+.account-overlay .primary {
+  background: #292d22;
+  color: white;
+  padding: 0.65rem;
+  border-radius: 0.5rem;
+  min-height: 2.75rem;
+}
+.account-overlay .help {
+  font-size: 0.875rem;
+  color: #626658;
+}
+.account-overlay .error {
+  color: #b42318;
+}

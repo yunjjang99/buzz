@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import http from "node:http";
 import { createHash } from "node:crypto";
-import { encrypt } from "nostr-tools/nip49";
+import { encrypt, decrypt } from "nostr-tools/nip49";
 import { getPublicKey, finalizeEvent, verifyEvent } from "nostr-tools/pure";
 const { createLoginService } = await import(
   process.env.BUZZ_LOGIN_TEST_BUILD
@@ -449,5 +449,103 @@ test("HTTP bridge binds host, payload and fresh NIP-98 proof on every retry", as
     assert.equal(new Set(ids).size, 3);
   } finally {
     await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test("native login exports only a password-encrypted identity and isolates bearer sessions", async () => {
+  const f = await fixture();
+  const headers = { Origin: "tauri://localhost" };
+  try {
+    await f.setup();
+    const denied = await f.api("desktop/login", {
+      username: "admin",
+      password: permanent,
+    });
+    assert.equal(denied.status, 403);
+    const login = await f.api(
+      "desktop/login",
+      { username: "admin", password: permanent },
+      "",
+      headers,
+    );
+    assert.equal(login.status, 200);
+    assert.equal(getPublicKey(decrypt(login.value.backup, permanent)), owner);
+    assert.ok(
+      !JSON.stringify(login.value).includes(
+        Buffer.from(secret).toString("hex"),
+      ),
+    );
+    assert.equal(
+      (
+        await f.api("session", undefined, "", {
+          ...headers,
+          Authorization: `Bearer ${login.value.token}`,
+        })
+      ).value.pubkey,
+      owner,
+    );
+    assert.equal((await f.api("session", undefined, login.cookie)).status, 401);
+    const web = await f.api("login", {
+      username: "admin",
+      password: permanent,
+    });
+    assert.equal(
+      (
+        await f.api("session", undefined, "", {
+          ...headers,
+          Authorization: `Bearer ${web.cookie.split("=")[1]}`,
+        })
+      ).status,
+      401,
+    );
+    const create = await f.api(
+      "admin/create",
+      {
+        username: "staff",
+        name: "직원",
+        password: temporary,
+        channels: ["general"],
+      },
+      web.cookie,
+    );
+    assert.equal(create.status, 201);
+    await f.service.runJobs();
+    await f.service.runJobs();
+    await f.service.runJobs();
+    const initial = await f.api(
+      "desktop/login",
+      { username: "staff", password: temporary },
+      "",
+      headers,
+    );
+    assert.equal(initial.status, 409);
+    assert.equal(initial.value.error, "password-change-required");
+    const changed = await f.api(
+      "desktop/login",
+      { username: "staff", password: temporary, newPassword: permanent },
+      "",
+      headers,
+    );
+    assert.equal(changed.status, 200);
+    assert.equal(
+      getPublicKey(decrypt(changed.value.backup, permanent)),
+      changed.value.account.pubkey,
+    );
+    assert.equal(changed.value.account.mustChangePassword, false);
+    await f.api("logout", {}, "", {
+      ...headers,
+      Authorization: `Bearer ${login.value.token}`,
+    });
+    assert.equal(
+      (
+        await f.api("session", undefined, "", {
+          ...headers,
+          Authorization: `Bearer ${login.value.token}`,
+        })
+      ).status,
+      401,
+    );
+  } finally {
+    await f.finish();
   }
 });

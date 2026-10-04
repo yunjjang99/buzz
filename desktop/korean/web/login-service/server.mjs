@@ -8,7 +8,7 @@ import {
   parentPort,
   workerData,
 } from "node:worker_threads";
-import { decrypt } from "nostr-tools/nip49";
+import { decrypt, encrypt } from "nostr-tools/nip49";
 import {
   finalizeEvent,
   generateSecretKey,
@@ -26,6 +26,11 @@ import {
 import { RelayBridge } from "./relay.mjs";
 import { assertNoKeys, validateBackup } from "../protocol.ts";
 
+const DESKTOP_ORIGINS = new Set([
+  "tauri://localhost",
+  "http://tauri.localhost",
+  "https://tauri.localhost",
+]);
 const COOKIE = "__Host-buzz_session";
 const now = () => Math.floor(Date.now() / 1000);
 const publicAccount = (account) => ({
@@ -117,6 +122,44 @@ export async function createLoginService(options) {
       importing = false;
     }
   }
+  async function exportKey(account, passphrase) {
+    if (importing) throw failure("rate-limited", 429);
+    importing = true;
+    const key = store.open(account);
+    try {
+      return await new Promise((resolve, reject) => {
+        const worker = new Worker(new URL(import.meta.url), {
+          workerData: { exportKey: key, password: passphrase },
+          resourceLimits: { maxOldGenerationSizeMb: 96 },
+        });
+        let done = false;
+        const finish = (error, value) => {
+          if (done) return;
+          done = true;
+          clearTimeout(timer);
+          void worker.terminate();
+          if (error) reject(error);
+          else resolve(value);
+        };
+        const timer = setTimeout(
+          () => finish(failure("backup-unlock-failed")),
+          30000,
+        );
+        worker.on("message", (data) =>
+          data.backup
+            ? finish(null, data.backup)
+            : finish(failure("backup-unlock-failed")),
+        );
+        worker.on("error", () => finish(failure("backup-unlock-failed")));
+        worker.on("exit", () => {
+          if (!done) finish(failure("backup-unlock-failed"));
+        });
+      });
+    } finally {
+      key.fill(0);
+      importing = false;
+    }
+  }
   function withKey(account, action) {
     const key = store.open(account);
     try {
@@ -181,17 +224,29 @@ export async function createLoginService(options) {
     });
   }
   function session(request) {
-    const cookie = request.headers.cookie
-      ?.split(";")
-      .map((part) => part.trim())
-      .find((part) => part.startsWith(`${COOKIE}=`))
-      ?.slice(COOKIE.length + 1);
+    const bearer = request.headers.authorization?.match(
+      /^Bearer ([a-f0-9]{64})$/,
+    )?.[1];
+    const desktop = DESKTOP_ORIGINS.has(request.headers.origin);
+    const cookie = desktop
+      ? bearer
+      : request.headers.cookie
+          ?.split(";")
+          .map((part) => part.trim())
+          .find((part) => part.startsWith(`${COOKIE}=`))
+          ?.slice(COOKIE.length + 1);
     if (!cookie || !/^[a-f0-9]{64}$/.test(cookie))
       throw failure("login-required", 401);
     const id = hashToken(cookie);
     const saved = store.state.sessions[id];
     const account = saved && store.state.accounts[saved.username];
-    if (!saved || saved.until <= now() || !account || !account.enabled)
+    if (
+      !saved ||
+      saved.until <= now() ||
+      !account ||
+      !account.enabled ||
+      Boolean(saved.desktop) !== desktop
+    )
       throw failure("login-required", 401);
     return { account, id };
   }
@@ -201,7 +256,7 @@ export async function createLoginService(options) {
       throw failure("admin-required", 403);
     return current;
   }
-  function issueSession(state, account, remember) {
+  function issueSession(state, account, remember, desktop = false) {
     for (const [id, saved] of Object.entries(state.sessions))
       if (saved.until <= now()) delete state.sessions[id];
     const own = Object.entries(state.sessions)
@@ -215,6 +270,7 @@ export async function createLoginService(options) {
     const duration = remember ? 30 * 86400 : 8 * 3600;
     state.sessions[hashToken(token)] = {
       username: account.username,
+      desktop,
       until: now() + duration,
     };
     return `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict${remember ? `; Max-Age=${duration}` : ""}`;
@@ -304,6 +360,23 @@ export async function createLoginService(options) {
     };
     try {
       const route = request.url;
+      const desktop = DESKTOP_ORIGINS.has(request.headers.origin);
+      if (desktop) {
+        response.setHeader(
+          "Access-Control-Allow-Origin",
+          request.headers.origin,
+        );
+        response.setHeader("Vary", "Origin");
+        response.setHeader(
+          "Access-Control-Allow-Methods",
+          "GET, POST, OPTIONS",
+        );
+        response.setHeader(
+          "Access-Control-Allow-Headers",
+          "Content-Type, Authorization",
+        );
+        if (request.method === "OPTIONS") return send({ ok: true });
+      }
       if (request.method === "GET" && route === "/chat-api/status")
         return send({
           configured: Object.keys(store.state.accounts).length > 0,
@@ -319,7 +392,7 @@ export async function createLoginService(options) {
         return send(await channels());
       }
       if (request.method !== "POST") throw failure("not-found", 404);
-      if (request.headers.origin !== origin)
+      if (request.headers.origin !== origin && !desktop)
         throw failure("invalid-origin", 403);
       const ip = (
         request.headers["x-forwarded-for"]?.split(",").at(-1)?.trim() ??
@@ -357,15 +430,22 @@ export async function createLoginService(options) {
               mustChangePassword: false,
             };
             state.accounts[name] = account;
-            return issueSession(state, account, false);
+            return issueSession(state, account, false, desktop);
           });
           response.setHeader("Set-Cookie", cookie);
-          return send(publicAccount(store.state.accounts[name]));
+          return send({
+            ...publicAccount(store.state.accounts[name]),
+            ...(desktop
+              ? { desktopToken: cookie.split(";")[0].split("=")[1] }
+              : {}),
+          });
         } finally {
           key.fill(0);
         }
       }
-      if (route === "/chat-api/login") {
+      if (route === "/chat-api/login" || route === "/chat-api/desktop/login") {
+        if (desktop !== (route === "/chat-api/desktop/login"))
+          throw failure("invalid-origin", 403);
         const name = username(input.username);
         password(input.password, 1);
         limiter.take(`login-ip:${ip}`, 30, 5 * 60000);
@@ -378,14 +458,47 @@ export async function createLoginService(options) {
         if (!valid || !account?.enabled) throw failure("invalid-login", 401);
         if (account.job && account.job.status !== "ready")
           throw failure("account-provisioning", 409);
+        let replacementHash = null;
+        if (desktop && account.mustChangePassword) {
+          if (!input.newPassword)
+            throw failure("password-change-required", 409);
+          password(input.newPassword);
+          if (input.newPassword === input.password)
+            throw failure("password-unchanged");
+          replacementHash = await limitedHash(() =>
+            passwordHash(input.newPassword),
+          );
+        }
+        const encrypted = desktop
+          ? await exportKey(
+              account,
+              input.newPassword && replacementHash
+                ? input.newPassword
+                : input.password,
+            )
+          : null;
         const cookie = store.transaction((state) => {
           const current = state.accounts[name];
           if (current.hash !== encoded || !current.enabled)
             throw failure("invalid-login", 401);
-          return issueSession(state, current, input.remember === true);
+          if (replacementHash) {
+            current.hash = replacementHash;
+            current.mustChangePassword = false;
+            for (const [id, saved] of Object.entries(state.sessions))
+              if (saved.username === name) delete state.sessions[id];
+          }
+          return issueSession(state, current, input.remember === true, desktop);
         });
         response.setHeader("Set-Cookie", cookie);
-        return send(publicAccount(store.state.accounts[name]));
+        return send(
+          desktop
+            ? {
+                account: publicAccount(store.state.accounts[name]),
+                backup: encrypted,
+                token: cookie.split(";")[0].split("=")[1],
+              }
+            : publicAccount(store.state.accounts[name]),
+        );
       }
       const current = session(request);
       if (route === "/chat-api/logout") {
@@ -628,9 +741,19 @@ export async function createLoginService(options) {
 
 if (!isMainThread) {
   try {
-    parentPort.postMessage({
-      key: decrypt(validateBackup(workerData.backup), workerData.password),
-    });
+    if (workerData.exportKey) {
+      parentPort.postMessage({
+        backup: encrypt(
+          new Uint8Array(workerData.exportKey),
+          workerData.password,
+          16,
+        ),
+      });
+    } else {
+      parentPort.postMessage({
+        key: decrypt(validateBackup(workerData.backup), workerData.password),
+      });
+    }
   } catch {
     parentPort.postMessage({ error: "backup-unlock-failed" });
   }

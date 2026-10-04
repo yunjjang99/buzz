@@ -101,6 +101,10 @@
     {
       "file": "src/main.tsx",
       "patch": "main.tsx.patch"
+    },
+    {
+      "file": "src/features/onboarding/ui/MachineOnboardingFlow.tsx",
+      "patch": "features__onboarding__ui__MachineOnboardingFlow.tsx.patch"
     }
   ]
 }

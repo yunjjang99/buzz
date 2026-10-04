@@ -5,7 +5,12 @@ import { desktopRoot } from "./overlay.mjs";
 export default defineConfig({
   ...upstream,
   testDir: "./tests",
-  projects: [{ name: "korean", testMatch: "**/korean-locale.spec.ts" }],
+  projects: [
+    {
+      name: "korean",
+      testMatch: ["**/korean-locale.spec.ts", "**/native-account.spec.ts"],
+    },
+  ],
   webServer: {
     command: "python3 -m http.server 4174 -d dist",
     cwd: desktopRoot,

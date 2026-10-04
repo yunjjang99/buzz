@@ -10,8 +10,16 @@ export interface WebAccount {
   provisioningError: string;
 }
 
+type ApiTransport = <T>(route: string, input?: object) => Promise<T>;
+let nativeTransport: ApiTransport | undefined;
+/** Select a memory-only desktop transport; the web entry keeps its cookie transport. */
+export function setNativeLoginTransport(transport: ApiTransport) {
+  nativeTransport = transport;
+}
+
 /** Same-origin, cookie authenticated API; credentials never enter browser storage. */
 export async function loginApi<T>(route: string, input?: object): Promise<T> {
+  if (nativeTransport) return nativeTransport<T>(route, input);
   const response = await fetch(`/chat-api/${route}`, {
     method: input ? "POST" : "GET",
     credentials: "same-origin",
