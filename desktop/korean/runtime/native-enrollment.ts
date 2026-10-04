@@ -13,6 +13,7 @@ export async function enrollNativeIdentity(
   manage: boolean,
   active: () => void,
   ops: NativeOps,
+  unusedInitialKey = false,
 ): Promise<void> {
   const verified = await ops.verify(backup, password);
   active();
@@ -24,7 +25,8 @@ export async function enrollNativeIdentity(
   if (
     !verified.matchesCurrentIdentity &&
     current.storage !== "ephemeral" &&
-    !current.lost
+    !current.lost &&
+    !unusedInitialKey
   )
     throw new Error(
       "기존 앱 계정을 보호하기 위해 연결을 중단했습니다. 기존 계정으로 계속 사용하거나 앱에서 로그아웃한 뒤 다시 로그인하세요.",

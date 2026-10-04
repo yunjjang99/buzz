@@ -1,3 +1,4 @@
+import { readMachineOnboardingCompletion } from "@/features/onboarding/machineOnboarding";
 import { enrollNativeIdentity } from "./native-enrollment";
 import "./native-account.css";
 import { useEffect, useRef, useState, type FormEvent } from "react";
@@ -90,6 +91,10 @@ export function NativeAccount({
           manage,
           requireActive,
           { verify: verifyNcryptsecBackup, import: importIdentity },
+          import.meta.env.VITE_BUZZ_EMPLOYEE_APP === "1" &&
+            !manage &&
+            communities.communities.length === 0 &&
+            !readMachineOnboardingCompletion(current.pubkey),
         );
       }
       requireActive();

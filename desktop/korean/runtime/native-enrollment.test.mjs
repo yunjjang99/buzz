@@ -75,3 +75,25 @@ test("native enrollment preserves durable identities and fences verification bef
   );
   assert.equal(imported, 1);
 });
+
+test("a verified employee identity replaces the isolated unused startup key", async () => {
+  let imported = false;
+  const ops = {
+    verify: async () => ({ pubkey: "staff", matchesCurrentIdentity: false }),
+    import: async () => {
+      imported = true;
+      return { pubkey: "staff", storage: "system-keyring" };
+    },
+  };
+  await enrollNativeIdentity(
+    { pubkey: "unused-startup", storage: "system-keyring" },
+    "staff",
+    "encrypted",
+    "password",
+    false,
+    () => {},
+    ops,
+    true,
+  );
+  assert.equal(imported, true);
+});

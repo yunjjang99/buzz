@@ -93,3 +93,52 @@ test("native settings signs in as the same owner and opens employee management",
     .locator(".account-overlay")
     .screenshot({ path: "test-results/korean-locale/04-native-accounts.png" });
 });
+
+test("isolated first login imports the employee identity rather than the generated startup key", async ({
+  page,
+}) => {
+  const employeePubkey =
+    "e5ebc6cdb579be112e336cc319b5989b4bb6af11786ea90dbe52b5f08d741b34";
+  const encrypted =
+    "ncryptsec1qgg9947rlpvqu76pj5ecreduf9jxhselq2nae2kghhvd5g7dgjtcxfqtd67p9m0w57lspw8gsq6yphnm8623nsl8xn9j4jdzz84zm3frztj3z7s35vpzmqf6ksu8r89qk5z2zxfmu5gv8th8wclt0h4p";
+  await installMockBridge(
+    page,
+    { backupVerificationPubkeys: [employeePubkey] },
+    { skipOnboardingSeed: true, skipCommunitySeed: true },
+  );
+  await page.route("https://buzz.kovar.kr/chat-api/**", (route) =>
+    route.fulfill({
+      json: {
+        account: {
+          ...account,
+          pubkey: employeePubkey,
+          username: "employee",
+          role: "member",
+        },
+        backup: encrypted,
+        token: "b".repeat(64),
+      },
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type,Authorization",
+        "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+      },
+    }),
+  );
+  await page.goto("/");
+  const form = page.getByRole("form", { name: "앱 아이디 로그인" });
+  await form.getByLabel("아이디", { exact: true }).fill("employee");
+  await form
+    .getByLabel("비밀번호", { exact: true })
+    .fill("mock horse battery staple lake orbit");
+  await form.getByRole("button", { name: "로그인", exact: true }).click();
+  await expect(form).not.toBeVisible();
+  await expect(page.getByTestId("open-search")).toBeVisible();
+  expect(
+    await page.evaluate(
+      (key) =>
+        localStorage.getItem(`buzz-machine-onboarding-complete.v2:${key}`),
+      employeePubkey,
+    ),
+  ).toBe("true");
+});
