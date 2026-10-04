@@ -12,7 +12,8 @@
     },
     "web": { "buildManifestSha256": "REPLACE", "kovarSha": "REPLACE" },
     "login": {
-      "image": "REPLACE_REPOSITORY@sha256:REPLACE",
+      "image": "sha256:REPLACE",
+      "archiveSha256": "REPLACE_WITH_DOCKER_SAVE_SHA256",
       "kovarSha": "REPLACE"
     },
     "relay": {

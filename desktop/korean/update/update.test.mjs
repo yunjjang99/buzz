@@ -179,6 +179,11 @@ test("combination records require paired account backup, database rollback decis
     },
   };
   assert.equal(validateCombination(candidate), candidate);
+  const local = structuredClone(candidate);
+  local.components.login.image = `sha256:${"f".repeat(64)}`;
+  assert.throws(() => validateCombination(local), /archive checksum/);
+  local.components.login.archiveSha256 = "a".repeat(64);
+  assert.equal(validateCombination(local), local);
   const missingPair = structuredClone(candidate);
   delete missingPair.accounts.pairedBackupReference;
   assert.throws(() => validateCombination(missingPair), /pairedBackup/);
