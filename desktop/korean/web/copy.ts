@@ -122,6 +122,66 @@ export const copy = {
 export function errorText(error: unknown, language: "ko" | "en"): string {
   const code = error instanceof Error ? error.message : "operation-failed";
   const messages: Record<string, [string, string]> = {
+    "login-service-unavailable": [
+      "로그인 서버에 연결할 수 없습니다. 잠시 후 다시 시도하세요.",
+      "The login service is unavailable. Try again shortly.",
+    ],
+    "invalid-login": [
+      "아이디 또는 비밀번호를 확인해 주세요.",
+      "Check your ID and password.",
+    ],
+    "invalid-username": [
+      "아이디는 영문·숫자·점·밑줄·하이픈으로 3~32자여야 합니다.",
+      "Use 3–32 letters, numbers, dots, underscores or hyphens for the ID.",
+    ],
+    "invalid-password": [
+      "새 비밀번호는 12~128자로 입력하세요.",
+      "Choose a password with 12–128 characters.",
+    ],
+    "invalid-name": [
+      "직원 이름을 80자 이내로 입력하세요.",
+      "Enter a name with at most 80 characters.",
+    ],
+    "username-taken": [
+      "이미 발급된 아이디입니다. 계정 목록을 확인하세요.",
+      "This ID already exists. Check the account list.",
+    ],
+    "account-already-exists": [
+      "이미 연결된 계정 또는 아이디입니다. 계정 목록을 확인하세요.",
+      "The identity or ID is already connected. Check the account list.",
+    ],
+    "owner-backup-required": [
+      "현재 홈서버 소유자의 계정 백업만 최초 연결할 수 있습니다.",
+      "Initial setup requires the current home server owner's backup.",
+    ],
+    "account-provisioning": [
+      "채널 등록이 아직 완료되지 않았습니다. 관리자에게 등록 상태 확인을 요청하세요.",
+      "Channel registration is not complete. Ask your administrator to check its status.",
+    ],
+    "login-required": [
+      "로그인이 만료되었습니다. 로그아웃한 뒤 다시 로그인하세요.",
+      "Your session expired. Sign out and sign in again.",
+    ],
+    "rate-limited": [
+      "요청이 많습니다. 잠시 기다린 뒤 다시 시도하세요.",
+      "Too many requests. Wait a moment and try again.",
+    ],
+    "service-error": [
+      "계정 작업을 완료하지 못했습니다. 계정 목록을 새로고침하고 다시 시도하세요.",
+      "Could not complete the account operation. Refresh the account list before retrying.",
+    ],
+    "password-change-required": [
+      "계정 관리에서 초기 비밀번호를 변경한 뒤 메시지를 보내세요.",
+      "Change your temporary password in account management before sending messages.",
+    ],
+    "password-confirmation-mismatch": [
+      "새 비밀번호와 확인 입력이 다릅니다.",
+      "The new password and confirmation do not match.",
+    ],
+    "password-unchanged": [
+      "초기 비밀번호와 다른 새 비밀번호를 정하세요.",
+      "Choose a different new password.",
+    ],
     "saved-account-invalid": [
       "저장된 계정을 읽을 수 없습니다. 기기에 저장된 계정을 지우고 백업 파일을 다시 연결하세요.",
       "Could not read the saved account. Remove the device copy and reconnect your backup.",

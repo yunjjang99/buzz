@@ -8,6 +8,23 @@ import {
 } from "nostr-tools/pure";
 import { waitForAnimations } from "../../../tests/helpers/animations";
 
+test.beforeEach(async ({ page }) => {
+  await page.route("**/chat-api/**", (route) =>
+    route.fulfill({
+      status: route.request().url().endsWith("/status") ? 200 : 401,
+      contentType: "application/json",
+      body: JSON.stringify(
+        route.request().url().endsWith("/status")
+          ? { configured: true }
+          : { error: "login-required" },
+      ),
+    }),
+  );
+});
+async function openLegacy(page: import("@playwright/test").Page) {
+  await page.locator("summary").click();
+}
+
 const key = new Uint8Array(32).fill(1);
 const relayKey = new Uint8Array(32).fill(2);
 const pubkey = getPublicKey(key);
@@ -91,6 +108,7 @@ async function signInWithExtension(page: import("@playwright/test").Page) {
     };
   }, pubkey);
   await page.goto("/chat/");
+  await openLegacy(page);
   await page
     .getByRole("button", { name: "브라우저 서명 확장으로 로그인" })
     .click();
@@ -183,6 +201,7 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
 }) => {
   const published = await installRelay(page, true);
   await page.goto("/chat/");
+  await openLegacy(page);
   await waitForAnimations(page);
   await page.screenshot({ path: "test-results/korean-web/01-login.png" });
   const password = "temporary fixture password";
@@ -215,6 +234,7 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
   expect(accountRecord).not.toContain(password);
   expect(accountRecord).not.toContain(Buffer.from(key).toString("hex"));
   await page.reload();
+  await openLegacy(page);
   await expect(
     page.getByText("이 기기에 연결된 계정", { exact: true }),
   ).toBeVisible();
@@ -222,7 +242,10 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
     page.getByLabel("암호화 계정 백업", { exact: true }),
   ).toHaveCount(0);
   await page.getByLabel("백업 비밀번호").fill(password);
-  await page.getByRole("button", { name: "로그인", exact: true }).click();
+  await page
+    .locator(".legacy-login")
+    .getByRole("button", { name: "로그인", exact: true })
+    .click();
   await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!");
   await page.getByLabel("메시지 입력").fill("전송 실패 후 재시도");
   await page.getByRole("button", { name: "메시지 보내기" }).click();
@@ -249,6 +272,7 @@ test("local encrypted backup decrypts in the real worker and never crosses the s
   });
   if (await channelList.isVisible()) await channelList.click();
   await page.getByRole("button", { name: "로그아웃", exact: true }).click();
+  await openLegacy(page);
   await expect(
     page.getByText("이 기기에 연결된 계정", { exact: true }),
   ).toBeVisible();
@@ -274,6 +298,7 @@ test("corrupt saved account preserves a recovery path", async ({ page }) => {
     localStorage.setItem("buzz-korean-web.account.v1", "corrupt record");
   });
   await page.goto("/chat/");
+  await openLegacy(page);
   await expect(page.getByRole("alert")).toContainText(
     "저장된 계정을 읽을 수 없습니다",
   );

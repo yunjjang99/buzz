@@ -254,7 +254,6 @@ test("unexpected socket close rejects finite history rather than returning an em
   await rejected;
 });
 
-
 test("device account persists only encrypted identity atomically and preserves recovery", () => {
   const dom = new JSDOM("", { url: "https://buzz.kovar.kr/chat/" });
   globalThis.localStorage = dom.window.localStorage;
@@ -267,10 +266,17 @@ test("device account persists only encrypted identity atomically and preserves r
   const raw = localStorage.getItem("buzz-korean-web.account.v1");
   assert.ok(!raw.includes(password));
   assert.ok(!raw.includes(Buffer.from(key).toString("hex")));
-  assert.throws(() => readAccount("wss://other.example"), /saved-account-invalid/);
+  assert.throws(
+    () => readAccount("wss://other.example"),
+    /saved-account-invalid/,
+  );
   assert.throws(() => saveAccount(relay, pubkey, "plaintext secret"));
   assert.deepEqual(readAccount(relay), expected);
-  globalThis.localStorage = { setItem() { throw new Error("quota-exceeded"); } };
+  globalThis.localStorage = {
+    setItem() {
+      throw new Error("quota-exceeded");
+    },
+  };
   assert.throws(() => saveAccount(relay, pubkey, backup), /quota-exceeded/);
   globalThis.localStorage = dom.window.localStorage;
   localStorage.setItem("buzz-korean-web.account.v1", "corrupt");

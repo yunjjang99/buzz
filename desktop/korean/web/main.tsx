@@ -11,6 +11,9 @@ import {
   forgetAccount,
   type SavedAccount,
 } from "./account";
+import { LoginPanel } from "./LoginPanel";
+import { AccountPanel } from "./AccountPanel";
+import { accountSigner, loginApi, type WebAccount } from "./login-api";
 import { Relay } from "./relay";
 import { acknowledgeOutbox, readOutbox, saveOutbox } from "./outbox";
 import {
@@ -65,6 +68,9 @@ function LanguageControl() {
 function App() {
   const language = useLocale();
   const text = copy[language];
+  const [webAccount, setWebAccount] = useState<WebAccount | null>(null);
+  const [accountPanel, setAccountPanel] = useState(false);
+  const [legacyOpen, setLegacyOpen] = useState(false);
   const [identity, setIdentity] = useState<Signer | null>(null);
   const [connected, setConnected] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -314,7 +320,34 @@ function App() {
     }
   }
 
-  function logout() {
+  async function employeeLogin(account: WebAccount) {
+    ++generation.current;
+    signer.current?.dispose();
+    client.current?.dispose();
+    const next = accountSigner(account);
+    signer.current = next;
+    setWebAccount(account);
+    setIdentity(next);
+    setAccountPanel(account.mustChangePassword);
+    await connect(next);
+  }
+
+  async function logout() {
+    if (webAccount) {
+      try {
+        await loginApi("logout", {});
+      } catch (failure) {
+        if (
+          !(failure instanceof Error) ||
+          failure.message !== "login-required"
+        ) {
+          setError(failure);
+          return;
+        }
+      }
+    }
+    setWebAccount(null);
+    setAccountPanel(false);
     ++generation.current;
     ++channelGeneration.current;
     ++loadGeneration.current;
@@ -500,6 +533,13 @@ function App() {
         </a>
         <LanguageControl />
       </header>
+      {webAccount && accountPanel && (
+        <AccountPanel
+          account={webAccount}
+          onChange={setWebAccount}
+          onClose={() => setAccountPanel(false)}
+        />
+      )}
       {!identity ? (
         <main className="login-layout">
           <section className="login-intro">
@@ -516,112 +556,127 @@ function App() {
           <section className="login-card" aria-labelledby="welcome">
             <h2 id="welcome">{text.welcome}</h2>
             <p className="server">buzz.kovar.kr</p>
-            <form
-              onSubmit={(event) => {
-                event.preventDefault();
-                void login("backup");
-              }}
+            <LoginPanel onLogin={employeeLogin} restore={!legacyOpen} />
+            <details
+              className="legacy-login"
+              onToggle={(event) => setLegacyOpen(event.currentTarget.open)}
             >
-              {useSaved && savedAccount ? (
-                <div className="saved-account">
-                  <strong>{text.savedAccount}</strong>
-                  <span>{npubEncode(savedAccount.pubkey).slice(0, 20)}…</span>
-                  <p className="help">{text.savedHelp}</p>
-                  <input
-                    type="text"
-                    name="username"
-                    autoComplete="username"
-                    value={savedAccount.pubkey}
-                    readOnly
-                    hidden
-                  />
-                </div>
-              ) : (
-                <>
-                  <label htmlFor="backup-file">{text.backup}</label>
-                  <input
-                    ref={fileInput}
-                    id="backup-file"
-                    type="file"
-                    accept=".ncryptsec,.txt"
-                    disabled={busy}
-                    onChange={(event) =>
-                      setFile(event.target.files?.[0] ?? null)
-                    }
-                  />
-                  <p className="help">{text.backupHelp}</p>
-                  <label className="remember-account">
-                    <input
-                      type="checkbox"
-                      checked={remember}
-                      disabled={busy}
-                      onChange={(event) => setRemember(event.target.checked)}
-                    />
-                    <span>{text.remember}</span>
-                  </label>
-                  <p className="help">{text.rememberHelp}</p>
-                </>
-              )}
-              <label htmlFor="backup-password">{text.password}</label>
-              <input
-                id="backup-password"
-                type="password"
-                name="password"
-                autoComplete="current-password"
-                value={password}
-                disabled={busy}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-              <button
-                className="primary"
-                type="submit"
-                disabled={busy || (!useSaved && !file) || !password}
+              <summary>
+                {language === "ko"
+                  ? "기존 백업·서명 확장으로 로그인"
+                  : "Sign in with a backup or browser signer"}
+              </summary>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void login("backup");
+                }}
               >
-                {busy ? text.connecting : useSaved ? text.signIn : text.unlock}
-              </button>
-            </form>
-            {Boolean(savedAccount || accountError) && (
-              <div className="account-actions">
-                {savedAccount && (
+                {useSaved && savedAccount ? (
+                  <div className="saved-account">
+                    <strong>{text.savedAccount}</strong>
+                    <span>{npubEncode(savedAccount.pubkey).slice(0, 20)}…</span>
+                    <p className="help">{text.savedHelp}</p>
+                    <input
+                      type="text"
+                      name="username"
+                      autoComplete="username"
+                      value={savedAccount.pubkey}
+                      readOnly
+                      hidden
+                    />
+                  </div>
+                ) : (
+                  <>
+                    <label htmlFor="backup-file">{text.backup}</label>
+                    <input
+                      ref={fileInput}
+                      id="backup-file"
+                      type="file"
+                      accept=".ncryptsec,.txt"
+                      disabled={busy}
+                      onChange={(event) =>
+                        setFile(event.target.files?.[0] ?? null)
+                      }
+                    />
+                    <p className="help">{text.backupHelp}</p>
+                    <label className="remember-account">
+                      <input
+                        type="checkbox"
+                        checked={remember}
+                        disabled={busy}
+                        onChange={(event) => setRemember(event.target.checked)}
+                      />
+                      <span>{text.remember}</span>
+                    </label>
+                    <p className="help">{text.rememberHelp}</p>
+                  </>
+                )}
+                <label htmlFor="backup-password">{text.password}</label>
+                <input
+                  id="backup-password"
+                  type="password"
+                  name="password"
+                  autoComplete="current-password"
+                  value={password}
+                  disabled={busy}
+                  onChange={(event) => setPassword(event.target.value)}
+                />
+                <button
+                  className="primary"
+                  type="submit"
+                  disabled={busy || (!useSaved && !file) || !password}
+                >
+                  {busy
+                    ? text.connecting
+                    : useSaved
+                      ? text.signIn
+                      : text.unlock}
+                </button>
+              </form>
+              {Boolean(savedAccount || accountError) && (
+                <div className="account-actions">
+                  {savedAccount && (
+                    <button
+                      type="button"
+                      disabled={busy}
+                      onClick={() => {
+                        setUseSaved(!useSaved);
+                        setPassword("");
+                        setFile(null);
+                        setError(null);
+                      }}
+                    >
+                      {useSaved ? text.otherAccount : text.backToSaved}
+                    </button>
+                  )}
                   <button
                     type="button"
                     disabled={busy}
-                    onClick={() => {
-                      setUseSaved(!useSaved);
-                      setPassword("");
-                      setFile(null);
-                      setError(null);
-                    }}
+                    onClick={removeSavedAccount}
                   >
-                    {useSaved ? text.otherAccount : text.backToSaved}
+                    {text.forget}
                   </button>
-                )}
-                <button
-                  type="button"
-                  disabled={busy}
-                  onClick={removeSavedAccount}
-                >
-                  {text.forget}
-                </button>
+                </div>
+              )}
+              {Boolean(accountError) && (
+                <p className="error" role="alert">
+                  {errorText(accountError, language)}
+                </p>
+              )}
+              <div className="divider">
+                <span>{language === "ko" ? "또는" : "or"}</span>
               </div>
-            )}
-            {Boolean(accountError) && (
-              <p className="error" role="alert">
-                {errorText(accountError, language)}
-              </p>
-            )}
-            <div className="divider">
-              <span>{language === "ko" ? "또는" : "or"}</span>
-            </div>
-            <button
-              className="secondary"
-              type="button"
-              disabled={busy}
-              onClick={() => void login("extension")}
-            >
-              {text.extension}
-            </button>
-            <p className="privacy">{text.privacy}</p>
+              <button
+                className="secondary"
+                type="button"
+                disabled={busy}
+                onClick={() => void login("extension")}
+              >
+                {text.extension}
+              </button>
+              <p className="privacy">{text.privacy}</p>
+            </details>
             {Boolean(error) && (
               <p className="error" role="alert">
                 {errorText(error, language)}
@@ -740,7 +795,12 @@ function App() {
                   <small>{text.identity}</small>
                 </div>
               </div>
-              <button type="button" onClick={logout}>
+              {webAccount && (
+                <button type="button" onClick={() => setAccountPanel(true)}>
+                  {language === "ko" ? "계정 관리" : "Account management"}
+                </button>
+              )}
+              <button type="button" onClick={() => void logout()}>
                 {text.logout}
               </button>
             </div>

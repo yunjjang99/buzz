@@ -1,6 +1,9 @@
 {$BUZZ_DOMAIN} {
   encode zstd gzip
   redir /chat /chat/ 308
+  handle /chat-api/* {
+    reverse_proxy buzz-login:3101
+  }
   handle_path /chat/* {
     root * /srv/buzz-chat
     header {
