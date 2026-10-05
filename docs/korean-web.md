@@ -322,3 +322,23 @@ pnpm exec playwright test --config korean/playwright.config.ts native-account.sp
 실제 관리자 MFA 등록은 본인이 웹에서 완료해야 합니다. 이번 배포는 웹과 로그인
 서비스이며 데스크톱 설치 파일 배포는 포함하지 않습니다. 구버전 데스크톱의
 관리자 아이디 로그인에는 새 MFA 입력 UI가 필요하므로 웹을 이용합니다.
+
+### 서버 시각 웹 배포 기록 — 2026-10-05 (한국 시간)
+
+`9f7d6b756`을 `dev`와 운영 웹·로그인 서비스에 반영했습니다.
+로그인 이미지: `local/buzz-login:f6d46f809403`, 웹 빌드: `c7ac874138bb`.
+서버 시각 응답과 캐시 금지, `/health`, 공개 HTML 및 자산 8개의 SHA256,
+실행 중인 로그인 서버 파일의 빌드 SHA256 일치, 브라우저의 실제 릴레이
+WebSocket AUTH challenge를 확인했습니다.
+
+배포용 로그인 서비스 테스트 20개가 통과했습니다. 배포된 웹 자산을 사용하는
+Chromium·모바일 WebKit 테스트 8개도 통과했습니다. 여기에는 PC 시계가 1년
+앞/뒤인 상태의 일반 글·첨부·다운로드, 아이디 로그인과 백업 서명이 포함됩니다.
+브라우저의 인증·전송 대상은 합성 계정·테스트 릴레이이며 실제 직원 대화에는
+테스트 메시지를 보내지 않았습니다. 실제 사용자 계정의 다른 PC 확인은 별도입니다.
+
+배포 전 비공개 계정/키 백업:
+`/Users/kovar/Servers/buzz/backups/before-server-time-20261005T100232Z/accounts-and-master.tar.gz`.
+설정·HTML 복구본:
+`/Users/kovar/Servers/buzz/web-deploy-backups/20261005T100233Z-c7ac874138bb/`.
+이미 열어 둔 웹 탭은 새로고침하여 새 서명 경로를 사용해야 합니다.
