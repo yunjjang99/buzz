@@ -12,12 +12,11 @@ export function command(
   } = {},
 ) {
   return new Promise((resolve, reject) => {
-    const ownsGroup = process.env.KOVAR_PROCESS_GROUP !== "1";
     const child = spawn(command, args, {
       cwd,
-      env: { ...env, KOVAR_PROCESS_GROUP: "1" },
+      env,
       stdio: ["ignore", "pipe", "pipe"],
-      detached: process.platform !== "win32" && ownsGroup,
+      detached: process.platform !== "win32",
     });
     let failure;
     let bytes = 0;
@@ -34,7 +33,36 @@ export function command(
           failure = new Error("Process-tree cleanup failed");
       } else {
         try {
-          process.kill(ownsGroup ? -child.pid : child.pid, signal);
+          // Nested supervisors may create their own process groups. Include all
+          // descendants before signalling the root, so reparenting cannot hide them.
+          const snapshot = spawnSync(
+            "ps",
+            ["-A", "-o", "pid=", "-o", "ppid="],
+            { encoding: "utf8", timeout: 5000, maxBuffer: 4 * 1024 * 1024 },
+          );
+          if (snapshot.error || snapshot.status !== 0)
+            throw new Error("Cannot inspect descendant processes for cleanup");
+          const pairs = snapshot.stdout
+            .trim()
+            .split("\n")
+            .map((line) => line.trim().split(/\s+/).map(Number));
+          const owned = new Set([child.pid]);
+          for (let changed = true; changed; ) {
+            changed = false;
+            for (const [pid, parent] of pairs)
+              if (owned.has(parent) && !owned.has(pid)) {
+                owned.add(pid);
+                changed = true;
+              }
+          }
+          for (const pid of [...owned].reverse()) {
+            try {
+              process.kill(pid, signal);
+            } catch (error) {
+              if (error.code !== "ESRCH") throw error;
+            }
+          }
+          process.kill(-child.pid, signal);
         } catch (error) {
           if (error.code !== "ESRCH") failure = error;
         }
@@ -56,7 +84,13 @@ export function command(
     const receive = (data) => {
       bytes += data.length;
       if (bytes > 8 * 1024 * 1024) stop(`Output limit exceeded: ${command}`);
-      else onOutput(data);
+      else {
+        try {
+          onOutput(data);
+        } catch (error) {
+          stop(`Cannot write command output: ${error.message}`);
+        }
+      }
     };
     child.stdout.on("data", receive);
     child.stderr.on("data", receive);
@@ -67,7 +101,7 @@ export function command(
       clearTimeout(timer);
       clearTimeout(escalation);
       // The outer supervisor sweeps remaining descendants, including nested runners.
-      if (ownsGroup && process.platform !== "win32") kill();
+      if (process.platform !== "win32") kill();
       process.removeListener("SIGINT", interrupt);
       process.removeListener("SIGTERM", interrupt);
       if (failure || code !== 0)

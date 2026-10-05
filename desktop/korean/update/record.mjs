@@ -38,13 +38,20 @@ export function validateCombination(record) {
   }
   for (const kind of ["login", "relay"]) {
     const entry = record.components?.[kind];
-    if (
-      !/^[a-z0-9./_-]+(?::[a-zA-Z0-9._-]+)?@sha256:[a-f0-9]{64}$/.test(
+    const registryDigest =
+      /^[a-z0-9./_-]+(?::[a-zA-Z0-9._-]+)?@sha256:[a-f0-9]{64}$/.test(
         entry?.image ?? "",
-      ) ||
+      );
+    const archivedLocalImage =
+      /^sha256:[a-f0-9]{64}$/.test(entry?.image ?? "") &&
+      sha(entry?.archiveSha256, 64);
+    if (
+      (!registryDigest && !archivedLocalImage) ||
       !sha(entry?.[kind === "relay" ? "upstreamSha" : "kovarSha"], 40)
     )
-      throw new Error(`Require immutable image digest and source SHA: ${kind}`);
+      throw new Error(
+        `Require immutable image digest (or local ID + archive checksum) and source SHA: ${kind}`,
+      );
   }
   for (const [section, keys] of Object.entries({
     database: [

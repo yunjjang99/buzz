@@ -265,7 +265,11 @@ node desktop/korean/update/record.mjs --input /private/kovar-combination.json --
 
    이 기존 명령은 config/index를 백업하고, 이전 해시 자산을 보존하며, 로그인
    이미지를 content 기반 이름으로 만들고 Caddy를 갱신한다. 실제 이미지 ID도
-   조합 기록에 추가한다. 기록을 `deployed`로 바꾸는 것은 배포 후 운영자 확인이다.
+   조합 기록에 추가한다. 로컬 로그인 이미지는 registry digest가 없을 수 있으므로
+   `docker image inspect --format '{{.Id}}' IMAGE`의 `sha256:...` ID와
+   `docker save --output /private/backups/login-image.tar IMAGE`로 보존한 파일의
+   SHA-256을 `archiveSha256`에 기록한다. 복구 때 `docker load --input`으로
+   보존 이미지를 먼저 불러온다. image ID를 repository manifest digest로 꾸미지 않는다. 기록을 `deployed`로 바꾸는 것은 배포 후 운영자 확인이다.
 6. relay는 별도 유지보수 작업이다. 위 명령은 relay/DB를 업그레이드하지 않는다.
    `deploy/compose`와 기존 홈서버 runbook을 따라 검증된 **정확한 image digest**만
    지정한다. DB migration 실행 여부/순서를 먼저 결정하고 원본 새 이미지가
