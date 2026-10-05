@@ -227,3 +227,27 @@ Tauri 식별자는 `kr.kovar.buzz.desktop`, 원본의 이름 있는 계정 격�
 원본 확인·격리 통합·필수 검증·Kovar 후보 빌드·배포 및 복구는
 [Kovar 원본 업데이트 운영](kovar-updates.md)을 따릅니다. 검사와 빌드는 운영을
 변경하지 않으며, 실제 릴레이 검증 없이 Mock 결과만으로 출시하지 않습니다.
+
+## 2026-10-05 관리자 MFA Mac 로컬 업데이트
+
+- 설치 소스: `4af047c6c` (`codex/admin-mfa`), 앱 버전 `0.5.26`, Apple Silicon.
+- 관리자 비밀번호 로그인/관리 기능 재인증에 MFA를 적용한다. 기존 기기 키를 이용한
+  채팅 접속은 유지된다. 실제 관리자 인증 앱 등록과 복구 코드 보관은 사용자가 수행한다.
+- 이미 설치되어 있던 전략실의 소스를 `fa4f` 작업 공간에서 복사해 함께 보존했다.
+  웹 배포와 원래 작업 공간은 이 데스크톱 업데이트에서 수정하지 않았다.
+- 동일 Rust 소스와 루트 Cargo.lock임을 확인한 `c312bab4a41e` 빌드의 sidecar 6개를
+  재사용했다. 파일별 SHA-256은 아래 배포 기록의 `buzz-mfa-sidecars.json`에 있다.
+- overlay/변환 TypeScript, MFA·직원 계정·전략실 mock UI 10개, 전략실 모델 6개 통과.
+  네이티브 release 빌드와 ad-hoc 서명 후 `codesign --verify --deep --strict` 통과.
+  전체 `just ci`, Windows 빌드, Developer ID 서명/공증은 수행하지 않았다.
+- 설치: `/Users/kovar/Applications/Kovar Buzz.app`.
+- 이전 앱: `/Users/kovar/Applications/Kovar Buzz Backups/Kovar Buzz-before-MFA-20261005-165606.app`.
+- ZIP·SHA256SUMS·로그·배포 상태:
+  `/Users/kovar/Servers/buzz/desktop-releases/mfa-4af047c6c-20261005/`.
+- 설치 후 시작 시 macOS 키체인 승인 대기가 확인되었다. SecurityAgent 시스템 창은
+  자동화 도구가 접근을 차단하므로 사용자가 Mac 로그인 비밀번호를 직접 입력해
+  승인해야 한다. 키체인/계정 저장소를 삭제하거나 초기화해서 우회하지 않는다.
+  승인 이후 네이티브 화면·관리자 재인증 확인은 배포 기록에 별도로 남긴다.
+- 복구하려면 앱을 종료한 뒤 현재 앱을 보관하고 위 백업 앱을 같은 설치 경로로
+  복원한다. 앱 데이터와 OS 키체인은 유지한다. 이 ZIP은 로컬 보관용이며 공증된
+  직원 배포물이나 자동 업데이트로 게시한 것이 아니다.
