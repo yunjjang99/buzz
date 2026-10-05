@@ -37,6 +37,7 @@ import {
   messageText,
 } from "./media-protocol";
 import "./style.css";
+import "./strategy/embed";
 
 import { relayUrl } from "./config";
 document.documentElement.lang = getLocale();

@@ -5,7 +5,7 @@ on:
   pull_request:
     paths: ['desktop/**', 'crates/**', 'migrations/**', 'schema/**', 'Cargo.*', 'pnpm-lock.yaml', 'scripts/**', '.github/workflows/kovar-*.yml']
   push:
-    branches: [main, 'codex/**']
+    branches: [main, dev, 'codex/**']
     paths: ['desktop/**', 'crates/**', 'migrations/**', 'schema/**', 'Cargo.*', 'pnpm-lock.yaml', 'scripts/**', '.github/workflows/kovar-*.yml']
 permissions:
   contents: read

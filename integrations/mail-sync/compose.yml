@@ -1,0 +1,32 @@
+name: kovar-mail-sync
+services:
+  mail-sync:
+    build: .
+    image: local/kovar-mail-sync:20261005
+    restart: unless-stopped
+    ports: ["127.0.0.1:8766:8766"]
+    environment:
+      BUZZ_MAIL_RELAY_ORIGIN: https://buzz.kovar.kr
+      BUZZ_MAIL_RELAY_INTERNAL: http://relay:3000
+    networks: [buzz]
+    volumes: ["mail-data:/data"]
+    read_only: true
+    tmpfs: ["/tmp:size=16m"]
+    cap_drop: [ALL]
+    security_opt: ["no-new-privileges:true"]
+    mem_limit: 512m
+    pids_limit: 64
+    logging:
+      driver: json-file
+      options: { max-size: "5m", max-file: "2" }
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:8766/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+volumes:
+  mail-data:
+networks:
+  buzz:
+    external: true
+    name: buzz-home_buzz-net

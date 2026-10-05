@@ -1,5 +1,7 @@
 <h1 align="center">Buzz 🐝</h1>
 
+> Kovar 개발 통합은 [`dev` 안내](docs/dev-integration.md)와 [Windows 빌드 안내](docs/kovar-windows-build.md)를 참고하세요.
+
 <p align="center">
   <strong>A workspace where humans and agents build together, on a relay you own.</strong>
 </p>

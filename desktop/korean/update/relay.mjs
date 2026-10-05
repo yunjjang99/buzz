@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { encrypt, decrypt } from "nostr-tools/nip49";
 import { finalizeEvent, getPublicKey } from "nostr-tools/pure";
 import { createLoginService } from "../web/login-service/server.mjs";
+import { hotp } from "../web/login-service/mfa.mjs";
 import { RelayBridge } from "../web/login-service/relay.mjs";
 import { Relay } from "../web/relay.ts";
 import { relayFixture } from "./relay-fixture.mjs";
@@ -90,14 +91,41 @@ async function connect(account, cookie) {
 }
 try {
   await startLogin();
-  const admin = await api("setup", {
+  const setup = await api("setup", {
     username: "admin",
     name: "합성 관리자",
     password,
     backup: encrypt(ownerKey, password, 10),
     backupPassword: password,
   });
+  assert.equal(setup.status, 200);
+  assert.ok(setup.value.mfaEnrollment);
+  assert.equal(
+    (await api("admin/accounts", undefined, setup.cookie)).status,
+    401,
+  );
+  const encoded = setup.value.mfaEnrollment.secret;
+  const bits = [...encoded]
+    .map((letter) =>
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"
+        .indexOf(letter)
+        .toString(2)
+        .padStart(5, "0"),
+    )
+    .join("");
+  const secret = Buffer.from(
+    (bits.match(/.{8}/g) ?? []).map((byte) => parseInt(byte, 2)),
+  );
+  const admin = await api("login", {
+    username: "admin",
+    password,
+    mfaChallenge: setup.value.mfaEnrollment.challenge,
+    recoverySaved: true,
+    mfaCode: hotp(secret, Math.floor(Date.now() / 30000)),
+  });
+  secret.fill(0);
   assert.equal(admin.status, 200);
+  assert.ok(admin.cookie);
   const channel = randomUUID();
   const privateChannel = randomUUID();
   for (const [id, name] of [

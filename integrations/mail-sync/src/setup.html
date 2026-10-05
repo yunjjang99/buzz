@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KOVAR Buzz · 메일 연결</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f5f6;color:#18242a;font:1rem/1.65 system-ui,sans-serif}main{max-width:850px;margin:3rem auto;padding:0 1.5rem}h1{font-size:2rem;margin:.4rem 0}h2{font-size:1.3rem;margin:0}a{color:#075d53}header,article,aside{background:white;border:1px solid #dce4e2;border-radius:1rem;padding:1.5rem;margin-bottom:1.3rem}header{border-top:.3rem solid #137767}.eyebrow{font-size:.8rem;letter-spacing:.08em;color:#327167;font-weight:700}.muted{color:#586766;font-size:.9rem}label{display:block;margin-top:1rem;font-weight:600}input{width:100%;padding:.8rem;border:1px solid #829e99;border-radius:.5rem;font:inherit}button{background:#12685c;color:white;border:0;border-radius:.5rem;padding:.8rem 1.1rem;margin:.9rem .4rem 0 0;font:inherit;cursor:pointer}button.secondary{background:#e9efee;color:#24473f}button:disabled{opacity:.5;cursor:wait}.status{background:#eef4f2;padding:.8rem;border-radius:.5rem;margin:1rem 0}.error{color:#9f2424}#notice{min-height:1.7rem}li{margin:.3rem 0}small{font-size:.85rem}footer{color:#586766;margin:2rem 0}input:focus,button:focus,a:focus{outline:3px solid #4da894;outline-offset:3px}
+</style></head><body><main>
+<header><div class="eyebrow">KOVAR BUZZ / 메일 연결</div><h1>두 회사의 메일을 Buzz에서</h1>
+<p>받은메일과 보낸메일을 회사별 채널에 모읍니다. 최근 3개월부터 가져오며, 이후에는 약 2분 간격으로 새 메일을 확인합니다.</p>
+<p class="muted">이 화면은 서버가 설치된 Mac에서만 열립니다. 아래 비밀번호는 일반 로그인 비밀번호가 아닌 <strong>앱 비밀번호</strong>입니다. 채팅에 보내지 말고 이 화면에 직접 입력하세요.</p>
+<p id="summary" class="status">수집 상태를 확인하고 있습니다.</p></header>
+<aside><h2>코바 업무 자동 분류</h2><p id="classification-status" role="status">분류 상태 확인 중</p><p class="muted">견적요청·견적관리·공급처오퍼·주문발주·배송입고·운영관리·정보알림으로 분류합니다. 애매한 메일은 공동메일분류 채널에서 확인합니다. 분류는 메일의 업무 종류를 표시하며 판매나 결제를 확정하지 않습니다.</p></aside>
+<div id="accounts"></div>
+<div id="notice" role="status" aria-live="polite"></div>
+<aside><h2>연결 전 준비</h2><ol>
+<li><strong>Gmail</strong>: nova@kovar.kr로 Google에 로그인한 뒤 2단계 인증을 설정하고 <a href="https://myaccount.google.com/apppasswords" target="_blank" rel="noreferrer">앱 비밀번호</a>를 생성해 코바 입력칸에 넣으세요. 조직에서 앱 비밀번호를 막았다면 관리자 설정 또는 별도 OAuth 연결이 필요합니다.</li>
+<li><strong>네이버</strong>: cbtcshin@naver.com의 <a href="https://mail.naver.com/v2/settings/smtp/imap" target="_blank" rel="noreferrer">메일 설정 → IMAP/SMTP</a>에서 IMAP 사용을 켜고, <a href="https://nid.naver.com/user2/help/myInfo?m=viewSecurity" target="_blank" rel="noreferrer">보안 설정</a>의 2단계 인증에서 애플리케이션 비밀번호를 만들어 청북 입력칸에 넣으세요.</li>
+</ol><p class="muted">원본 메일을 보내거나 삭제하거나 읽음 처리하지 않습니다. 스팸·휴지통·임시보관함은 제외합니다. 첨부파일은 이름을 기록하며, 8 MiB 초과 메일은 제목·주소 등 기본 정보만 기록합니다. 자동 회신·전달 메일은 견적 발송이나 판매 확정으로 처리하지 않습니다.</p></aside>
+<button id="retry" class="secondary">연결 상태 다시 확인</button>
+<footer>Buzz 직원은 공개된 회사별 메일연동 채널에 참여할 수 있습니다. Mac과 Docker가 실행 중이어야 수집이 이어집니다.</footer>
+</main><script src="/setup-ui.js"></script></body></html>

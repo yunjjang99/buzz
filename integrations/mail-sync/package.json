@@ -1,0 +1,8 @@
+{
+  "name": "kovar-buzz-mail-sync",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=24" },
+  "scripts": { "start": "node src/server.mjs", "test": "node --test test/*.test.mjs" },
+  "dependencies": { "imapflow": "2.2.5", "mailparser": "3.9.35", "nostr-tools": "2.25.2" }
+}

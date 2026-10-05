@@ -1,7 +1,7 @@
 # Windows PC에서 Kovar Buzz 빌드하기
 
 대상은 **Windows 10/11 x64, MSVC**다. WSL/Linux 셸이나 Windows ARM64용 빌드가 아니다.
-저장소 `yunjjang99/buzz`의 **`codex/admin-mfa` 브랜치**에 관리자 MFA, 단계별 로그인
+저장소 `yunjjang99/buzz`의 **`dev` 브랜치**에 관리자 MFA, 단계별 로그인
 잠금, 한국어 UI, 직원 계정, 전략실 및 아래 빌드 스크립트가 있다. `main`을 받으면
 이 변경이 포함되지 않을 수 있다. 서버는 이미 `https://buzz.kovar.kr`에서 운영 중이다.
 클라이언트 빌드에는 운영 서버 `.env`, 개인키, `accounts.json`, `master.key`가 필요 없다.
@@ -39,7 +39,7 @@ Windows에서는 Hermit 활성화 대신 위의 네이티브 도구체인을 사
 ```powershell
 New-Item -ItemType Directory -Force C:\src | Out-Null
 Set-Location C:\src
-git -c core.autocrlf=false clone --branch codex/admin-mfa https://github.com/yunjjang99/buzz.git kovar-buzz
+git -c core.autocrlf=false clone --branch dev https://github.com/yunjjang99/buzz.git kovar-buzz
 Set-Location C:\src\kovar-buzz
 git config core.autocrlf false
 git status --short
@@ -51,7 +51,7 @@ rustup target add x86_64-pc-windows-msvc
 명령이 실패하면 다음 단계로 진행하지 말고 오류를 해결한다. `git status --short`는
 비어 있어야 한다. 설치 중 파일이 바뀌었다면 변경을 검토하고 보존한다. `reset --hard`,
 키체인 초기화, lockfile 삭제로 넘어가지 않는다. 이미 clone한 PC는 변경을 보존한 뒤
-`git fetch origin`, `git switch codex/admin-mfa`, `git pull --ff-only`로 갱신한다.
+`git fetch origin`, `git switch dev`, `git pull --ff-only`로 갱신한다.
 
 ## 3. 로컬 시험용 설치 파일 생성
 

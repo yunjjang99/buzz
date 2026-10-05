@@ -7,6 +7,17 @@ export default defineConfig({
   root: path.join(koreanRoot, "web"),
   base: "/chat/",
   plugins: [react()],
-  build: { outDir: "../web-dist", emptyOutDir: true },
+  build: {
+    outDir: "../web-dist",
+    emptyOutDir: true,
+    manifest: true,
+    rollupOptions: {
+      input: {
+        strategyEmbed: path.join(koreanRoot, "web/strategy/embed.tsx"),
+        chat: path.join(koreanRoot, "web/index.html"),
+        strategy: path.join(koreanRoot, "web/strategy.html"),
+      },
+    },
+  },
   server: { host: "127.0.0.1", port: 4180, strictPort: true },
 });

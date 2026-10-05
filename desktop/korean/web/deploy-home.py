@@ -104,11 +104,13 @@ entry = destination / ".index-next.html"
 # bootstrap; hashed dependencies remain available because assets are additive.
 next_entry = (build / "index.html").read_text()
 strategy_bootstrap = re.findall(r'<(?:script|link)\b[^>]*data-buzz-strategy[^>]*>(?:</script>)?', old_entry)
-if strategy_bootstrap:
+if strategy_bootstrap and 'name="buzz-strategy-bundled" content="1"' not in next_entry:
     if next_entry.count("</body>") != 1:
         raise SystemExit("Cannot preserve the strategy bootstrap in the new chat entry.")
     next_entry = re.sub(r'<(?:script|link)\b[^>]*data-buzz-strategy[^>]*>(?:</script>)?', '', next_entry)
     next_entry = next_entry.replace("</body>", ''.join(strategy_bootstrap) + "</body>")
+if (build / "strategy.html").is_file():
+    shutil.copy2(build / "strategy.html", destination / "strategy.html")
 entry.write_text(next_entry)
 try:
     caddy_file.write_text(new_caddy)
