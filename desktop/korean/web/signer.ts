@@ -1,5 +1,6 @@
 import { verifyEvent, type Event, type EventTemplate } from "nostr-tools/pure";
 import { validateBackup } from "./protocol";
+import { atServerTime, readServerTime } from "./server-time";
 
 export interface Signer {
   pubkey: string;
@@ -51,9 +52,11 @@ export async function extensionSigner(): Promise<Signer> {
     pubkey,
     async sign(template) {
       if (!active) throw new Error("locked");
-      const event = await provider.signEvent(template);
+      const approved = atServerTime(template, await readServerTime());
       if (!active) throw new Error("locked");
-      return checkedEvent(template, event, pubkey);
+      const event = await provider.signEvent(approved);
+      if (!active) throw new Error("locked");
+      return checkedEvent(approved, event, pubkey);
     },
     dispose() {
       active = false;
@@ -120,9 +123,10 @@ export async function backupSigner(
     return {
       pubkey,
       async sign(template) {
+        const approved = atServerTime(template, await readServerTime());
         return checkedEvent(
-          template,
-          (await request("sign", { template })) as Event,
+          approved,
+          (await request("sign", { template: approved })) as Event,
           pubkey,
         );
       },

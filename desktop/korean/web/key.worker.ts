@@ -8,9 +8,10 @@ import { assertNoKeys, KINDS, validateBackup } from "./protocol";
 
 import { relayUrl } from "./config";
 import { validMediaAuth } from "./media-protocol";
+import { readServerTime } from "./server-time";
 
 let secret: Uint8Array | null = null;
-self.onmessage = (
+self.onmessage = async (
   message: MessageEvent<{
     id: number;
     operation: string;
@@ -33,7 +34,7 @@ self.onmessage = (
       if (
         template.kind !== KINDS.auth &&
         template.kind !== KINDS.message &&
-        !validMediaAuth(template, relayUrl, Math.floor(Date.now() / 1000))
+        !validMediaAuth(template, relayUrl, await readServerTime())
       )
         throw new Error("unsupported-operation");
       assertNoKeys(template.content);

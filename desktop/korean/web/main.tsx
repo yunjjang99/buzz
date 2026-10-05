@@ -517,7 +517,7 @@ function App() {
             <time dateTime={new Date(message.created_at * 1000).toISOString()}>
               {new Date(message.created_at * 1000).toLocaleTimeString(
                 language === "ko" ? "ko-KR" : "en-US",
-                { hour: "2-digit", minute: "2-digit" },
+                { hour: "2-digit", minute: "2-digit", timeZone: "Asia/Seoul" },
               )}
             </time>
             {message.edited && !message.deleted && <span>{text.edited}</span>}

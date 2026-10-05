@@ -20,7 +20,7 @@ test("authenticated strategy task saves, appears by time, completes and survives
   await page.route("**/chat-api/**", async (route) => {
     const path = new URL(route.request().url()).pathname;
     let body: unknown = path.endsWith("/status")
-      ? { configured: true }
+      ? { configured: true, serverTime: Math.floor(Date.now() / 1000) }
       : account;
     if (path.endsWith("/sign"))
       body = finalizeEvent(route.request().postDataJSON().template, key);
@@ -109,7 +109,7 @@ test("unauthenticated strategy shows sign-in and does not expose mail or metrics
       contentType: "application/json",
       body: JSON.stringify(
         route.request().url().endsWith("/status")
-          ? { configured: true }
+          ? { configured: true, serverTime: Math.floor(Date.now() / 1000) }
           : { error: "login-required" },
       ),
     }),

@@ -10,6 +10,7 @@ import {
   installRelay,
   signInWithExtension,
 } from "./fixtures";
+import { validMediaAuth } from "../media-protocol";
 import { waitForAnimations } from "../../../tests/helpers/animations";
 
 const bytes = Buffer.from("웹 첨부 파일 테스트\n");
@@ -41,7 +42,7 @@ test.beforeEach(async ({ page }) => {
     route.fulfill({
       status: route.request().url().endsWith("/status") ? 200 : 401,
       json: route.request().url().endsWith("/status")
-        ? { configured: true }
+        ? { configured: true, serverTime: Math.floor(Date.now() / 1000) }
         : { error: "login-required" },
     }),
   );
@@ -169,6 +170,7 @@ test("upload failure retains files and text, and retry posts a threaded attachme
     .getByRole("button", { name: "답장", exact: true })
     .click();
   await attach(page);
+  await page.clock.setFixedTime(new Date(Date.now() + 86400000));
   await page.getByLabel("메시지 입력").fill("검토 부탁드립니다");
   await page.getByRole("button", { name: "메시지 보내기" }).click();
   await expect(page.getByRole("alert")).toContainText(
@@ -326,6 +328,7 @@ test("backup worker signs Blossom proofs as well as chat events", async ({
     buffer: Buffer.from(encrypt(key, "fixture password", 10)),
   });
   await page.getByLabel("백업 비밀번호").fill("fixture password");
+  await page.clock.setFixedTime(new Date(Date.now() - 86400000));
   await page.getByRole("button", { name: "백업으로 로그인" }).click();
   await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!");
   await attach(page);
@@ -370,3 +373,53 @@ test("employee session signs file upload and download without a browser extensio
   );
   expect(signedKinds.filter((kind) => kind === 24242)).toHaveLength(2);
 });
+
+for (const offset of [-365 * 86400000, 365 * 86400000]) {
+  test(`wrong PC clock ${offset}: plain text, upload and download use server time`, async ({
+    page,
+  }) => {
+    await page.clock.setFixedTime(new Date(Date.now() + offset));
+    const published = await installRelay(page);
+    await mediaRoutes(page);
+    const account = {
+      username: "staff",
+      name: "직원",
+      pubkey: getPublicKey(key),
+      role: "member",
+      mustChangePassword: false,
+      status: "ready",
+      provisioningError: "",
+    };
+    await page.route("**/chat-api/session", (route) =>
+      route.fulfill({ json: account }),
+    );
+    const signedKinds: number[] = [];
+    await page.route("**/chat-api/sign", (route) => {
+      const { template } = route.request().postDataJSON();
+      const now = Math.floor(Date.now() / 1000);
+      expect(Math.abs(template.created_at - now)).toBeLessThanOrEqual(2);
+      if (template.kind === 24242)
+        expect(validMediaAuth(template, "https://buzz.kovar.kr", now)).toBe(
+          true,
+        );
+      signedKinds.push(template.kind);
+      return route.fulfill({ json: finalizeEvent(template, key) });
+    });
+    await page.goto("/chat/");
+    await expect(page.getByRole("log")).toContainText("안녕하세요, 팀 여러분!");
+    await page.getByLabel("메시지 입력").fill("서버 기준 시각으로 전송");
+    await page.getByRole("button", { name: "메시지 보내기" }).click();
+    await expect(page.getByRole("log")).toContainText(
+      "서버 기준 시각으로 전송",
+    );
+    await attach(page);
+    await page.getByRole("button", { name: "메시지 보내기" }).click();
+    const downloaded = page.waitForEvent("download");
+    await page.getByRole("button", { name: `다운로드: ${file.name}` }).click();
+    expect((await downloaded).suggestedFilename().normalize("NFC")).toBe(
+      file.name,
+    );
+    expect(published).toHaveLength(2);
+    expect(signedKinds.filter((kind) => kind === 24242)).toHaveLength(2);
+  });
+}

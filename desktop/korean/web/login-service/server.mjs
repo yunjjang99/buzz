@@ -402,6 +402,7 @@ export async function createLoginService(options) {
       if (request.method === "GET" && route === "/chat-api/status")
         return send({
           configured: Object.keys(store.state.accounts).length > 0,
+          serverTime: now(),
         });
       if (request.method === "GET" && route === "/chat-api/session")
         return send(publicAccount(session(request).account));

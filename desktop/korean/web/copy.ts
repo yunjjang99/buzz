@@ -162,6 +162,10 @@ export function errorText(error: unknown, language: "ko" | "en"): string {
           : error.message
       : "operation-failed";
   const messages: Record<string, [string, string]> = {
+    "server-time-unavailable": [
+      "서버 기준 시각을 확인하지 못했습니다. 잠시 후 다시 시도하세요.",
+      "Could not obtain server time. Please try again shortly.",
+    ],
     "mfa-required": [
       "관리자 계정입니다. 인증 앱의 코드 또는 일회용 복구 코드를 입력해 주세요.",
       "Enter your authenticator code or a single-use recovery code.",

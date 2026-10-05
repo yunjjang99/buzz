@@ -19,7 +19,7 @@ test("web strategy shares the channel shell and returns to the conversation", as
       json: route.request().url().endsWith("/sign")
         ? finalizeEvent(route.request().postDataJSON().template, key)
         : route.request().url().endsWith("/status")
-          ? { configured: true }
+          ? { configured: true, serverTime: Math.floor(Date.now() / 1000) }
           : account,
     }),
   );

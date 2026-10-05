@@ -47,7 +47,11 @@ async function fixture(page: Page, role: "admin" | "member" = "admin") {
         status,
         body: JSON.stringify(body),
       });
-    if (path.endsWith("/status")) return reply({ configured: true });
+    if (path.endsWith("/status"))
+      return reply({
+        configured: true,
+        serverTime: Math.floor(Date.now() / 1000),
+      });
     if (path.endsWith("/login")) {
       if (data.username !== account.username || data.password !== password)
         return reply({ error: "invalid-login" }, 401);

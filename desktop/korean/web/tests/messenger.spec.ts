@@ -10,7 +10,7 @@ test.beforeEach(async ({ page }) => {
       contentType: "application/json",
       body: JSON.stringify(
         route.request().url().endsWith("/status")
-          ? { configured: true }
+          ? { configured: true, serverTime: Math.floor(Date.now() / 1000) }
           : { error: "login-required" },
       ),
     }),

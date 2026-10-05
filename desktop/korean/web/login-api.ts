@@ -1,5 +1,6 @@
 import type { Event, EventTemplate } from "nostr-tools/pure";
 import { checkedEvent, type Signer } from "./signer";
+import { atServerTime, checkedServerTime } from "./server-time";
 export interface WebAccount {
   username: string;
   name: string;
@@ -15,7 +16,7 @@ export interface WebAccount {
 type ApiTransport = <T>(route: string, input?: object) => Promise<T>;
 let nativeTransport: ApiTransport | undefined;
 /** Select a memory-only desktop transport; the web entry keeps its cookie transport. */
-export function setNativeLoginTransport(transport: ApiTransport) {
+export function setNativeLoginTransport(transport: ApiTransport | undefined) {
   nativeTransport = transport;
 }
 
@@ -25,6 +26,7 @@ export async function loginApi<T>(route: string, input?: object): Promise<T> {
   const response = await fetch(`/chat-api/${route}`, {
     method: input ? "POST" : "GET",
     credentials: "same-origin",
+    cache: "no-store",
     redirect: "error",
     signal: AbortSignal.timeout(40000),
     headers: input ? { "Content-Type": "application/json" } : {},
@@ -53,9 +55,14 @@ export function accountSigner(account: WebAccount): Signer {
     pubkey: account.pubkey,
     async sign(template: EventTemplate) {
       if (!active) throw new Error("locked");
-      const event = await loginApi<Event>("sign", { template });
+      const now = checkedServerTime(
+        await loginApi<{ serverTime: number }>("status"),
+      );
       if (!active) throw new Error("locked");
-      return checkedEvent(template, event, account.pubkey);
+      const approved = atServerTime(template, now);
+      const event = await loginApi<Event>("sign", { template: approved });
+      if (!active) throw new Error("locked");
+      return checkedEvent(approved, event, account.pubkey);
     },
     dispose() {
       active = false;

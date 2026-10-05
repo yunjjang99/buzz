@@ -1227,3 +1227,75 @@ test("TOTP accepts one future interval and rejects wider drift and old intervals
     await f.finish();
   }
 });
+
+test("account signer uses service time for auth, plain messages and media despite device skew", async () => {
+  const { accountSigner, setNativeLoginTransport } = await import(
+    "../login-api.ts"
+  );
+  const f = await fixture();
+  try {
+    const admin = await f.setup();
+    setNativeLoginTransport(async (route, input) => {
+      const result = await f.api(route, input, admin.cookie);
+      if (result.status !== 200) throw new Error(result.value.error);
+      return result.value;
+    });
+    const signer = accountSigner(admin.value);
+    const serverTime = (await f.api("status")).value.serverTime;
+    assert.ok(Number.isSafeInteger(serverTime));
+    for (const skew of [-31536000, -86400, 1, 86400, 31536000]) {
+      const created_at = serverTime + skew;
+      const operations = [
+        {
+          kind: 22242,
+          created_at,
+          content: "",
+          tags: [
+            ["relay", "wss://buzz.test"],
+            ["challenge", "skew-test"],
+          ],
+        },
+        {
+          kind: 9,
+          created_at,
+          content: "시계가 틀려도 보내는 글",
+          tags: [["h", "general"]],
+        },
+        ...["upload", "get"].map((verb) => ({
+          kind: 24242,
+          created_at,
+          content: "Buzz file transfer",
+          tags: [
+            ["t", verb],
+            ["x", "a".repeat(64)],
+            ["server", "buzz.test"],
+            ["expiration", String(created_at + 60)],
+          ],
+        })),
+      ];
+      for (const template of operations) {
+        const event = await signer.sign(template);
+        assert.ok(verifyEvent(event));
+        assert.equal(event.content, template.content);
+        assert.ok(
+          Math.abs(event.created_at - Math.floor(Date.now() / 1000)) <= 2,
+        );
+        assert.equal(
+          template.created_at,
+          created_at,
+          "does not mutate retry inputs",
+        );
+        if (event.kind === 24242)
+          assert.equal(
+            Number(event.tags.find((tag) => tag[0] === "expiration")[1]),
+            event.created_at + 60,
+          );
+        else assert.deepEqual(event.tags, template.tags);
+      }
+    }
+    signer.dispose();
+  } finally {
+    setNativeLoginTransport(undefined);
+    await f.finish();
+  }
+});
