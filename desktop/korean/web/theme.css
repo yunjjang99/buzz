@@ -1,0 +1,56 @@
+/* Buzz's default desktop palette: neutral actions, one continuous chrome
+ * gradient, and an inset content surface. See shared/styles/globals/theme.css.
+ * HSL tokens also feed the embedded strategy room's existing theme contract. */
+:root {
+  color-scheme: light;
+  --background: 0 0% 100%;
+  --foreground: 210 12% 16%;
+  --card: var(--background);
+  --muted-foreground: 212 8% 43%;
+  --border: 240 2% 90%;
+  --accent: 0 0% 94%;
+  --primary: var(--foreground);
+  --primary-foreground: var(--background);
+  --ring: var(--foreground);
+  --chat-surface: hsl(var(--background));
+  --chat-fg: hsl(var(--foreground));
+  --chat-muted: hsl(var(--muted-foreground));
+  --chat-border: hsl(var(--border));
+  --chat-subtle: hsl(var(--accent));
+  --chat-primary: hsl(var(--primary));
+  --chat-primary-fg: hsl(var(--primary-foreground));
+  --chat-gradient-top: #e6e6b6;
+  --chat-gradient-bottom: #c4d0da;
+  --chat-hover: rgb(0 0 0 / 4%);
+  --chat-selected: rgb(0 0 0 / 7%);
+  --chat-success: #1a7f37;
+  --chat-danger: #922f28;
+  --chat-danger-bg: #fff0ee;
+  --chat-danger-border: #f3d3ce;
+  --chat-warning-bg: #fff6d9;
+  --chat-warning-border: #eedba2;
+  --chat-warning-fg: #71560b;
+  --chat-text: 0.875rem;
+  --chat-meta: 0.6875rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --background: 0 0% 10.1960784314%;
+    --foreground: 214 13% 90%;
+    --muted-foreground: 210 8% 65%;
+    --border: 213 8% 27%;
+    --accent: 213 10% 21%;
+    --chat-gradient-top: #4a4616;
+    --chat-gradient-bottom: #0a1423;
+    --chat-hover: rgb(255 255 255 / 4%);
+    --chat-selected: rgb(255 255 255 / 16%);
+    --chat-success: #7ee787;
+    --chat-danger: #ffaaa3;
+    --chat-danger-bg: #352423;
+    --chat-danger-border: #75453f;
+    --chat-warning-bg: #332c19;
+    --chat-warning-border: #766333;
+    --chat-warning-fg: #f2d782;
+  }
+}

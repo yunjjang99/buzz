@@ -9,8 +9,8 @@
 }
 .strategy-pinned-entry:hover,
 .strategy-pinned-entry[aria-current="page"] {
-  background: #e9e9e2;
-  color: #242520;
+  background: var(--chat-selected);
+  color: var(--chat-fg);
 }
 .workspace[data-strategy-open] > :not(.sidebar):not(.strategy-web-pane) {
   display: none;

@@ -36,6 +36,7 @@ import {
   attachmentTag,
   messageText,
 } from "./media-protocol";
+import buzzIcon from "../../public/app-icon@3x.png";
 import "./style.css";
 import "./strategy/embed";
 
@@ -584,7 +585,7 @@ function App() {
     <div className="app">
       <header className="brand-bar">
         <a className="brand" href="/chat/" aria-label="Buzz">
-          <span aria-hidden="true">✦</span> Buzz <small>{text.title}</small>
+          <img src={buzzIcon} alt="" /> Kovar Buzz <small>{text.title}</small>
         </a>
         <LanguageControl />
       </header>
@@ -601,12 +602,6 @@ function App() {
             <span className="eyebrow">KOVAR · TEAM WORKSPACE</span>
             <h1>{text.subtitle}</h1>
             <p>{text.intro}</p>
-            <div className="illustration" aria-hidden="true">
-              <div className="bubble">안녕하세요! 👋</div>
-              <div className="bubble second">Hello, team.</div>
-              <div className="bee">✦</div>
-            </div>
-            <p className="feature-note">{text.limitations}</p>
           </section>
           <section className="login-card" aria-labelledby="welcome">
             <h2 id="welcome">{text.welcome}</h2>
