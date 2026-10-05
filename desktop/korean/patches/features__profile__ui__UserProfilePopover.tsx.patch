@@ -1,0 +1,109 @@
+Index: src/features/profile/ui/UserProfilePopover.tsx
+===================================================================
+--- src/features/profile/ui/UserProfilePopover.tsx	
++++ src/features/profile/ui/UserProfilePopover.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { Activity, Headphones, MessageSquare } from "lucide-react";
+ 
+@@ -83,6 +84,7 @@
+ }
+ 
+ function InfoBadge({ children }: { children: React.ReactNode }) {
++  useLocale();
+   return (
+     <span className="inline-flex items-center rounded-full bg-muted/50 px-2 py-0.5 text-xs text-muted-foreground">
+       {children}
+@@ -106,6 +108,7 @@
+   displayName: string;
+   pubkey: string;
+ }) {
++  useLocale();
+   return (
+     <span className="group/name inline-grid h-5 min-w-0 flex-1 overflow-hidden text-sm font-semibold leading-5">
+       <span
+@@ -123,6 +126,7 @@
+ }
+ 
+ function StatusLine({ children }: { children: React.ReactNode }) {
++  useLocale();
+   return (
+     <div
+       className="flex w-full min-w-0 items-center gap-1 py-1 text-xs leading-4 text-muted-foreground"
+@@ -145,6 +149,7 @@
+   role,
+   botIdenticonValue,
+ }: UserProfilePopoverProps) {
++  useLocale();
+   const [open, setOpen] = React.useState(false);
+   const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(
+     null,
+@@ -275,6 +280,7 @@
+   role?: string;
+   setOpen: (open: boolean) => void;
+ }) {
++  useLocale();
+   const profileQuery = useUserProfileQuery(pubkey);
+   const usersBatchQuery = useUsersBatchQuery([pubkey]);
+   const relayAgentsQuery = useRelayAgentsQuery();
+@@ -427,7 +433,7 @@
+             className="mt-0.5 truncate text-xs leading-4 text-muted-foreground"
+             data-testid={`user-profile-popover-owner-${pubkey}`}
+           >
+-            managed by {ownerLabel}
++            {t("managed by")} {ownerLabel}
+           </p>
+         ) : null}
+         {profileSubheader ? (
+@@ -517,7 +523,7 @@
+             type="button"
+           >
+             <Activity className="h-4 w-4 text-muted-foreground" />
+-            View activity log
++            {t("View activity log")}
+           </button>
+         ) : null}
+ 
+@@ -544,7 +550,7 @@
+               <div className="flex gap-2">
+                 {showHumanProfileActions ? (
+                   <Button
+-                    aria-label="Wave"
++                    aria-label={t("Wave")}
+                     className="buzz-wave-hover-trigger shrink-0 px-3 transition-transform duration-100 ease-out motion-reduce:transition-none motion-safe:active:scale-[0.97]"
+                     data-testid={`user-profile-popover-wave-${pubkey}`}
+                     disabled={pendingAction !== null || isOpeningDm}
+@@ -590,7 +596,7 @@
+                     ) : (
+                       <MessageSquare />
+                     )}
+-                    Message
++                    {t("Message")}
+                   </Button>
+                 ) : null}
+                 {showHuddleAction ? (
+@@ -615,7 +621,7 @@
+                     ) : (
+                       <Headphones />
+                     )}
+-                    Huddle
++                    {t("Huddle")}
+                   </Button>
+                 ) : null}
+               </div>
+@@ -634,11 +640,13 @@
+   name: string;
+   anchorAt: number;
+ }) {
++  useLocale();
+   const now = useNow(1000);
+ 
+   return (
+     <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary motion-safe:animate-pulse">
+-      Working in #{name} · {formatElapsed(now - anchorAt)}
++      {t("Working in #{channel}", { channel: name })} ·{" "}
++      {formatElapsed(now - anchorAt)}
+     </span>
+   );
+ }

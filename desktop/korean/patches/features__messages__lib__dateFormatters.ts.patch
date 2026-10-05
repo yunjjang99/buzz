@@ -1,0 +1,47 @@
+Index: src/features/messages/lib/dateFormatters.ts
+===================================================================
+--- src/features/messages/lib/dateFormatters.ts	
++++ src/features/messages/lib/dateFormatters.ts	
+@@ -1,3 +1,4 @@
++import { localizedDateTimeFormat } from "@buzz-korean/interaction-copy";
+ /**
+  * Shared date/time formatters for the message timeline.
+  *
+@@ -17,14 +18,14 @@
+  * scrolls away while the messages under it stay on screen.
+  */
+ 
+-const TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
++const TIME_FORMATTER = localizedDateTimeFormat({
+   hour: "numeric",
+   minute: "2-digit",
+ });
+ 
+ const DAY_PERIOD_SUFFIX_RE = /[\s\u00a0\u202f]*(?:AM|PM)$/i;
+ 
+-const FULL_DATE_TIME_FORMATTER = new Intl.DateTimeFormat("en-US", {
++const FULL_DATE_TIME_FORMATTER = localizedDateTimeFormat({
+   weekday: "long",
+   year: "numeric",
+   month: "long",
+@@ -33,7 +34,7 @@
+   minute: "2-digit",
+ });
+ 
+-const SHORT_MONTH_DAY_FORMATTER = new Intl.DateTimeFormat("en-US", {
++const SHORT_MONTH_DAY_FORMATTER = localizedDateTimeFormat({
+   month: "short",
+   day: "numeric",
+ });
+@@ -45,7 +46,10 @@
+ 
+ /** Short clock time with the AM/PM marker removed, e.g. "2:34". */
+ export function formatTimeWithoutDayPeriod(time: string): string {
+-  return time.replace(DAY_PERIOD_SUFFIX_RE, "").trim();
++  return time
++    .replace(DAY_PERIOD_SUFFIX_RE, "")
++    .replace(/^(?:오전|오후)\s*/, "")
++    .trim();
+ }
+ 
+ /** Full date + time for tooltips, e.g. "Wednesday, April 2, 2026 at 2:34 PM". */

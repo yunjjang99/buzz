@@ -1,0 +1,163 @@
+Index: src/features/profile/ui/UserProfileAgentManagementRows.tsx
+===================================================================
+--- src/features/profile/ui/UserProfileAgentManagementRows.tsx	
++++ src/features/profile/ui/UserProfileAgentManagementRows.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import {
+   Archive,
+@@ -49,6 +50,7 @@
+   onDuplicateAgent?: () => void;
+   onExportAgent?: () => void;
+ }) {
++  useLocale();
+   if (
+     !onCreateCard &&
+     !onDuplicateAgent &&
+@@ -66,7 +68,7 @@
+         <ProfileAgentActionRow
+           disabled={isDeletePending}
+           icon={CopyPlus}
+-          label="Duplicate agent"
++          label={t("Duplicate agent")}
+           onClick={onDuplicateAgent}
+           testId="user-profile-duplicate-agent-row"
+         />
+@@ -75,7 +77,7 @@
+         <ProfileAgentActionRow
+           disabled={isDeletePending}
+           icon={Download}
+-          label="Export agent"
++          label={t("Export agent")}
+           onClick={onExportAgent}
+           testId="user-profile-export-agent-row"
+         />
+@@ -84,7 +86,7 @@
+         <ProfileAgentActionRow
+           disabled={isDeletePending}
+           icon={Sparkles}
+-          label="Create trading card"
++          label={t("Create trading card")}
+           onClick={onCreateCard}
+           testId="user-profile-create-card-row"
+         />
+@@ -121,6 +123,7 @@
+   onClick: () => void;
+   testId: string;
+ }) {
++  useLocale();
+   return (
+     <button
+       className="flex min-h-16 w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/40 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring"
+@@ -156,16 +159,17 @@
+ }: {
+   archiveActions: IdentityArchiveActions;
+ }) {
++  useLocale();
+   const [confirmOpen, setConfirmOpen] = React.useState(false);
+   const isArchived = archiveActions.isArchived === true;
+   const Icon = isArchived ? ArchiveRestore : Archive;
+   const label = archiveActions.isPending
+     ? isArchived
+-      ? "Unarchiving…"
+-      : "Archiving…"
++      ? t("Unarchiving…")
++      : t("Archiving…")
+     : isArchived
+-      ? "Unarchive agent"
+-      : "Archive agent";
++      ? t("Unarchive agent")
++      : t("Archive agent");
+ 
+   return (
+     <>
+@@ -209,6 +213,7 @@
+   managedAgent?: ManagedAgent;
+   onDelete: () => void;
+ }) {
++  useLocale();
+   const [confirmOpen, setConfirmOpen] = React.useState(false);
+ 
+   return (
+@@ -217,7 +222,7 @@
+         destructive
+         disabled={isPending}
+         icon={Trash2}
+-        label="Delete agent"
++        label={t("Delete agent")}
+         onClick={() => {
+           if (managedAgent) {
+             setConfirmOpen(true);
+@@ -256,39 +261,51 @@
+   onOpenChange: (open: boolean) => void;
+   open: boolean;
+ }) {
++  useLocale();
+   const isProviderAgent = agent.backend.type === "provider";
+ 
+   return (
+     <AlertDialog onOpenChange={onOpenChange} open={open}>
+       <AlertDialogContent data-testid="agent-delete-confirm-dialog">
+         <AlertDialogHeader>
+-          <AlertDialogTitle>Delete this agent?</AlertDialogTitle>
++          <AlertDialogTitle>{t("Delete this agent?")}</AlertDialogTitle>
+           <AlertDialogDescription>
+             {isProviderAgent
+-              ? "Deleting removes this agent’s local management record, not its remote deployment."
+-              : "Deleting this agent stops and removes the agent from this community."}
++              ? t(
++                  "Deleting removes this agent’s local management record, not its remote deployment.",
++                )
++              : t(
++                  "Deleting this agent stops and removes the agent from this community.",
++                )}
+           </AlertDialogDescription>
+         </AlertDialogHeader>
+         <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
+-          <li>Removes the local management record and saved agent key</li>
+-          <li>Removes the agent from every channel it belongs to</li>
+           <li>
+-            Archives the agent&apos;s identity on the relay so it no longer
+-            appears in member lists or mention suggestions
++            {t("Removes the local management record and saved agent key")}
+           </li>
++          <li>{t("Removes the agent from every channel it belongs to")}</li>
+           <li>
++            {t(
++              "Archives the agent's identity on the relay so it no longer appears in member lists or mention suggestions",
++            )}
++          </li>
++          <li>
+             {isProviderAgent
+-              ? "Unless the agent is known to be Offline, Buzz first requests shutdown through a channel when available. A failed request cancels deletion. The remote process may still be running even after a successful request."
+-              : "Stops any local agent process before deleting the record"}
++              ? t(
++                  "Unless the agent is known to be Offline, Buzz first requests shutdown through a channel when available. A failed request cancels deletion. The remote process may still be running even after a successful request.",
++                )
++              : t("Stops any local agent process before deleting the record")}
+           </li>
+         </ul>
+         <p className="text-sm text-muted-foreground">
+-          Archive this agent if you want to hide it instead of removing it.
++          {t(
++            "Archive this agent if you want to hide it instead of removing it.",
++          )}
+         </p>
+         <AlertDialogFooter>
+           <AlertDialogCancel asChild>
+             <Button type="button" variant="outline">
+-              Cancel
++              {t("Cancel")}
+             </Button>
+           </AlertDialogCancel>
+           <AlertDialogAction
+@@ -297,7 +314,7 @@
+             disabled={isPending}
+             onClick={onConfirm}
+           >
+-            {isPending ? "Deleting…" : "Delete agent"}
++            {isPending ? t("Deleting…") : t("Delete agent")}
+           </AlertDialogAction>
+         </AlertDialogFooter>
+       </AlertDialogContent>

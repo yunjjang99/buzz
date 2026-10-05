@@ -14,6 +14,7 @@ export default defineConfig({
         "**/employee-page.spec.ts",
         "**/settings-details.spec.ts",
         "**/strategy-pane.spec.ts",
+        "**/interactions.spec.ts",
       ],
     },
   ],

@@ -1,0 +1,26 @@
+Index: src/features/profile/ui/UserProfilePanel.tsx
+===================================================================
+--- src/features/profile/ui/UserProfilePanel.tsx	
++++ src/features/profile/ui/UserProfilePanel.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { isRelayRemovedError } from "@/features/agents/managedAgentRelayCleanup";
+ import { toast } from "sonner";
+@@ -122,6 +123,7 @@
+   widthPx,
+   transparentChrome = false,
+ }: UserProfilePanelProps) {
++  useLocale();
+   const { globalConfig } = useGlobalAgentConfig();
+   const isOverlay = useIsThreadPanelOverlay();
+   const isSplitLayout = layout === "split";
+@@ -701,7 +703,7 @@
+   ]);
+   const ownerDisplayName = ownerHandle
+     ? isCurrentUserOwner || (!ownerPubkey && isOwner === true)
+-      ? `${ownerHandle} (you)`
++      ? t("{name} (you)", { name: ownerHandle })
+       : ownerHandle
+     : null;
+   const ownerProfilePubkey =

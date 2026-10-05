@@ -1,0 +1,76 @@
+Index: src/features/profile/ui/ArchiveConfirmDialog.tsx
+===================================================================
+--- src/features/profile/ui/ArchiveConfirmDialog.tsx	
++++ src/features/profile/ui/ArchiveConfirmDialog.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import {
+   AlertDialog,
+   AlertDialogAction,
+@@ -30,8 +31,9 @@
+   isBot: boolean;
+   isPending: boolean;
+ }) {
+-  const title = isBot ? "Archive this agent?" : "Archive this identity?";
+-  const subject = isBot ? "this agent" : "this person";
++  useLocale();
++  const title = isBot ? t("Archive this agent?") : t("Archive this identity?");
++  const subject = isBot ? t("this agent") : t("this person");
+ 
+   return (
+     <AlertDialog onOpenChange={onOpenChange} open={open}>
+@@ -39,7 +41,7 @@
+         <AlertDialogHeader>
+           <AlertDialogTitle>{title}</AlertDialogTitle>
+           <AlertDialogDescription>
+-            Archiving hides {subject} from the space.
++            {t("Archiving hides {subject} from the space.", { subject })}
+           </AlertDialogDescription>
+         </AlertDialogHeader>
+         {/* The list + closing paragraph sit outside AlertDialogDescription on
+@@ -47,25 +49,28 @@
+             a <ul> or another block <p>. */}
+         <ul className="list-disc space-y-1.5 pl-5 text-sm text-muted-foreground">
+           <li>
+-            They won't appear in search, autocomplete, or when adding members
++            {t(
++              "They won't appear in search, autocomplete, or when adding members",
++            )}
+           </li>
+           <li>
+-            This only affects{" "}
+-            <span className="font-medium text-foreground">this space</span> —
+-            not their account anywhere else
++            {t(
++              "This only affects this space — not their account anywhere else",
++            )}
+           </li>
+-          <li>You can unarchive them at any time to restore them</li>
++          <li>{t("You can unarchive them at any time to restore them")}</li>
+         </ul>
+         {isBot ? (
+           <p className="text-sm text-muted-foreground">
+-            You can also delete this agent from the profile settings menu if you
+-            want to remove the agent instead of hiding it.
++            {t(
++              "You can also delete this agent from the profile settings menu if you want to remove the agent instead of hiding it.",
++            )}
+           </p>
+         ) : null}
+         <AlertDialogFooter>
+           <AlertDialogCancel asChild>
+             <Button type="button" variant="outline">
+-              Cancel
++              {t("Cancel")}
+             </Button>
+           </AlertDialogCancel>
+           <AlertDialogAction
+@@ -74,7 +79,7 @@
+             disabled={isPending}
+             onClick={onConfirm}
+           >
+-            {isPending ? "Archiving…" : "Archive"}
++            {isPending ? t("Archiving…") : t("Archive")}
+           </AlertDialogAction>
+         </AlertDialogFooter>
+       </AlertDialogContent>

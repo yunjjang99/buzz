@@ -1,0 +1,94 @@
+Index: src/features/huddle/components/AddAgentDialog.tsx
+===================================================================
+--- src/features/huddle/components/AddAgentDialog.tsx	
++++ src/features/huddle/components/AddAgentDialog.tsx	
+@@ -1,3 +1,4 @@
++import { t, useLocale } from "@buzz-korean/locale";
+ import { invoke } from "@tauri-apps/api/core";
+ import { LoaderCircle } from "lucide-react";
+ import * as React from "react";
+@@ -34,6 +35,7 @@
+   onAdd,
+   currentAgentPubkeys,
+ }: AddAgentDialogProps) {
++  useLocale();
+   const [agents, setAgents] = React.useState<ManagedAgentSummary[]>([]);
+   const [loading, setLoading] = React.useState(true);
+   const [adding, setAdding] = React.useState<string | null>(null);
+@@ -56,7 +58,7 @@
+       .catch((e: unknown) => {
+         if (cancelled) return;
+         console.error("Failed to load agents:", e);
+-        setError("Could not load agents.");
++        setError(t("Could not load agents."));
+       })
+       .finally(() => {
+         if (!cancelled) setLoading(false);
+@@ -98,7 +100,11 @@
+             startError instanceof Error
+               ? startError.message
+               : String(startError);
+-          setWarning(`Added to huddle, but could not start agent: ${msg}`);
++          setWarning(
++            t("Added to huddle, but could not start agent: {error}", {
++              error: msg,
++            }),
++          );
+           console.error("Failed to start agent after huddle add:", startError);
+           return;
+         }
+@@ -107,7 +113,9 @@
+         // Agent was added to the ephemeral channel but parent channel add failed.
+         // Show as a warning — don't close the dialog so the user can see it.
+         setWarning(
+-          `Added to huddle, but parent channel failed: ${result.parent_error}`,
++          t("Added to huddle, but parent channel failed: {error}", {
++            error: result.parent_error,
++          }),
+         );
+       } else {
+         onClose();
+@@ -124,7 +132,7 @@
+         }
+       }
+       const msg = e instanceof Error ? e.message : String(e);
+-      setError(`Failed to add agent: ${msg}`);
++      setError(t("Failed to add agent: {error}", { error: msg }));
+       console.error("Failed to add agent to huddle:", e);
+     } finally {
+       setAdding(null);
+@@ -141,9 +149,9 @@
+       <ChooserDialogContent
+         className="max-w-xl"
+         data-testid="add-huddle-agent-dialog"
+-        headerSubtitle="Choose an agent to join this huddle."
++        headerSubtitle={t("Choose an agent to join this huddle.")}
+         scrollAreaClassName="space-y-5"
+-        title="Add agents"
++        title={t("Add agents")}
+       >
+         {error ? (
+           <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+@@ -159,11 +167,11 @@
+ 
+         {loading ? (
+           <p className="py-4 text-center text-sm text-muted-foreground">
+-            Loading agents…
++            {t("Loading agents…")}
+           </p>
+         ) : availableAgents.length === 0 ? (
+           <p className="py-4 text-center text-sm text-muted-foreground">
+-            All available agents are already in this huddle.
++            {t("All available agents are already in this huddle.")}
+           </p>
+         ) : (
+           <ul className="flex flex-col gap-1">
+@@ -188,7 +196,7 @@
+                     </span>
+                     {isAdding ? (
+                       <LoaderCircle
+-                        aria-label={`Adding ${agent.name}`}
++                        aria-label={t("Adding {name}", { name: agent.name })}
+                         className="h-4 w-4 shrink-0 animate-spin text-muted-foreground"
+                       />
+                     ) : null}

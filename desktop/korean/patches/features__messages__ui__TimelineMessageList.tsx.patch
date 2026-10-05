@@ -1,0 +1,42 @@
+Index: src/features/messages/ui/TimelineMessageList.tsx
+===================================================================
+--- src/features/messages/ui/TimelineMessageList.tsx	
++++ src/features/messages/ui/TimelineMessageList.tsx	
+@@ -1,3 +1,4 @@
++import { useLocale } from "@buzz-korean/locale";
+ import * as React from "react";
+ import { VList } from "virtua";
+ import type { VListHandle } from "virtua";
+@@ -171,6 +172,7 @@
+   onVirtualizerRangeChanged,
+   onVirtualizerScrollerChange,
+ }: TimelineMessageListProps) {
++  useLocale();
+   const entries = React.useMemo(
+     () =>
+       mainEntries ??
+@@ -414,6 +416,7 @@
+   ref,
+   style,
+ }: VirtualizedTimelineItemShellProps) {
++  useLocale();
+   const preserveVisibility = React.useContext(
+     PreserveVirtualizedItemVisibilityContext,
+   );
+@@ -439,6 +442,7 @@
+   onVirtualizerScrollerChange,
+   renderItem,
+ }: VirtualizedTimelineRowsProps) {
++  const locale = useLocale();
+   const listRef = React.useRef<VListHandle>(null);
+   const hostRef = React.useRef<HTMLDivElement>(null);
+   const itemsLengthRef = React.useRef(0);
+@@ -619,7 +623,7 @@
+           : { label: nextLabel, incomingLabel },
+       );
+     },
+-    [dayDividerItems],
++    [dayDividerItems, locale],
+   );
+ 
+   React.useEffect(

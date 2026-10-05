@@ -1,0 +1,41 @@
+Index: src/features/messages/ui/WaveMessageAttachment.tsx
+===================================================================
+--- src/features/messages/ui/WaveMessageAttachment.tsx	
++++ src/features/messages/ui/WaveMessageAttachment.tsx	
+@@ -1,3 +1,5 @@
++import { t, useLocale } from "@buzz-korean/locale";
++import { translateWaveFallback } from "@buzz-korean/interaction-copy";
+ import * as React from "react";
+ import { useQueryClient } from "@tanstack/react-query";
+ import { toast } from "sonner";
+@@ -31,6 +33,7 @@
+   huddleMemberPubkeysPending = false,
+   searchQuery,
+ }: WaveMessageAttachmentProps) {
++  useLocale();
+   const queryClient = useQueryClient();
+   const { isStarting, startHuddle } = useHuddle();
+   const startHuddleDisabled =
+@@ -74,11 +77,11 @@
+         <AttachmentTitle>
+           <HighlightedSearchText
+             query={searchQuery ?? ""}
+-            text={fallbackText}
++            text={translateWaveFallback(fallbackText)}
+           />
+         </AttachmentTitle>
+         <AttachmentDescription>
+-          Start a huddle to talk to them.
++          {t("Start a huddle to talk to them.")}
+         </AttachmentDescription>
+       </AttachmentContent>
+       <AttachmentActions>
+@@ -88,7 +91,7 @@
+           size="xs"
+           type="button"
+         >
+-          Start huddle
++          {t("Start huddle")}
+         </AttachmentAction>
+       </AttachmentActions>
+     </Attachment>
