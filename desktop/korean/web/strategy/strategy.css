@@ -1,0 +1,618 @@
+.strategy-shell,
+.strategy-editor {
+  --st-bg: hsl(var(--background, 0 0% 98%));
+  --st-fg: hsl(var(--foreground, 0 0% 12%));
+  --st-card: hsl(var(--card, 0 0% 100%));
+  --st-muted: hsl(var(--muted-foreground, 0 0% 43%));
+  --st-border: hsl(var(--border, 0 0% 88%));
+  --st-accent: hsl(var(--accent, 0 0% 94%));
+  --st-primary: hsl(var(--primary, 0 0% 16%));
+  --st-primary-fg: hsl(var(--primary-foreground, 0 0% 98%));
+  --st-ring: hsl(var(--ring, 0 0% 55%));
+  --st-danger: #d36661;
+  --st-warning: #b98b36;
+  color-scheme: light dark;
+}
+.strategy-native-pane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+.strategy-embedded {
+  flex: 1;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+.strategy-title {
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--st-border);
+  margin-bottom: 1rem;
+}
+.strategy-shell button:hover:not(:disabled),
+.strategy-editor button:hover:not(:disabled) {
+  filter: brightness(0.94);
+}
+.strategy-shell {
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", sans-serif;
+}
+.strategy-shell *,
+.strategy-editor * {
+  box-sizing: border-box;
+}
+.strategy-shell :where(button, input, textarea, select),
+.strategy-editor :where(button, input, textarea, select) {
+  font: inherit;
+  color: inherit;
+}
+.strategy-shell button,
+.strategy-editor button {
+  cursor: pointer;
+  border: 0;
+  border-radius: 0.375rem;
+  background: transparent;
+}
+.strategy-shell button:disabled,
+.strategy-editor button:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+.strategy-shell a {
+  color: inherit;
+}
+.strategy-shell :focus-visible {
+  outline: 2px solid var(--st-ring);
+  outline-offset: 4px;
+}
+.strategy-top :where(nav > span) {
+  display: inline-block;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+.strategy-shell {
+  background: var(--st-bg);
+  min-height: 100%;
+  color: var(--st-fg);
+}
+.strategy-top {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 1.3rem;
+  background: var(--st-bg);
+  color: var(--st-fg);
+  padding: 0.9rem 2rem;
+  border-bottom: 1px solid var(--st-border);
+}
+.strategy-brand {
+  text-decoration: none;
+  font-size: 1.3rem;
+  font-weight: 750;
+}
+.strategy-top nav {
+  display: flex;
+  gap: 1rem;
+  flex: 1;
+}
+.strategy-top nav a {
+  text-decoration: none;
+  padding: 0.55rem 0.8rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+.strategy-top [aria-current] {
+  background: var(--st-accent);
+  color: var(--st-fg);
+  font-weight: 700;
+}
+.strategy-top > span,
+.strategy-top > button {
+  font-size: 0.85rem;
+}
+.strategy-main {
+  max-width: 100%;
+  width: 100%;
+  margin: auto;
+  padding: 1.25rem;
+}
+.strategy-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+.strategy-title h1 {
+  margin: 0;
+  font-size: 1.125rem;
+  letter-spacing: -0.02em;
+  font-weight: 600;
+}
+.strategy-main p {
+  font-size: 0.8rem;
+  line-height: 1.65;
+  color: var(--st-muted);
+}
+.strategy-title p {
+  margin: 0.5rem 0;
+}
+.strategy-controls {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.strategy-main :where(button:not(.agenda-item):not(.mail-subject)),
+.strategy-editor button {
+  padding: 0.55rem 0.8rem;
+  font-size: 0.8rem;
+  border: 1px solid var(--st-border);
+  background: var(--st-card);
+}
+.strategy-main .strategy-primary,
+.strategy-editor .strategy-primary {
+  background: var(--st-primary);
+  color: var(--st-primary-fg);
+  border-color: var(--st-primary);
+}
+.strategy-coverage {
+  margin: 0.5rem 0 1.2rem;
+}
+.strategy-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-bottom: 1.3rem;
+}
+.strategy-kpis article {
+  background: var(--st-card);
+  padding: 1rem;
+  border: 1px solid var(--st-border);
+  border-radius: 0.5rem;
+}
+.strategy-kpis h2 {
+  font-size: 0.85rem;
+  margin: 0 0 0.7rem;
+  font-weight: 550;
+  color: var(--st-muted);
+}
+.strategy-kpis strong {
+  font-size: 1.75rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.strategy-kpis small {
+  font-size: 0.8rem;
+  margin-left: 0.35rem;
+  font-weight: 400;
+}
+.strategy-kpis p {
+  margin: 0.4rem 0 0;
+  font-size: 0.72rem;
+}
+.strategy-kpis .attention {
+  border-top: 3px solid var(--st-danger);
+}
+.strategy-kpis .attention strong {
+  color: var(--st-danger);
+}
+.strategy-columns {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 1.2rem;
+  align-items: start;
+}
+.strategy-panel {
+  background: var(--st-card);
+  border: 1px solid var(--st-border);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  margin-bottom: 1.2rem;
+  min-width: 0;
+}
+.strategy-panel > header,
+.strategy-editor header,
+.strategy-mail-detail header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 0.7rem;
+}
+.strategy-panel h2 {
+  font-size: 1rem;
+  margin: 0;
+}
+.strategy-panel header > span {
+  font-size: 0.75rem;
+  color: var(--st-muted);
+}
+.strategy-empty {
+  padding: 1.3rem 0;
+  text-align: center;
+}
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+}
+.calendar-weekdays {
+  font-size: 0.75rem;
+  text-align: center;
+  color: var(--st-muted);
+  margin: 1.3rem 0 0.5rem;
+}
+.strategy-main .calendar-grid button {
+  border: 0;
+  border-radius: 0.35rem;
+  min-height: 3.3rem;
+  padding: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: start;
+}
+.calendar-grid small {
+  color: var(--st-muted);
+  font-size: 0.65rem;
+}
+.calendar-grid button.selected {
+  background: var(--st-accent);
+  box-shadow: inset 0 0 0 1px var(--st-ring);
+}
+.calendar-grid .outside {
+  opacity: 0.35;
+}
+.calendar-grid .today {
+  border-bottom: 2px solid var(--st-primary);
+  font-weight: 750;
+}
+.agenda-heading {
+  border-top: 1px solid var(--st-border);
+  padding-top: 1rem;
+  margin-top: 1rem;
+}
+.agenda-heading h3 {
+  font-size: 0.85rem;
+  margin: 0;
+}
+.strategy-controls [aria-pressed="true"] {
+  background: var(--st-accent);
+  border-color: var(--st-ring);
+}
+.strategy-agenda {
+  max-height: 24rem;
+  overflow: auto;
+}
+.agenda-item {
+  display: flex;
+  gap: 0.8rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.85rem 0.2rem;
+  border-radius: 0;
+  border-bottom: 1px solid var(--st-border);
+  align-items: center;
+}
+.agenda-item:hover {
+  background: var(--st-accent);
+}
+.agenda-item time {
+  min-width: 4.4rem;
+  font-size: 0.8rem;
+  color: var(--st-muted);
+}
+.agenda-item > span {
+  flex: 1;
+  min-width: 0;
+}
+.agenda-item strong {
+  font-size: 0.85rem;
+  display: block;
+  overflow-wrap: anywhere;
+}
+.agenda-item small {
+  display: block;
+  color: var(--st-muted);
+  font-size: 0.72rem;
+  margin-top: 0.25rem;
+}
+.agenda-item em {
+  font-style: normal;
+  font-size: 0.7rem;
+}
+.strategy-task-list {
+  max-height: 19rem;
+  overflow: auto;
+}
+.strategy-main .strategy-task-list button {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+  text-align: left;
+  border: 0;
+  border-bottom: 1px solid var(--st-border);
+  border-radius: 0;
+  padding: 0.8rem 0;
+}
+.strategy-task-list strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.strategy-task-list span,
+.strategy-task-list small {
+  font-size: 0.72rem;
+  color: var(--st-muted);
+}
+.strategy-overdue,
+.strategy-task-list .strategy-overdue {
+  color: var(--st-danger);
+}
+.comparison-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.2rem 3rem;
+  margin: 1.5rem 0;
+}
+.comparison-row {
+  display: grid;
+  grid-template-columns: 5rem 1fr 6rem;
+  align-items: center;
+  gap: 0.7rem;
+  font-size: 0.8rem;
+}
+.comparison-row > span {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.comparison-row small {
+  color: var(--st-muted);
+}
+.comparison-track {
+  height: 0.45rem;
+  background: var(--st-accent);
+  margin: 0.35rem 0;
+  border-radius: 1rem;
+  overflow: hidden;
+}
+.comparison-track span {
+  display: block;
+  height: 100%;
+  background: var(--st-primary);
+  border-radius: 1rem;
+}
+.comparison-track.previous span {
+  background: var(--st-muted);
+}
+.strategy-legend i {
+  display: inline-block;
+  width: 0.6rem;
+  height: 0.6rem;
+  background: var(--st-primary);
+  margin-right: 0.4rem;
+}
+.strategy-legend i + i,
+.strategy-legend i:nth-child(2) {
+  background: var(--st-muted);
+  margin-left: 1rem;
+}
+.strategy-filters {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+.strategy-filters label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.75rem;
+}
+.strategy-filters label:first-child {
+  flex: 1;
+}
+.strategy-filters input,
+.strategy-filters select,
+.strategy-editor input,
+.strategy-editor select,
+.strategy-editor textarea {
+  border: 1px solid var(--st-border);
+  border-radius: 0.45rem;
+  padding: 0.65rem;
+  background: var(--st-card);
+  color: var(--st-fg);
+  min-width: 0;
+}
+.mail-table {
+  overflow: auto;
+}
+.mail-table table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.8rem;
+}
+.mail-table th {
+  font-size: 0.72rem;
+  color: var(--st-muted);
+  font-weight: 500;
+  padding: 0.7rem;
+  border-bottom: 1px solid var(--st-border);
+  white-space: nowrap;
+}
+.mail-table td {
+  padding: 0.8rem 0.7rem;
+  border-bottom: 1px solid var(--st-border);
+  vertical-align: top;
+}
+.mail-table td:first-child {
+  white-space: nowrap;
+}
+.mail-table small {
+  display: block;
+  font-size: 0.7rem;
+  color: var(--st-muted);
+  margin-top: 0.35rem;
+  overflow-wrap: anywhere;
+}
+.mail-table td:last-child {
+  min-width: 7rem;
+}
+.mail-table td:last-child a {
+  display: block;
+  font-size: 0.72rem;
+  margin-top: 0.6rem;
+}
+.mail-subject {
+  text-align: left;
+  font-weight: 600;
+  padding: 0;
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+.strategy-tag {
+  display: inline-block;
+  white-space: nowrap;
+  background: var(--st-accent);
+  color: var(--st-muted);
+  padding: 0.2rem 0.45rem;
+  border-radius: 0.3rem;
+  font-size: 0.7rem;
+}
+.strategy-mail-detail {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--st-border);
+  background: var(--st-bg);
+}
+.strategy-mail-detail h3 {
+  font-size: 0.9rem;
+}
+.strategy-mail-detail pre {
+  font-family: inherit;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  max-height: 25rem;
+  overflow: auto;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.strategy-editor {
+  margin: auto;
+  background: var(--st-card);
+  border: 1px solid var(--st-border);
+  border-radius: 0.5rem;
+  color: var(--st-fg);
+  width: min(94vw, 36rem);
+  max-height: 90dvh;
+  padding: 1.5rem;
+}
+.strategy-editor::backdrop {
+  background: #0e1d35a0;
+}
+.strategy-editor h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+.strategy-editor p {
+  color: var(--st-muted);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+.strategy-editor label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  margin: 0.85rem 0;
+}
+.editor-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+.strategy-editor footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  margin-top: 1.3rem;
+}
+.strategy-editor form a {
+  font-size: 0.8rem;
+}
+.strategy-notice {
+  background: var(--st-accent);
+  padding: 0.85rem;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+}
+.strategy-error {
+  background: var(--st-accent);
+  color: var(--st-danger);
+  padding: 0.8rem;
+  border-radius: 0.5rem;
+}
+.strategy-login {
+  max-width: 32rem;
+  margin: 7vh auto;
+  padding: 1.25rem;
+}
+.strategy-login h1 {
+  font-size: 1.125rem;
+}
+.strategy-login > p {
+  color: var(--st-muted);
+}
+.strategy-login input {
+  max-width: 100%;
+}
+@media (max-width: 850px) {
+  .strategy-main {
+    padding: 1rem;
+  }
+  .strategy-columns {
+    grid-template-columns: 1fr;
+  }
+  .strategy-kpis {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .strategy-top {
+    padding: 0.75rem 1rem;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+  .strategy-top > span {
+    display: none;
+  }
+  .comparison-grid {
+    grid-template-columns: 1fr;
+  }
+  .strategy-title {
+    align-items: start;
+    flex-direction: column;
+  }
+  .strategy-filters {
+    flex-wrap: wrap;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .strategy-main button {
+    transition: background 120ms ease;
+  }
+}
+
+.calendar-grid .calendar-candidate {
+  color: var(--st-warning);
+}
+.candidate-item {
+  border-left: 2px dashed var(--st-warning);
+  padding-left: 0.5rem;
+}

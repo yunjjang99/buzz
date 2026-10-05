@@ -13,6 +13,7 @@ export default defineConfig({
         "**/native-account.spec.ts",
         "**/employee-page.spec.ts",
         "**/settings-details.spec.ts",
+        "**/strategy-pane.spec.ts",
       ],
     },
   ],

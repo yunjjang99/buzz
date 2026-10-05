@@ -1,0 +1,23 @@
+Index: src/app/routes/index.tsx
+===================================================================
+--- src/app/routes/index.tsx	
++++ src/app/routes/index.tsx	
+@@ -1,1 +1,2 @@
++import { NativeStrategy } from "@buzz-korean/StrategyLauncher";
+ import * as React from "react";
+@@ -13,2 +14,3 @@
+ type HomeRouteSearch = {
++  strategy?: boolean;
+   item?: string;
+@@ -21,2 +23,3 @@
+   return {
++    strategy: search.strategy === true || search.strategy === "true",
+     item:
+@@ -46,2 +49,7 @@
+ function HomeRouteComponent() {
++  const { strategy } = Route.useSearch();
++  return strategy ? <NativeStrategy /> : <HomeInboxComponent />;
++}
++
++function HomeInboxComponent() {
+   const { goChannel } = useAppNavigation();

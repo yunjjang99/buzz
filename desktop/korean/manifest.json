@@ -317,6 +317,10 @@
     {
       "file": "src/features/agents/ui/agentConfigOptions.tsx",
       "patch": "features__agents__ui__agentConfigOptions.tsx.patch"
+    },
+    {
+      "file": "src/app/routes/index.tsx",
+      "patch": "app__routes__index.tsx.patch"
     }
   ]
 }
