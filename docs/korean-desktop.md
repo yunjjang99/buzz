@@ -251,3 +251,7 @@ Tauri 식별자는 `kr.kovar.buzz.desktop`, 원본의 이름 있는 계정 격�
 - 복구하려면 앱을 종료한 뒤 현재 앱을 보관하고 위 백업 앱을 같은 설치 경로로
   복원한다. 앱 데이터와 OS 키체인은 유지한다. 이 ZIP은 로컬 보관용이며 공증된
   직원 배포물이나 자동 업데이트로 게시한 것이 아니다.
+
+Windows PC에서 관리자 MFA 버전을 직접 빌드하는 단계별 안내와 배포판 모으기는
+[Windows 빌드 안내](kovar-windows-build.md)를 따른다. 로컬 시험용 빌드 진입점은
+`node desktop/korean/build-windows.mjs --output NEW_DIRECTORY`다.
